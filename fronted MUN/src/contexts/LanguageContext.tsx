@@ -13,7 +13,7 @@ export const translations = {
     heroSub: "Empowering the next generation of global leaders through diplomacy, technology, and sustainable solutions.",
     heroBadge: "3 Days · Registration Open",
     btnRegister: "Register Now", btnCommittees: "View Committees",
-    stat0val: "300+", stat0lbl: "Delegates", stat1val: "8", stat1lbl: "Committees",
+    stat0val: "150+", stat0lbl: "Delegates", stat1val: "8", stat1lbl: "Committees",
     stat2val: "40+", stat2lbl: "Countries", stat3val: "3", stat3lbl: "Days",
     councilsLabel: "The Councils", councilsTitle: "Featured Committees", viewAll: "View All Committees",
     ctaTitle1: "Ready to Make", ctaTitle2: "Your Mark?",
