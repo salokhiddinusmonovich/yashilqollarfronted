@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 
-const GREEN = "#0be95c";
+const GREEN = "#22C55E";
 const ORANGE = "#F97316";
 const ORANGE_DARK = "#c2520a";
 
 const secretariat = [
-    { name: "TIMOFEYEV ARTUR", role: "MAIN SECRETARY GENERAL", badge: "SG" },
+    { name: "Usmonov Salokhiddin", role: "MAIN SECRETARY GENERAL", badge: "SG", photo: "/images/salokhiddin.png" },
     { name: "HASANOVA KAMILA", role: "SECRETARY GENERAL", badge: "SG" },
     { name: "ATAKHANOVA MAFTUNA", role: "VICE SECRETARY GENERAL", badge: "SG" },
     { name: "SUREYA ABI", role: "VICE SECRETARY GENERAL", badge: "SG" },
@@ -24,7 +24,7 @@ const committee = [
     { name: "EVGENY KOTOV", role: "UI DESIGNER", badge: "OC" },
 ];
 
-function MemberCard({ name, role, badge, large = false }) {
+function MemberCard({ name, role, badge, photo, large = false }) {
     const [hovered, setHovered] = useState(false);
     const isSG = badge === "SG";
     const accentColor = isSG ? GREEN : ORANGE;
@@ -60,19 +60,19 @@ function MemberCard({ name, role, badge, large = false }) {
                 borderRadius: large ? 12 : 8,
                 overflow: "hidden", marginBottom: large ? 14 : 9,
             }}>
-                {/* swap in real photo: <img src="/images/name.jpg" style={{width:"100%",height:"100%",objectFit:"cover"}} /> */}
+                {photo && (
+                    <img src={photo} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top center", position: "absolute", inset: 0 }} />
+                )}
+                {!photo && (
+                    <div style={{ position: "absolute", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "60%", height: "85%", background: "rgba(0,0,0,0.15)", borderRadius: "50% 50% 0 0" }} />
+                )}
+                {/* Badge always on top */}
                 <div style={{
-                    position: "absolute", top: 10, right: 10,
-                    background: accentColor, color: isSG ? "#000" : "#000",
+                    position: "absolute", top: 10, right: 10, zIndex: 2,
+                    background: accentColor, color: "#000",
                     fontSize: 9, fontWeight: 900, letterSpacing: "0.05em",
                     padding: "3px 8px", borderRadius: 5, textTransform: "uppercase",
                 }}>{badge}</div>
-                <div style={{
-                    position: "absolute", bottom: 0, left: "50%",
-                    transform: "translateX(-50%)",
-                    width: "60%", height: "85%",
-                    background: "rgba(0,0,0,0.15)", borderRadius: "50% 50% 0 0",
-                }} />
             </div>
 
             <div style={{ padding: "0 2px" }}>
