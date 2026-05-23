@@ -1,0 +1,324 @@
+import { useState, useEffect } from "react";
+
+const GREEN = "#22C55E";
+const ORANGE = "#F97316";
+
+const levelColor = { Beginner: "#4ADE80", Intermediate: "#FACC15", Advanced: "#F97316" };
+
+const committees = [
+    {
+        code: "UNGA",
+        name: "General Assembly",
+        topic: "Addressing the global climate migration crisis and establishing frameworks for climate refugees.",
+        level: "Beginner", type: "Solo",
+        usg: { name: "Alina Kazaeva" },
+        mainChair: { name: "Dr. Alisher Erkinov" },
+        coChairs: [{ name: "Bekmuhammad Yuldashev" }, { name: "Feruza Bakhodirova" }],
+    },
+    {
+        code: "UNSC",
+        name: "Security Council",
+        topic: "Maintaining international peace in the context of emerging cyber warfare and digital conflicts.",
+        level: "Advanced", type: "Solo",
+        usg: { name: "Kamola Hasanova" },
+        mainChair: { name: "Timur Abdullayev" },
+        coChairs: [{ name: "Nilufar Yusupova" }, { name: "Bobur Mirzayev" }],
+    },
+    {
+        code: "WHO",
+        name: "World Health Organization",
+        topic: "Global pandemic preparedness and equitable vaccine distribution frameworks.",
+        level: "Intermediate", type: "Solo",
+        usg: { name: "Sarvinoz Rakhimova" },
+        mainChair: { name: "Jasur Toshmatov" },
+        coChairs: [{ name: "Dilnoza Karimova" }],
+    },
+    {
+        code: "ECOSOC",
+        name: "Economic & Social Council",
+        topic: "Bridging the digital divide: inclusive access to technology in developing nations.",
+        level: "Intermediate", type: "Solo",
+        usg: { name: "Sherzod Nazarov" },
+        mainChair: { name: "Malika Yuldasheva" },
+        coChairs: [{ name: "Firdavs Ergashev" }, { name: "Zulfiya Hamidova" }],
+    },
+    {
+        code: "UNHRC",
+        name: "Human Rights Council",
+        topic: "Protecting digital rights and combating state-sponsored surveillance of civil society.",
+        level: "Intermediate", type: "Solo",
+        usg: { name: "Mohira Tursunova" },
+        mainChair: { name: "Sanjar Umarov" },
+        coChairs: [{ name: "Aziza Nishonova" }],
+    },
+    {
+        code: "UNEP",
+        name: "Environment Programme",
+        topic: "Accelerating the global transition to renewable energy and phasing out fossil fuel subsidies.",
+        level: "Beginner", type: "Solo",
+        usg: { name: "Rustam Khodjaev" },
+        mainChair: { name: "Gulnora Ibragimova" },
+        coChairs: [{ name: "Ibrohim Sotvoldiyev" }, { name: "Muazzam Rajabova" }],
+    },
+    {
+        code: "UNDP",
+        name: "Development Programme",
+        topic: "Financing sustainable development in post-conflict nations through public-private partnerships.",
+        level: "Beginner", type: "Solo",
+        usg: { name: "Lola Abdullaeva" },
+        mainChair: { name: "Nodir Xoliqov" },
+        coChairs: [{ name: "Barno Tursunova" }],
+    },
+    {
+        code: "CRISIS",
+        name: "Crisis Committee",
+        topic: "Responding to a sudden geopolitical escalation in Central Asia — classified scenario.",
+        level: "Advanced", type: "Solo",
+        usg: { name: "Artur Timofeyev" },
+        mainChair: { name: "Maftuna Atakhanova" },
+        coChairs: [{ name: "Sureya Abi" }, { name: "Bekhruz Tadjiev" }],
+    },
+];
+
+function Avatar({ name, role, color }) {
+    const initials = name.split(" ").map(w => w[0]).slice(0, 2).join("");
+    return (
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{
+                width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                background: `${color}18`, border: `1px solid ${color}35`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 10, fontWeight: 800, color: color,
+            }}>{initials}</div>
+            <div>
+                <div style={{ fontSize: 9, fontWeight: 800, color: color, textTransform: "uppercase", letterSpacing: "0.1em" }}>{role}</div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.75)" }}>{name}</div>
+            </div>
+        </div>
+    );
+}
+
+function CommitteeCard({ c }) {
+    const [hovered, setHovered] = useState(false);
+    const lvlColor = levelColor[c.level] || GREEN;
+
+    return (
+        <div
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+            style={{
+                background: "#111",
+                border: `1px solid ${hovered ? GREEN + "50" : "rgba(255,255,255,0.07)"}`,
+                borderRadius: 18, padding: "24px 22px",
+                display: "flex", flexDirection: "column",
+                transition: "border-color 0.2s, transform 0.2s",
+                transform: hovered ? "translateY(-3px)" : "translateY(0)",
+                position: "relative", overflow: "hidden",
+            }}
+        >
+            {/* Top glow on hover */}
+            <div style={{
+                position: "absolute", top: 0, left: 0, right: 0, height: 2,
+                background: hovered ? `linear-gradient(90deg, transparent, ${GREEN}, transparent)` : "transparent",
+                transition: "background 0.3s",
+            }} />
+
+            {/* Header */}
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 18 }}>
+                <div style={{
+                    background: `${GREEN}15`, color: GREEN,
+                    border: `1px solid ${GREEN}35`,
+                    padding: "6px 14px", borderRadius: 8,
+                    fontSize: 13, fontWeight: 900, letterSpacing: "0.05em",
+                    flexShrink: 0,
+                }}>{c.code}</div>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                    <span style={{
+                        fontSize: 8, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em",
+                        padding: "3px 8px", borderRadius: 5,
+                        background: `${lvlColor}15`, color: lvlColor,
+                        border: `1px solid ${lvlColor}30`,
+                    }}>{c.level}</span>
+                    <span style={{
+                        fontSize: 8, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em",
+                        padding: "3px 8px", borderRadius: 5,
+                        background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.4)",
+                        border: "1px solid rgba(255,255,255,0.1)",
+                    }}>{c.type}</span>
+                </div>
+            </div>
+
+            <h3 style={{ margin: "0 0 8px", fontSize: 16, fontWeight: 900, color: "#fff", textTransform: "uppercase", letterSpacing: "0.01em" }}>
+                {c.name}
+            </h3>
+
+            {/* Topic */}
+            <div style={{ marginBottom: 20 }}>
+                <div style={{ fontSize: 9, fontWeight: 800, color: GREEN, textTransform: "uppercase", letterSpacing: "0.2em", marginBottom: 6 }}>Agenda Topic</div>
+                <p style={{ margin: 0, fontSize: 12, color: "rgba(255,255,255,0.45)", lineHeight: 1.65 }}>{c.topic}</p>
+            </div>
+
+            {/* Divider */}
+            <div style={{ height: 1, background: "rgba(255,255,255,0.06)", marginBottom: 16 }} />
+
+            {/* Secretariat */}
+            <div style={{ marginBottom: 12 }}>
+                <div style={{ fontSize: 9, fontWeight: 800, color: "rgba(255,255,255,0.25)", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 10 }}>Secretariat</div>
+                <Avatar name={c.usg.name} role="USG" color={ORANGE} />
+            </div>
+
+            {/* Chairs */}
+            <div style={{ marginBottom: 20 }}>
+                <div style={{ fontSize: 9, fontWeight: 800, color: "rgba(255,255,255,0.25)", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 10 }}>Chairs</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    <Avatar name={c.mainChair.name} role="Main Chair" color={GREEN} />
+                    {c.coChairs.map((cc, i) => (
+                        <Avatar key={i} name={cc.name} role="Co-Chair" color="rgba(255,255,255,0.35)" />
+                    ))}
+                </div>
+            </div>
+
+            {/* Button */}
+            <button style={{
+                marginTop: "auto",
+                width: "100%", padding: "13px 0",
+                background: hovered ? GREEN : "rgba(34,197,94,0.1)",
+                border: `1px solid ${GREEN}50`,
+                color: hovered ? "#000" : GREEN,
+                borderRadius: 10, fontSize: 11, fontWeight: 900,
+                letterSpacing: "0.15em", textTransform: "uppercase",
+                cursor: "pointer", transition: "all 0.2s",
+            }}>REGISTER →</button>
+        </div>
+    );
+}
+
+export function CommitteesPage() {
+    const [isMobile, setIsMobile] = useState(false);
+    const [menuOpen, setMenuOpen] = useState(false);
+    const [filter, setFilter] = useState("ALL");
+
+    useEffect(() => {
+        const check = () => setIsMobile(window.innerWidth < 768);
+        check();
+        window.addEventListener("resize", check);
+        return () => window.removeEventListener("resize", check);
+    }, []);
+
+    const levels = ["ALL", "Beginner", "Intermediate", "Advanced"];
+    const filtered = filter === "ALL" ? committees : committees.filter(c => c.level === filter);
+
+    return (
+        <div style={{
+            minHeight: "100vh", background: "#080808",
+            fontFamily: "'Inter','Helvetica Neue',sans-serif",
+            color: "#fff", position: "relative", overflowX: "hidden",
+        }}>
+            {/* Green glow */}
+            <div style={{
+                position: "fixed", top: -200, left: -200,
+                width: 900, height: 900, borderRadius: "50%",
+                background: "radial-gradient(ellipse, rgba(34,197,94,0.22) 0%, rgba(22,163,74,0.10) 35%, transparent 68%)",
+                pointerEvents: "none", zIndex: 0,
+            }} />
+
+            {/* Nav */}
+            <nav style={{
+                position: "fixed", top: 0, left: 0, right: 0, zIndex: 50,
+                background: "rgba(8,8,8,0.90)", backdropFilter: "blur(12px)",
+                borderBottom: "1px solid rgba(255,255,255,0.05)",
+                padding: isMobile ? "0 20px" : "0 40px",
+                display: "flex", alignItems: "center", justifyContent: "space-between", height: 60,
+            }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ width: 32, height: 32, borderRadius: "50%", border: "1.5px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800 }}>T</div>
+                    <span style={{ fontWeight: 800, fontSize: 14, letterSpacing: "0.1em" }}>TT MUN</span>
+                </div>
+                {!isMobile && (
+                    <div style={{ display: "flex", gap: 24 }}>
+                        {["HOME", "ABOUT", "COMMITTEES", "TEAM", "SCHEDULE", "REGISTER NOW", "SPONSORS", "CONTACT"].map(item => (
+                            <span key={item} style={{
+                                fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", cursor: "pointer",
+                                color: item === "COMMITTEES" ? ORANGE : "rgba(255,255,255,0.5)",
+                                borderBottom: item === "COMMITTEES" ? `2px solid ${ORANGE}` : "2px solid transparent",
+                                paddingBottom: 2, whiteSpace: "nowrap",
+                            }}>{item}</span>
+                        ))}
+                    </div>
+                )}
+                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                    {!isMobile && <button style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", padding: "5px 14px", borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: "pointer" }}>RU</button>}
+                    <button style={{ background: ORANGE, border: "none", color: "#fff", padding: "8px 14px", borderRadius: 7, fontSize: 11, fontWeight: 800, cursor: "pointer", whiteSpace: "nowrap" }}>REGISTER NOW</button>
+                    {isMobile && <button onClick={() => setMenuOpen(o => !o)} style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.12)", color: "#fff", borderRadius: 6, padding: "6px 10px", fontSize: 16, cursor: "pointer" }}>☰</button>}
+                </div>
+            </nav>
+            {isMobile && menuOpen && (
+                <div style={{ position: "fixed", top: 60, left: 0, right: 0, zIndex: 49, background: "rgba(10,10,10,0.97)", borderBottom: "1px solid rgba(255,255,255,0.08)", padding: "16px 20px", display: "flex", flexDirection: "column", gap: 14 }}>
+                    {["HOME", "ABOUT", "COMMITTEES", "TEAM", "SCHEDULE", "REGISTER NOW", "SPONSORS", "CONTACT"].map(item => (
+                        <span key={item} onClick={() => setMenuOpen(false)} style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", color: item === "COMMITTEES" ? ORANGE : "rgba(255,255,255,0.6)", cursor: "pointer" }}>{item}</span>
+                    ))}
+                </div>
+            )}
+
+            <main style={{
+                position: "relative", zIndex: 1,
+                paddingTop: isMobile ? 80 : 96, paddingBottom: 100,
+                paddingLeft: isMobile ? 16 : "clamp(32px, 5vw, 80px)",
+                paddingRight: isMobile ? 16 : "clamp(32px, 5vw, 80px)",
+                maxWidth: 1280, margin: "0 auto",
+            }}>
+
+                {/* Header */}
+                <div style={{ marginBottom: 36 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+                        <div style={{ width: 24, height: 2, background: GREEN, borderRadius: 2 }} />
+                        <span style={{ color: GREEN, fontSize: 10, fontWeight: 800, letterSpacing: "0.3em", textTransform: "uppercase" }}>TT MUN 2026</span>
+                    </div>
+                    <h1 style={{
+                        margin: 0, fontWeight: 900, textTransform: "uppercase", letterSpacing: "-0.02em",
+                        fontSize: isMobile ? "clamp(32px,10vw,48px)" : "clamp(40px,5vw,62px)",
+                        color: "#fff", lineHeight: 1.05,
+                    }}>
+                        <span style={{ color: GREEN }}>COMMITTEES</span>
+                    </h1>
+                    <p style={{ margin: "12px 0 0", fontSize: 14, color: "rgba(255,255,255,0.35)" }}>
+                        {committees.length} committees · Debate, diplomacy, and decision-making.
+                    </p>
+                </div>
+
+                {/* Level filter */}
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 40 }}>
+                    {levels.map(lvl => {
+                        const active = filter === lvl;
+                        const c = lvl === "ALL" ? GREEN : (levelColor[lvl] || GREEN);
+                        return (
+                            <button key={lvl} onClick={() => setFilter(lvl)} style={{
+                                background: active ? `${c}20` : "rgba(255,255,255,0.04)",
+                                border: `1px solid ${active ? c + "55" : "rgba(255,255,255,0.1)"}`,
+                                color: active ? c : "rgba(255,255,255,0.5)",
+                                padding: "7px 16px", borderRadius: 999,
+                                fontSize: 10, fontWeight: 800, letterSpacing: "0.1em",
+                                textTransform: "uppercase", cursor: "pointer",
+                                display: "flex", alignItems: "center", gap: 6,
+                                transition: "all 0.15s",
+                            }}>
+                                {lvl !== "ALL" && <span style={{ width: 6, height: 6, borderRadius: "50%", background: c, display: "inline-block" }} />}
+                                {lvl}
+                            </button>
+                        );
+                    })}
+                </div>
+
+                {/* Grid */}
+                <div style={{
+                    display: "grid",
+                    gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(320px, 1fr))",
+                    gap: 20,
+                }}>
+                    {filtered.map((c, i) => <CommitteeCard key={i} c={c} />)}
+                </div>
+
+            </main>
+        </div>
+    );
+}
