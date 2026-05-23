@@ -20,10 +20,10 @@ export const translations = {
     ctaSub: "Registration is open for Yashil Qo'llar MUN 2026. Secure your spot at one of Central Asia's most exciting Model UN conferences.",
     btnContact: "Contact Us",
     homeCommittees: [
-      { code: "UNSC", name: "UN Security Council", topic: "Addressing the escalation of tensions in the South China Sea" },
-      { code: "UNGA", name: "UN General Assembly", topic: "Reforming the global financial architecture for sustainable development" },
-      { code: "WHO", name: "World Health Organization", topic: "Pandemic preparedness and equitable access to vaccines" },
-      { code: "ECOSOC", name: "Economic & Social Council", topic: "Digital economy and bridging the technological divide" },
+      { code: "UNGA", name: "General Assembly", topic: "Mitigating the impact of plastic pollution on global marine ecosystems." },
+      { code: "ECOSOC", name: "Economic and Social Council", topic: "Developing sustainable economic models for renewable energy transition." },
+      { code: "UNSC", name: "Security Council", topic: "Security threats posed by climate-induced water scarcity." },
+      { code: "WHO", name: "World Health Organization", topic: "Combating the spread of diseases due to rising global temperatures." },
     ],
     // ABOUT
     aboutTag: "About the Conference",

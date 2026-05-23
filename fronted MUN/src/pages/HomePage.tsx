@@ -260,12 +260,12 @@ export const HomePage = () => {
             {/* Список слов из твоего дизайна */}
             {[
               "Public Speaking", "Diplomacy", "Critical Thinking",
-              "International Experience", "Expert Guidance", "250+ Delegates",
-              "15+ Countries", "8 Committees", "Networking", "Leadership Skills"
+              "International Experience", "Expert Guidance", "150+ Delegates",
+              "100+ Countries", " 7 Committees", "Networking", "Leadership Skills"
             ].concat([
               "Public Speaking", "Diplomacy", "Critical Thinking",
               "International Experience", "Expert Guidance", "250+ Delegates",
-              "15+ Countries", "8 Committees", "Networking", "Leadership Skills"
+              "100+  Countries", "8 Committees", "Networking", "Leadership Skills"
             ]).map((text, idx) => (
               <div key={idx} className="yq-ticker-item">
                 <div className="yq-ticker-dot" />
@@ -288,7 +288,7 @@ export const HomePage = () => {
                 CHOOSE YOUR <span style={{ color: "#10b981" }}>ARENA</span>
               </h2>
               <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "1.1rem", marginTop: "10px" }}>
-                8 committees spanning history, politics, science and human rights
+                7 committees spanning history, politics, science and human rights
               </p>
             </div>
 
@@ -345,12 +345,12 @@ export const HomePage = () => {
             {/* Список слов из твоего дизайна */}
             {[
               "Public Speaking", "Diplomacy", "Critical Thinking",
-              "International Experience", "Expert Guidance", "250+ Delegates",
-              "15+ Countries", "8 Committees", "Networking", "Leadership Skills"
+              "International Experience", "Expert Guidance", "150+ Delegates",
+              "100+ Countries", "7 Committees", "Networking", "Leadership Skills"
             ].concat([
               "Public Speaking", "Diplomacy", "Critical Thinking",
-              "International Experience", "Expert Guidance", "250+ Delegates",
-              "15+ Countries", "8 Committees", "Networking", "Leadership Skills"
+              "International Experience", "Expert Guidance", "150+ Delegates",
+              "100+ Countries", "7 Committees", "Networking", "Leadership Skills"
             ]).map((text, idx) => (
               <div key={idx} className="yq-ticker-item">
                 <div className="yq-ticker-dot" />
