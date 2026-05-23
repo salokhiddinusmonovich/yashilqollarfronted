@@ -5,7 +5,7 @@ export const FooterContact = () => {
                 Contact
             </span>
             <a
-                href="mailto://tashkenttechmun@gmail.com"
+                href="mailto://yashilqollar@gmail.com"
                 className="items-start box-border caret-transparent text-neutral-600 gap-x-[10.4px] flex text-[12.8px] leading-[19.2px] min-h-[auto] min-w-[auto] outline-[3px] gap-y-[10.4px] no-underline hover:text-white/80 hover:border-white/80"
             >
                 <span className="items-center bg-white/0 box-border caret-transparent text-neutral-700 flex shrink-0 h-7 justify-center min-h-[auto] min-w-7 outline-[3px] no-underline w-7 border mt-px rounded-[7px] border-solid border-white/10">
@@ -16,7 +16,7 @@ export const FooterContact = () => {
                     />
                 </span>
                 <span className="box-border caret-transparent block min-h-[auto] min-w-[auto] outline-[3px] no-underline">
-                    tashkenttechmun@gmail.com
+                    yashilqollar@gmail.com
                 </span>
             </a>
             <a
@@ -35,7 +35,7 @@ export const FooterContact = () => {
                 </span>
             </a>
             <a
-                href="https://t.me/tashkent_tech_mun"
+                href="https://t.me/yqmun"
                 className="items-start box-border caret-transparent text-neutral-600 gap-x-[10.4px] flex text-[12.8px] leading-[19.2px] min-h-[auto] min-w-[auto] outline-[3px] gap-y-[10.4px] no-underline hover:text-white/80 hover:border-white/80"
             >
                 <span className="items-center bg-white/0 box-border caret-transparent text-neutral-700 flex shrink-0 h-7 justify-center min-h-[auto] min-w-7 outline-[3px] no-underline w-7 border mt-px rounded-[7px] border-solid border-white/10">
@@ -46,7 +46,7 @@ export const FooterContact = () => {
                     />
                 </span>
                 <span className="box-border caret-transparent block min-h-[auto] min-w-[auto] outline-[3px] no-underline">
-                    @tashkent_tech_mun
+                    @yqmun
                 </span>
             </a>
             <div className="items-start box-border caret-transparent text-neutral-600 gap-x-[10.4px] flex text-[12.8px] leading-[19.2px] min-h-[auto] min-w-[auto] outline-[3px] gap-y-[10.4px] no-underline">

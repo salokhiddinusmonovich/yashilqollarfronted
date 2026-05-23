@@ -14,7 +14,7 @@ export const SocialLinks = () => {
                     />
                 </a>
                 <a
-                    href="https://t.me/tashkent_tech_mun"
+                    href="https://t.me/yqmun"
                     className="items-center box-border caret-transparent text-white/40 flex min-h-[auto] min-w-[auto] outline-[3px] no-underline p-1 hover:text-emerald-500 hover:border-emerald-500"
                 >
                     <img
