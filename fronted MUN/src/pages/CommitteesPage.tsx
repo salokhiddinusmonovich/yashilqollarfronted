@@ -12,6 +12,8 @@ const committees = [
         topic: "Mitigating the impact of plastic pollution on global marine ecosystems.",
         level: "Beginner",
         type: "Solo / Double",
+        countries: 45,
+        capacity: 80, // Самый большой зал
         usg: { name: "TBD" },
         mainChair: { name: "TBD" },
         coChairs: [{ name: "TBD" }, { name: "TBD" }]
@@ -22,6 +24,8 @@ const committees = [
         topic: "Developing sustainable economic models for renewable energy transition.",
         level: "Intermediate",
         type: "Solo / Double",
+        countries: 25,
+        capacity: 30,
         usg: { name: "TBD" },
         mainChair: { name: "TBD" },
         coChairs: [{ name: "TBD" }]
@@ -32,6 +36,8 @@ const committees = [
         topic: "Security threats posed by climate-induced water scarcity.",
         level: "Advanced",
         type: "Solo",
+        countries: 15, // Строго 15 по правилам ООН
+        capacity: 15,
         usg: { name: "TBD" },
         mainChair: { name: "TBD" },
         coChairs: [{ name: "TBD" }]
@@ -42,6 +48,8 @@ const committees = [
         topic: "Combating the spread of diseases due to rising global temperatures.",
         level: "Intermediate",
         type: "Solo",
+        countries: 15,
+        capacity: 15,
         usg: { name: "TBD" },
         mainChair: { name: "TBD" },
         coChairs: [{ name: "TBD" }]
@@ -52,6 +60,8 @@ const committees = [
         topic: "Protecting children from the health impacts of climate change.",
         level: "Beginner",
         type: "Double",
+        countries: 10,
+        capacity: 20, // 10 стран по 2 человека
         usg: { name: "TBD" },
         mainChair: { name: "TBD" },
         coChairs: [{ name: "TBD" }]
@@ -62,6 +72,21 @@ const committees = [
         topic: "Global carbon taxes and green logistics incentives.",
         level: "Advanced",
         type: "Solo",
+        countries: 15,
+        capacity: 15,
+        usg: { name: "TBD" },
+        mainChair: { name: "TBD" },
+        coChairs: [{ name: "TBD" }]
+    },
+    {
+        // ВОТ ОН, ТОТ ЧТО ПОТЕРЯЛСЯ
+        code: "ECC",
+        name: "Ecological Council",
+        topic: "Restoration strategies for the Aral Sea region and biodiversity protection.",
+        level: "Intermediate",
+        type: "Solo",
+        countries: 20,
+        capacity: 20,
         usg: { name: "TBD" },
         mainChair: { name: "TBD" },
         coChairs: [{ name: "TBD" }]
