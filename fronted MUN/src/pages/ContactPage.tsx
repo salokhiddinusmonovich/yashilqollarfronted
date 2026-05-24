@@ -5,7 +5,7 @@ const ORANGE = "#F97316";
 
 const contacts = [
   {
-    label: "Email", value: "info@ttmun.uz", href: "mailto:info@ttmun.uz",
+    label: "Email", value: "yashilqollar@gmail.com", href: "mailto:yashilqollar@gmail.com",
     icon: <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
   },
   {
@@ -118,14 +118,16 @@ export function ContactPage() {
             </div>
             <div style={{ fontSize: 10, fontWeight: 800, color: "rgba(255,255,255,0.25)", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 16 }}>Location</div>
             <div style={{ background: "#111", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, padding: 20 }}>
-              <div style={{ width: "100%", height: 150, borderRadius: 10, marginBottom: 16, background: `linear-gradient(135deg, ${GREEN}10, rgba(255,255,255,0.02))`, border: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10 }}>
-                <svg width="36" height="36" fill="none" stroke={GREEN} strokeWidth="1.5" viewBox="0 0 24 24" opacity="0.6">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <span style={{ fontSize: 12, color: "rgba(255,255,255,0.25)", textAlign: "center", lineHeight: 1.6 }}>Tashkent University of Technology<br />Universitetskaya St. 2/1</span>
-              </div>
-              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.45)", lineHeight: 1.6 }}>📍 Universitetskaya St. 2/1, Almazar district, Tashkent, Uzbekistan</div>
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2996.9106699755757!2d69.2494268!3d41.3108069!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x38ae8b05774c5969%3A0xd6f6eef4c05c280!2sTashkent%20State%20University%20of%20Economics!5e0!3m2!1sen!2s!4v1779662828383!5m2!1sen!2s"
+                width="100%"
+                height="200"
+                style={{ border: 0, display: "block", borderRadius: 10, marginBottom: 16, filter: "invert(90%) hue-rotate(180deg) saturate(0.8)" }}
+                allowFullScreen=""
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.45)", lineHeight: 1.6 }}>📍 Islom Karimov street 49, Tashkent, Uzbekistan</div>
             </div>
           </div>
 

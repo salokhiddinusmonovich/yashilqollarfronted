@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const GOOGLE_FORM_URL = "https://forms.gle/your-link-here";
+const GOOGLE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScl1fYhbUqZg_9kX2Ghkob-oiEtYD2pNlwXwXnVwZ3EQjdDjg/viewform?usp=publish-editor";
 const GREEN = "#22C55E";
 const ORANGE = "#F97316";
 
@@ -139,6 +139,36 @@ export function RegistrationPage() {
                     </a>
                 </div>
                 <p style={{ marginTop: 24, fontSize: 11, color: "rgba(255,255,255,0.2)", letterSpacing: "0.05em" }}>FREE TO ATTEND · TASHKENT, UZBEKISTAN · MAY 31, 2026</p>
+
+                {/* Embedded Google Form */}
+                <div style={{
+                    width: "100%", maxWidth: 760, marginTop: 72,
+                    borderRadius: 20, overflow: "hidden",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    boxShadow: `0 0 80px ${GREEN}12`,
+                }}>
+                    <div style={{
+                        background: "#111", padding: "14px 22px",
+                        borderBottom: "1px solid rgba(255,255,255,0.07)",
+                        display: "flex", alignItems: "center", gap: 10,
+                    }}>
+                        <div style={{ width: 8, height: 8, borderRadius: "50%", background: GREEN }} />
+                        <span style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.4)", letterSpacing: "0.15em", textTransform: "uppercase" }}>
+                            Registration Form
+                        </span>
+                    </div>
+                    <iframe
+                        src="https://docs.google.com/forms/d/e/1FAIpQLScl1fYhbUqZg_9kX2Ghkob-oiEtYD2pNlwXwXnVwZ3EQjdDjg/viewform?usp=publish-editor"
+                        width="100%"
+                        height="920"
+                        frameBorder="0"
+                        marginHeight={0}
+                        marginWidth={0}
+                        style={{ display: "block", background: "#fff" }}
+                    >
+                        Loading…
+                    </iframe>
+                </div>
 
             </main>
         </div>
