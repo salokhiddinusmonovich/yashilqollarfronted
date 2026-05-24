@@ -31,7 +31,7 @@ export const FooterContact = () => {
                     />
                 </span>
                 <span className="box-border caret-transparent block min-h-[auto] min-w-[auto] outline-[3px] no-underline">
-                    @tashkent.tech.mun
+                    @yashilqollarmun
                 </span>
             </a>
             <a
