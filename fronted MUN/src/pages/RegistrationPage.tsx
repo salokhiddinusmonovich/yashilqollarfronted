@@ -110,7 +110,7 @@ export function RegistrationPage() {
                     <span style={{ color: GREEN }}>CONFERENCE</span>
                 </h1>
                 <p style={{ fontSize: isMobile ? 14 : 16, color: "rgba(255,255,255,0.35)", lineHeight: 1.7, maxWidth: 480, marginBottom: 72 }}>
-                    TT MUN 2026 — Tashkent, May 31. Register now and secure your seat among 250+ delegates from 15+ countries.
+                    Yashil Qo'llar MUN 2026 — Tashkent, July 21. Register now and secure your seat among 150+ delegates from 100+ countries.
                 </p>
 
                 {/* Steps */}
