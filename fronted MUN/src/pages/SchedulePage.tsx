@@ -155,7 +155,7 @@ export function SchedulePage() {
                     <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
                         <span style={{ fontSize: 12 }}>📍</span>
                         <span style={{ color: "#22C55E", fontSize: 11, fontWeight: 800, letterSpacing: "0.22em" }}>
-                            TASHKENT • MAY 31, 2026
+                            TASHKENT • July 21, 2026
                         </span>
                     </div>
                     <h1 style={{
@@ -177,7 +177,7 @@ export function SchedulePage() {
                         fontSize: 11, fontWeight: 800, letterSpacing: "0.1em",
                         cursor: "pointer", display: "flex", alignItems: "center", gap: 6,
                     }}>
-                        <span>+</span> MAY 31
+                        <span>+</span> July 21
                     </button>
 
                     {Object.entries(typeConfig).map(([key, cfg]) => (

@@ -16,7 +16,7 @@ const partnerSections = [
         desc: "Strategic partners powering Yashil Qo'llar MUN 2026.",
         partners: [
             { logoText: "✕", logoBg: "#fff", name: "STUDENTS", desc: "Official student partner organisation.", type: "MAIN PARTNER" },
-            { logoText: "TT", logoBg: "#fff", logoTextColor: ORANGE, name: "TASHKENT UNIVERSITY OF TECHNOLOGY", desc: "Host university and academic foundation.", type: "MAIN PARTNER" },
+            { logoText: "TT", logoBg: "#fff", logoTextColor: ORANGE, name: "Tashkent State University of Economics", desc: "Host university and academic foundation.", type: "MAIN PARTNER" },
         ],
     },
     {
