@@ -6,9 +6,9 @@ const GREEN_DIM = "#16A34A";
 const ORANGE = "#F97316";
 
 const stats = [
-    { value: "250+", label: "DELEGATES" },
-    { value: "15+", label: "COUNTRIES" },
-    { value: "8", label: "COMMITTEES" },
+    { value: "150+", label: "DELEGATES" },
+    { value: "100+", label: "COUNTRIES" },
+    { value: "7", label: "COMMITTEES" },
     { value: "1", label: "DAY OF DIPLOMACY" },
 ];
 
