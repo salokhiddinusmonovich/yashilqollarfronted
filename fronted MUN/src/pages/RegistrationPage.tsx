@@ -17,7 +17,7 @@ const steps = [
     },
     {
         num: "03", title: "PARTICIPATE",
-        desc: "Get ready for an elite diplomatic experience at TT MUN 2026.",
+        desc: "Get ready for an elite diplomatic experience at Yashil Qo'llar MUN 2026.",
         icon: <svg width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>,
     },
 ];

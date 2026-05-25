@@ -156,7 +156,7 @@ export function TeamPage() {
                         <span style={{ color: GREEN }}>THE </span><span style={{ color: "#fff" }}>TEAM</span>
                     </h1>
                     <p style={{ margin: "12px 0 0", fontSize: 14, color: "rgba(255,255,255,0.35)", lineHeight: 1.5 }}>
-                        The people behind TT MUN 2026 — dedicated to making it exceptional.
+                        The people behind Yashil Qo'llar MUN 2026 — dedicated to making it exceptional.
                     </p>
                 </div>
 

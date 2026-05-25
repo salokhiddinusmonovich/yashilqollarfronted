@@ -13,7 +13,7 @@ const stats = [
 const partnerSections = [
     {
         badge: "MAIN PARTNERS", badgeColor: GREEN,
-        desc: "Strategic partners powering TT MUN 2026.",
+        desc: "Strategic partners powering Yashil Qo'llar MUN 2026.",
         partners: [
             { logoText: "✕", logoBg: "#fff", name: "STUDENTS", desc: "Official student partner organisation.", type: "MAIN PARTNER" },
             { logoText: "TT", logoBg: "#fff", logoTextColor: ORANGE, name: "TASHKENT UNIVERSITY OF TECHNOLOGY", desc: "Host university and academic foundation.", type: "MAIN PARTNER" },
@@ -274,7 +274,7 @@ export function SponsorsPage() {
                             BECOME A PARTNER
                         </h2>
                         <p style={{ fontSize: isMobile ? 13 : 14, color: "rgba(255,255,255,0.4)", lineHeight: 1.75, marginBottom: 28, maxWidth: 420 }}>
-                            Partner with TT MUN 2026 and gain visibility among 250+ future leaders from 15+ countries. We offer flexible packages tailored to your goals.
+                            Partner with Yashil Qo'llar MUN 2026 and gain visibility among 150+ future leaders from 100+ countries. We offer flexible packages tailored to your goals.
                         </p>
                         <button style={{
                             background: GREEN, border: "none", color: "#000",

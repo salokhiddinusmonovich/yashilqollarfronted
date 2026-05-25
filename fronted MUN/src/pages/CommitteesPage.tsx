@@ -285,7 +285,7 @@ export function CommitteesPage() {
                 <div style={{ marginBottom: 36 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
                         <div style={{ width: 24, height: 2, background: GREEN, borderRadius: 2 }} />
-                        <span style={{ color: GREEN, fontSize: 10, fontWeight: 800, letterSpacing: "0.3em", textTransform: "uppercase" }}>TT MUN 2026</span>
+                        <span style={{ color: GREEN, fontSize: 10, fontWeight: 800, letterSpacing: "0.3em", textTransform: "uppercase" }}>Yashil Qo'llar MUN 2026</span>
                     </div>
                     <h1 style={{
                         margin: 0, fontWeight: 900, textTransform: "uppercase", letterSpacing: "-0.02em",
