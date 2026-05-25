@@ -58,7 +58,7 @@ export const FooterContact = () => {
                     />
                 </span>
                 <span className="box-border caret-transparent block min-h-[auto] min-w-[auto] outline-[3px] no-underline">
-                    Tashkent, Almazar district, Universitetskaya st., 2/1
+                    Islom Karimov street 49, Tashkent, Uzbekistan
                 </span>
             </div>
         </div>
