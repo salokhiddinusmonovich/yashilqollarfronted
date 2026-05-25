@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import logoImg from "./photo_2025-10-08_22-18-51.jpg";
 
 const GREEN = "#22C55E";
 const GREEN_DIM = "#16A34A";
@@ -170,22 +171,45 @@ export function AboutPage() {
                         <div style={{
                             background: "#111",
                             border: "1px solid rgba(255,255,255,0.07)",
-                            borderRadius: 16, padding: "40px 28px",
-                            display: "flex", alignItems: "center", justifyContent: "center",
+                            borderRadius: 16,
+                            padding: "40px 28px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
                             minHeight: 160,
-                            position: "relative", overflow: "hidden",
+                            position: "relative",
+                            overflow: "hidden",
                         }}>
+                            {/* Ambient Background Glow */}
                             <div style={{
-                                position: "absolute", inset: 0,
+                                position: "absolute",
+                                inset: 0,
                                 background: `radial-gradient(ellipse at 50% 50%, ${GREEN}0a 0%, transparent 70%)`,
                             }} />
+
+                            {/* Circular Logo Container */}
                             <div style={{
-                                width: 80, height: 80, borderRadius: "50%",
+                                width: 80,
+                                height: 80,
+                                borderRadius: "50%",
                                 border: `2px solid ${GREEN}40`,
-                                display: "flex", alignItems: "center", justifyContent: "center",
-                                fontSize: 13, fontWeight: 900, color: `${GREEN}80`,
-                                letterSpacing: "0.05em",
-                            }}>LOGO</div>
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                position: "relative",
+                                zIndex: 1,
+                                overflow: "hidden", // Keeps the image inside the circle
+                            }}>
+                                <img
+                                    src={logoImg}
+                                    alt="Logo"
+                                    style={{
+                                        width: "100%",
+                                        height: "100%",
+                                        objectFit: "cover", // Prevents stretching
+                                    }}
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
