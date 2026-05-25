@@ -84,7 +84,7 @@ export function AboutPage() {
             }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <div style={{ width: 32, height: 32, borderRadius: "50%", border: "1.5px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800 }}>T</div>
-                    <span style={{ fontWeight: 800, fontSize: 14, letterSpacing: "0.1em" }}>TT MUN</span>
+                    <span style={{ fontWeight: 800, fontSize: 14, letterSpacing: "0.1em" }}>Yashil Qo'llar MUN</span>
                 </div>
                 {!isMobile && (
                     <div style={{ display: "flex", gap: 24 }}>
@@ -145,7 +145,7 @@ export function AboutPage() {
                             <span style={{ color: "#fff" }}><br />ARE BORN.</span>
                         </h1>
                         <p style={{ fontSize: isMobile ? 15 : 17, color: "rgba(255,255,255,0.45)", lineHeight: 1.75, maxWidth: 480, marginBottom: 36 }}>
-                            TT MUN is a premier youth-led simulation of the United Nations — an elite platform for the next generation of global leaders, diplomats, and innovators tackling the most pressing challenges of our era.
+                            Yashil Qo'llar MUN is a premier youth-led simulation of the United Nations — an elite platform for the next generation of global leaders, diplomats, and innovators tackling the most pressing challenges of our era.
                         </p>
                         <a href="#" style={{
                             display: "inline-block",
@@ -245,7 +245,7 @@ export function AboutPage() {
                             READY TO <span style={{ color: GREEN }}>LEAD?</span>
                         </div>
                         <div style={{ fontSize: 14, color: "rgba(255,255,255,0.38)" }}>
-                            May 31, 2026 · Tashkent University of Technology
+                            July 21, 2026 · Tashkent State University of Economics
                         </div>
                     </div>
                     <button style={{
