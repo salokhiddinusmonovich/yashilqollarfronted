@@ -110,7 +110,7 @@ export function RegistrationPage() {
                     <span style={{ color: GREEN }}>CONFERENCE</span>
                 </h1>
                 <p style={{ fontSize: isMobile ? 14 : 16, color: "rgba(255,255,255,0.35)", lineHeight: 1.7, maxWidth: 480, marginBottom: 72 }}>
-                    Yashil Qo'llar MUN 2026 — Tashkent, July 21. Register now and secure your seat among 150+ delegates from 100+ countries.
+                    Yashil Qo'llar MUN 2026 — Tashkent, July 12. Register now and secure your seat among 150+ delegates from 100+ countries.
                 </p>
 
                 {/* Steps */}
@@ -138,7 +138,7 @@ export function RegistrationPage() {
                         OPEN REGISTRATION FORM →
                     </a>
                 </div>
-                <p style={{ marginTop: 24, fontSize: 11, color: "rgba(255,255,255,0.2)", letterSpacing: "0.05em" }}>FREE TO ATTEND · TASHKENT, UZBEKISTAN · July 21, 2026</p>
+                <p style={{ marginTop: 24, fontSize: 11, color: "rgba(255,255,255,0.2)", letterSpacing: "0.05em" }}>FREE TO ATTEND · TASHKENT, UZBEKISTAN · July 12, 2026</p>
 
                 {/* Embedded Google Form */}
                 <div style={{

@@ -8,7 +8,7 @@ export const translations = {
     navHome: "Home", navAbout: "About", navCommittees: "Committees", navTeam: "Team",
     navSchedule: "Schedule", navRegister: "Register Now", navSponsors: "Sponsors", navContact: "Contact",
     // HOMEPAGE
-    dateTag: "21 July 2026 · TASHKENT",
+    dateTag: "12 July 2026 · TASHKENT",
     heroLine1: "Yashil", heroLine2: "Qo'llar", heroLine3: "Model", heroLine4: "United", heroLine5: "Nations",
     heroSub: "Empowering the next generation of global leaders through diplomacy, technology, and sustainable solutions.",
     heroBadge: "· Registration Open",
@@ -83,7 +83,7 @@ export const translations = {
     fees: [
       { type: "Early Bird", deadline: "April 15, 2026", price: "$25", desc: "Full conference access, delegate kit, all meals, social events", badge: "Best Value", badgeColor: "bg-green-500/10 text-green-400 border-green-500/20" },
       { type: "Regular", deadline: "May 15, 2026", price: "$35", desc: "Full conference access, delegate kit, all meals, social events", badge: "", badgeColor: "" },
-      { type: "On-Site", deadline: "July 21, 2026", price: "$45", desc: "Full conference access (no kit guarantee, limited seats)", badge: "Limited", badgeColor: "bg-red-500/10 text-red-400 border-red-500/20" },
+      { type: "On-Site", deadline: "July 12, 2026", price: "$45", desc: "Full conference access (no kit guarantee, limited seats)", badge: "Limited", badgeColor: "bg-red-500/10 text-red-400 border-red-500/20" },
     ],
     regDeadline: "Deadline:",
     regFields: { firstName: "First Name", lastName: "Last Name", email: "Email Address", committee1: "1st Committee Preference", committee2: "2nd Committee Preference", experience: "MUN Experience", motivation: "Motivation Statement", motivationPlaceholder: "Why do you want to participate?", selectCommittee: "Select committee", selectExperience: "Select experience level", expNone: "No prior MUN experience", exp12: "1–2 conferences", exp35: "3–5 conferences", exp5: "5+ conferences", submit: "Submit Application" },

@@ -269,7 +269,7 @@ export function AboutPage() {
                             READY TO <span style={{ color: GREEN }}>LEAD?</span>
                         </div>
                         <div style={{ fontSize: 14, color: "rgba(255,255,255,0.38)" }}>
-                            July 21, 2026 · Tashkent State University of Economics
+                            July 12, 2026 · Tashkent State University of Economics
                         </div>
                     </div>
                     <button style={{
