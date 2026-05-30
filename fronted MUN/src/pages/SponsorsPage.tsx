@@ -11,29 +11,29 @@ const stats = [
 ];
 
 const partnerSections = [
-    {
-        badge: "MAIN PARTNERS", badgeColor: GREEN,
-        desc: "Strategic partners powering Yashil Qo'llar MUN 2026.",
-        partners: [
-            { logoText: "✕", logoBg: "#fff", name: "STUDENTS", desc: "Official student partner organisation.", type: "MAIN PARTNER" },
-            { logoText: "TT", logoBg: "#fff", logoTextColor: ORANGE, name: "Tashkent State University of Economics", desc: "Host university and academic foundation.", type: "MAIN PARTNER" },
-        ],
-    },
-    {
-        badge: "ACADEMIC PARTNERS", badgeColor: "#f59e0b",
-        desc: "Academic institutions supporting youth diplomacy.",
-        partners: [
-            { logoText: "🏛", logoBg: "#7b1a1a", name: "DATASHKENT", desc: "Education and digital training hub.", type: "ACADEMIC PARTNER" },
-        ],
-    },
-    {
-        badge: "INTERNATIONAL PARTNERS", badgeColor: "#60A5FA",
-        desc: "International organisations elevating youth diplomacy globally.",
-        partners: [
-            { logoText: "UNODC", logoBg: "#1a3a5c", logoTextColor: "#60b3e0", name: "UNODC", desc: "United Nations Office on Drugs and Crime.", type: "INTERNATIONAL PARTNER" },
-            { logoText: "🌐", logoBg: "#1a3a5c", name: "UNITED NATIONS", desc: "Global multilateral organisation.", type: "INTERNATIONAL PARTNER" },
-        ],
-    },
+    // {
+    //     badge: "MAIN PARTNERS", badgeColor: GREEN,
+    //     desc: "Strategic partners powering Yashil Qo'llar MUN 2026.",
+    //     partners: [
+    //         { logoText: "✕", logoBg: "#fff", name: "STUDENTS", desc: "Official student partner organisation.", type: "MAIN PARTNER" },
+    //         { logoText: "TT", logoBg: "#fff", logoTextColor: ORANGE, name: "Tashkent State University of Economics", desc: "Host university and academic foundation.", type: "MAIN PARTNER" },
+    //     ],
+    // },
+    // {
+    //     badge: "ACADEMIC PARTNERS", badgeColor: "#f59e0b",
+    //     desc: "Academic institutions supporting youth diplomacy.",
+    //     partners: [
+    //         { logoText: "🏛", logoBg: "#7b1a1a", name: "DATASHKENT", desc: "Education and digital training hub.", type: "ACADEMIC PARTNER" },
+    //     ],
+    // },
+    // {
+    //     badge: "INTERNATIONAL PARTNERS", badgeColor: "#60A5FA",
+    //     desc: "International organisations elevating youth diplomacy globally.",
+    //     partners: [
+    //         { logoText: "UNODC", logoBg: "#1a3a5c", logoTextColor: "#60b3e0", name: "UNODC", desc: "United Nations Office on Drugs and Crime.", type: "INTERNATIONAL PARTNER" },
+    //         { logoText: "🌐", logoBg: "#1a3a5c", name: "UNITED NATIONS", desc: "Global multilateral organisation.", type: "INTERNATIONAL PARTNER" },
+    //     ],
+    // },
 ];
 
 const benefits = [
@@ -156,7 +156,7 @@ export function SponsorsPage() {
             }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <div style={{ width: 32, height: 32, borderRadius: "50%", border: "1.5px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800 }}>T</div>
-                    <span style={{ fontWeight: 800, fontSize: 14, letterSpacing: "0.1em" }}>TT MUN</span>
+                    <span style={{ fontWeight: 800, fontSize: 14, letterSpacing: "0.1em" }}>Yashil Qo'llar MUN</span>
                 </div>
                 {!isMobile && (
                     <div style={{ display: "flex", gap: 24 }}>

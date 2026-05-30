@@ -33,7 +33,7 @@ export const translations = {
     aboutWhatTitle: "What is Model UN?",
     aboutP1: "Model United Nations (MUN) is an educational simulation where students role-play as delegates to the United Nations. Participants research real-world issues, represent countries, debate solutions, and draft resolutions in committee sessions that mirror actual UN meetings.",
     aboutP2: "MUN develops essential 21st-century skills: public speaking, negotiation, research, collaborative problem-solving, cross-cultural communication, and leadership.",
-    aboutP3: "Tashkent Tech MUN brings this globally proven educational model to Central Asia, making world-class diplomatic training accessible to students across the region.",
+    aboutP3: "TechTashkent  MUN brings this globally proven educational model to Central Asia, making world-class diplomatic training accessible to students across the region.",
     aboutSteps: [
       { step: "01", title: "Country Assignment", desc: "Each delegate is assigned a country to represent across committee sessions." },
       { step: "02", title: "Research & Preparation", desc: "Delegates research their country's position on the committee's agenda topics." },
@@ -83,7 +83,7 @@ export const translations = {
     fees: [
       { type: "Early Bird", deadline: "April 15, 2026", price: "$25", desc: "Full conference access, delegate kit, all meals, social events", badge: "Best Value", badgeColor: "bg-green-500/10 text-green-400 border-green-500/20" },
       { type: "Regular", deadline: "May 15, 2026", price: "$35", desc: "Full conference access, delegate kit, all meals, social events", badge: "", badgeColor: "" },
-      { type: "On-Site", deadline: "May 31, 2026", price: "$45", desc: "Full conference access (no kit guarantee, limited seats)", badge: "Limited", badgeColor: "bg-red-500/10 text-red-400 border-red-500/20" },
+      { type: "On-Site", deadline: "July 21, 2026", price: "$45", desc: "Full conference access (no kit guarantee, limited seats)", badge: "Limited", badgeColor: "bg-red-500/10 text-red-400 border-red-500/20" },
     ],
     regDeadline: "Deadline:",
     regFields: { firstName: "First Name", lastName: "Last Name", email: "Email Address", committee1: "1st Committee Preference", committee2: "2nd Committee Preference", experience: "MUN Experience", motivation: "Motivation Statement", motivationPlaceholder: "Why do you want to participate?", selectCommittee: "Select committee", selectExperience: "Select experience level", expNone: "No prior MUN experience", exp12: "1–2 conferences", exp35: "3–5 conferences", exp5: "5+ conferences", submit: "Submit Application" },

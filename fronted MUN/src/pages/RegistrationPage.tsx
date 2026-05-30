@@ -72,7 +72,7 @@ export function RegistrationPage() {
             <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 50, background: "rgba(8,8,8,0.90)", backdropFilter: "blur(12px)", borderBottom: "1px solid rgba(255,255,255,0.05)", padding: isMobile ? "0 20px" : "0 40px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 60 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <div style={{ width: 32, height: 32, borderRadius: "50%", border: "1.5px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800 }}>T</div>
-                    <span style={{ fontWeight: 800, fontSize: 14, letterSpacing: "0.1em" }}>TT MUN</span>
+                    <span style={{ fontWeight: 800, fontSize: 14, letterSpacing: "0.1em" }}>Yashil Qo'llar MUN</span>
                 </div>
                 {!isMobile && (
                     <div style={{ display: "flex", gap: 24 }}>
@@ -138,7 +138,7 @@ export function RegistrationPage() {
                         OPEN REGISTRATION FORM →
                     </a>
                 </div>
-                <p style={{ marginTop: 24, fontSize: 11, color: "rgba(255,255,255,0.2)", letterSpacing: "0.05em" }}>FREE TO ATTEND · TASHKENT, UZBEKISTAN · MAY 31, 2026</p>
+                <p style={{ marginTop: 24, fontSize: 11, color: "rgba(255,255,255,0.2)", letterSpacing: "0.05em" }}>FREE TO ATTEND · TASHKENT, UZBEKISTAN · July 21, 2026</p>
 
                 {/* Embedded Google Form */}
                 <div style={{

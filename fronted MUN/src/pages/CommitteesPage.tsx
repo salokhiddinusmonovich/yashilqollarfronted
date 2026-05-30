@@ -245,7 +245,7 @@ export function CommitteesPage() {
             }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <div style={{ width: 32, height: 32, borderRadius: "50%", border: "1.5px solid rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800 }}>T</div>
-                    <span style={{ fontWeight: 800, fontSize: 14, letterSpacing: "0.1em" }}>TT MUN</span>
+                    <span style={{ fontWeight: 800, fontSize: 14, letterSpacing: "0.1em" }}>Yashil Qo'llar MUN</span>
                 </div>
                 {!isMobile && (
                     <div style={{ display: "flex", gap: 24 }}>

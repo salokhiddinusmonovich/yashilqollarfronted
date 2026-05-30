@@ -75,7 +75,7 @@ export function SchedulePage() {
                         display: "flex", alignItems: "center", justifyContent: "center",
                         fontSize: 13, fontWeight: 800,
                     }}>T</div>
-                    <span style={{ fontWeight: 800, fontSize: 14, letterSpacing: "0.1em" }}>TT MUN</span>
+                    <span style={{ fontWeight: 800, fontSize: 14, letterSpacing: "0.1em" }}>Yashil Qo'llar MUN</span>
                 </div>
 
                 {/* Desktop nav links */}
