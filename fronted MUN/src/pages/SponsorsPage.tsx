@@ -1,4 +1,10 @@
 import { useState, useEffect } from "react";
+import betrader from "/sponsors/btr.png";
+import tdiu from "/sponsors/tdiu.png";
+import tosh_eco_bosh_bosh from "/sponsors/tosh_sh_eco_bosh_bosh.png";
+
+
+
 
 const GREEN = "#22C55E";
 const ORANGE = "#F97316";
@@ -11,15 +17,16 @@ const stats = [
 ];
 
 const partnerSections = [
-    // {
-    //     badge: "MAIN PARTNERS", badgeColor: GREEN,
-    //     desc: "Strategic partners powering Yashil Qo'llar MUN 2026.",
-    //     partners: [
-    //         { logoText: "✕", logoBg: "#fff", name: "STUDENTS", desc: "Official student partner organisation.", type: "MAIN PARTNER" },
-    //         { logoText: "TT", logoBg: "#fff", logoTextColor: ORANGE, name: "Tashkent State University of Economics", desc: "Host university and academic foundation.", type: "MAIN PARTNER" },
-    //     ],
-    // },
-    // {
+    {
+        badge: "MAIN PARTNERS", badgeColor: GREEN,
+        desc: "Strategic partners powering Yashil Qo'llar MUN 2026.",
+        partners: [
+            { logoText: betrader, logoBg: "#060924", name: "Be Trader", desc: "Grand sponsor empowering youth development and financial literacy through educational initiatives.", type: "MAIN PARTNER" },
+            { logoText: tdiu, logoBg: "#fff", logoTextColor: ORANGE, name: "Tashkent State University of Economics", desc: "Host university and academic foundation.", type: "MAIN PARTNER" },
+            { logoText: tosh_eco_bosh_bosh, logoBg: "#060924", name: "Toshkent shahar Ekologiya va iqlim o'zgarishi bosh boshqarmasi", desc: "Official ecological partner supporting environmental sustainability and green initiatives across the capital.", type: "MAIN PARTNER" },
+        ],
+    },
+    // {x
     //     badge: "ACADEMIC PARTNERS", badgeColor: "#f59e0b",
     //     desc: "Academic institutions supporting youth diplomacy.",
     //     partners: [
@@ -44,9 +51,9 @@ const benefits = [
     "Speaking opportunity",
 ];
 
-// isMobile passed as prop — reactive, no stale closure
 function PartnerCard({ partner, accentColor, isMobile }) {
     const [hovered, setHovered] = useState(false);
+
     return (
         <div
             onMouseEnter={() => setHovered(true)}
@@ -58,7 +65,6 @@ function PartnerCard({ partner, accentColor, isMobile }) {
                 padding: isMobile ? 16 : 24,
                 transition: "border-color 0.2s, transform 0.2s",
                 transform: hovered ? "translateY(-3px)" : "translateY(0)",
-                // On mobile: fill ~half row. On desktop: fixed 300px.
                 flex: isMobile ? "1 1 calc(50% - 10px)" : "0 0 300px",
                 minWidth: isMobile ? "calc(50% - 10px)" : 300,
                 maxWidth: isMobile ? "calc(50% - 10px)" : 300,
@@ -77,18 +83,40 @@ function PartnerCard({ partner, accentColor, isMobile }) {
             <div style={{
                 width: "100%",
                 height: isMobile ? 120 : 200,
+                // У каждого партнера теперь свой фон. Если не задан — по дефолту белый.
                 background: partner.logoBg || "#fff",
-                borderRadius: 14, marginBottom: isMobile ? 14 : 20,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: isMobile
-                    ? (partner.logoText?.length > 4 ? 16 : partner.logoText?.length > 2 ? 22 : 32)
-                    : (partner.logoText?.length > 4 ? 24 : partner.logoText?.length > 2 ? 36 : 52),
-                fontWeight: 900,
-                color: partner.logoTextColor || "#000",
+                borderRadius: 14,
+                marginBottom: isMobile ? 14 : 20,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
                 overflow: "hidden",
+                boxSizing: "border-box",
+                // Отступ настраивается индивидуально через данные (например, 8 для BTR, 0 для остальных)
+                padding: partner.logoPadding !== undefined ? partner.logoPadding : 0,
             }}>
-                {/* To use a real logo: <img src="/logos/partner.png" style={{width:"70%",objectFit:"contain"}} /> */}
-                {partner.logoText}
+                {typeof partner.logoText === "string" && (partner.logoText.endsWith('.png') || partner.logoText.endsWith('.jpg') || partner.logoText.endsWith('.svg')) ? (
+                    <img
+                        src={partner.logoText}
+                        alt={partner.name}
+                        style={{
+                            width: "100%",
+                            height: "100%",
+                            // Способ подгонки ('contain' или 'cover') берется из конфига партнера
+                            objectFit: partner.logoFit || "contain"
+                        }}
+                    />
+                ) : (
+                    <span style={{
+                        fontSize: isMobile
+                            ? (partner.logoText?.length > 4 ? 16 : partner.logoText?.length > 2 ? 22 : 32)
+                            : (partner.logoText?.length > 4 ? 24 : partner.logoText?.length > 2 ? 36 : 52),
+                        fontWeight: 900,
+                        color: partner.logoTextColor || "#000"
+                    }}>
+                        {partner.logoText}
+                    </span>
+                )}
             </div>
 
             {/* Name */}
