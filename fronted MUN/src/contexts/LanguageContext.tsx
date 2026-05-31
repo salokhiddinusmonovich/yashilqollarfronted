@@ -95,7 +95,7 @@ export const translations = {
     faq: [
       { q: "Who can attend Yashil Qo'llar MUN 2026?", a: "Yashil Qo'llar MUN is open to high school and university students from all countries. No prior MUN experience is required for most committees." },
       { q: "What language are committee sessions held in?", a: "All official committee sessions and communications are conducted in English." },
-      { q: "Is accommodation provided?", a: "We can recommend partner hotels near the venue. Details are sent to registered delegates upon confirmation." },
+      // { q: "Is accommodation provided?", a: "We can recommend partner hotels near the venue. Details are sent to registered delegates upon confirmation." },
       { q: "When will I receive committee and country assignments?", a: "Assignments are sent by email approximately 3–4 weeks before the conference begins." },
       { q: "Can I attend as a delegation (school group)?", a: "Yes! We welcome school and university delegations. Please contact us for group registration discounts." },
     ],
