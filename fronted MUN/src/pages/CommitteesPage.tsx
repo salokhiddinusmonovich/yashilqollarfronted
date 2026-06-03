@@ -6,91 +6,91 @@ const ORANGE = "#F97316";
 const levelColor = { Beginner: "#4ADE80", Intermediate: "#FACC15", Advanced: "#F97316" };
 
 const committees = [
-    {
-        code: "UNGA",
-        name: "General Assembly",
-        topic: "Mitigating the impact of plastic pollution on global marine ecosystems.",
-        level: "Beginner",
-        type: "Solo / Double",
-        countries: 45,
-        capacity: 80, // Самый большой зал
-        usg: { name: "TBD" },
-        mainChair: { name: "TBD" },
-        coChairs: [{ name: "TBD" }, { name: "TBD" }]
-    },
-    {
-        code: "ECOSOC",
-        name: "Economic and Social Council",
-        topic: "Developing sustainable economic models for renewable energy transition.",
-        level: "Intermediate",
-        type: "Solo / Double",
-        countries: 25,
-        capacity: 30,
-        usg: { name: "TBD" },
-        mainChair: { name: "TBD" },
-        coChairs: [{ name: "TBD" }]
-    },
-    {
-        code: "UNSC",
-        name: "Security Council",
-        topic: "Security threats posed by climate-induced water scarcity.",
-        level: "Advanced",
-        type: "Solo",
-        countries: 15, // Строго 15 по правилам ООН
-        capacity: 15,
-        usg: { name: "TBD" },
-        mainChair: { name: "TBD" },
-        coChairs: [{ name: "TBD" }]
-    },
-    {
-        code: "WHO",
-        name: "World Health Organization",
-        topic: "Combating the spread of diseases due to rising global temperatures.",
-        level: "Intermediate",
-        type: "Solo",
-        countries: 15,
-        capacity: 15,
-        usg: { name: "TBD" },
-        mainChair: { name: "TBD" },
-        coChairs: [{ name: "TBD" }]
-    },
-    {
-        code: "UNICEF",
-        name: "UN Children's Fund",
-        topic: "Protecting children from the health impacts of climate change.",
-        level: "Beginner",
-        type: "Double",
-        countries: 10,
-        capacity: 20, // 10 стран по 2 человека
-        usg: { name: "TBD" },
-        mainChair: { name: "TBD" },
-        coChairs: [{ name: "TBD" }]
-    },
-    {
-        code: "WTO",
-        name: "World Trade Organization",
-        topic: "Global carbon taxes and green logistics incentives.",
-        level: "Advanced",
-        type: "Solo",
-        countries: 15,
-        capacity: 15,
-        usg: { name: "TBD" },
-        mainChair: { name: "TBD" },
-        coChairs: [{ name: "TBD" }]
-    },
-    {
-        // ВОТ ОН, ТОТ ЧТО ПОТЕРЯЛСЯ
-        code: "ECC",
-        name: "Ecological Council",
-        topic: "Restoration strategies for the Aral Sea region and biodiversity protection.",
-        level: "Intermediate",
-        type: "Solo",
-        countries: 20,
-        capacity: 20,
-        usg: { name: "TBD" },
-        mainChair: { name: "TBD" },
-        coChairs: [{ name: "TBD" }]
-    }
+    // {
+    //     code: "UNGA",
+    //     name: "General Assembly",
+    //     topic: "Mitigating the impact of plastic pollution on global marine ecosystems.",
+    //     level: "Beginner",
+    //     type: "Solo / Double",
+    //     countries: 45,
+    //     capacity: 80, // Самый большой зал
+    //     usg: { name: "TBD" },
+    //     mainChair: { name: "TBD" },
+    //     coChairs: [{ name: "TBD" }, { name: "TBD" }]
+    // },
+    // {
+    //     code: "ECOSOC",
+    //     name: "Economic and Social Council",
+    //     topic: "Developing sustainable economic models for renewable energy transition.",
+    //     level: "Intermediate",
+    //     type: "Solo / Double",
+    //     countries: 25,
+    //     capacity: 30,
+    //     usg: { name: "TBD" },
+    //     mainChair: { name: "TBD" },
+    //     coChairs: [{ name: "TBD" }]
+    // },
+    // {
+    //     code: "UNSC",
+    //     name: "Security Council",
+    //     topic: "Security threats posed by climate-induced water scarcity.",
+    //     level: "Advanced",
+    //     type: "Solo",
+    //     countries: 15, // Строго 15 по правилам ООН
+    //     capacity: 15,
+    //     usg: { name: "TBD" },
+    //     mainChair: { name: "TBD" },
+    //     coChairs: [{ name: "TBD" }]
+    // },
+    // {
+    //     code: "WHO",
+    //     name: "World Health Organization",
+    //     topic: "Combating the spread of diseases due to rising global temperatures.",
+    //     level: "Intermediate",
+    //     type: "Solo",
+    //     countries: 15,
+    //     capacity: 15,
+    //     usg: { name: "TBD" },
+    //     mainChair: { name: "TBD" },
+    //     coChairs: [{ name: "TBD" }]
+    // },
+    // {
+    //     code: "UNICEF",
+    //     name: "UN Children's Fund",
+    //     topic: "Protecting children from the health impacts of climate change.",
+    //     level: "Beginner",
+    //     type: "Double",
+    //     countries: 10,
+    //     capacity: 20, // 10 стран по 2 человека
+    //     usg: { name: "TBD" },
+    //     mainChair: { name: "TBD" },
+    //     coChairs: [{ name: "TBD" }]
+    // },
+    // {
+    //     code: "WTO",
+    //     name: "World Trade Organization",
+    //     topic: "Global carbon taxes and green logistics incentives.",
+    //     level: "Advanced",
+    //     type: "Solo",
+    //     countries: 15,
+    //     capacity: 15,
+    //     usg: { name: "TBD" },
+    //     mainChair: { name: "TBD" },
+    //     coChairs: [{ name: "TBD" }]
+    // },
+    // {
+    //     // ВОТ ОН, ТОТ ЧТО ПОТЕРЯЛСЯ
+    //     code: "ECC",
+    //     name: "Ecological Council",
+    //     topic: "Restoration strategies for the Aral Sea region and biodiversity protection.",
+    //     level: "Intermediate",
+    //     type: "Solo",
+    //     countries: 20,
+    //     capacity: 20,
+    //     usg: { name: "TBD" },
+    //     mainChair: { name: "TBD" },
+    //     coChairs: [{ name: "TBD" }]
+    // }
 ];
 
 function Avatar({ name, role, color }) {

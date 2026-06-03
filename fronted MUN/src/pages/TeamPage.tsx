@@ -6,23 +6,23 @@ const ORANGE_DARK = "#c2520a";
 
 // photo: "/images/salokhiddin.png"
 const secretariat = [
-    { name: "Usmonov Salokhiddin", role: "MAIN SECRETARY GENERAL", badge: "SG" },
-    { name: "HASANOVA KAMILA", role: "SECRETARY GENERAL", badge: "SG" },
-    { name: "ATAKHANOVA MAFTUNA", role: "VICE SECRETARY GENERAL", badge: "SG" },
-    { name: "SUREYA ABI", role: "VICE SECRETARY GENERAL", badge: "SG" },
+    // { name: "Usmonov Salokhiddin", role: "MAIN SECRETARY GENERAL", badge: "SG" },
+    // { name: "HASANOVA KAMILA", role: "SECRETARY GENERAL", badge: "SG" },
+    // { name: "ATAKHANOVA MAFTUNA", role: "VICE SECRETARY GENERAL", badge: "SG" },
+    // { name: "SUREYA ABI", role: "VICE SECRETARY GENERAL", badge: "SG" },
 ];
 
 const committee = [
-    { name: "BEKHRUZ TADJIEV", role: "DIRECTOR GENERAL", badge: "OC" },
-    { name: "ANVAROV BEKHRUZ", role: "PROGRAMMER", badge: "OC" },
-    { name: "USMONOVA OYSHA", role: "CONFERENCE MANAGER", badge: "OC" },
-    { name: "NASRULLAEV NUSRATILLA", role: "FINANCE MANAGER", badge: "OC" },
-    { name: "TUYCHIEVA SALIMA", role: "HEAD OF MEDIA", badge: "OC" },
-    { name: "YULDASHEVA LOLA", role: "VICE HEAD OF MEDIA", badge: "OC" },
-    { name: "ISMOILOVA HADIJA", role: "HEAD OF VOLUNTEERS", badge: "OC" },
-    { name: "RASULEV TAIR", role: "VOLUNTEERS COORDINATOR", badge: "OC" },
-    { name: "NAZAROV JAVOHIR", role: "LEAD GRAPHIC DESIGNER", badge: "OC" },
-    { name: "EVGENY KOTOV", role: "UI DESIGNER", badge: "OC" },
+    // { name: "BEKHRUZ TADJIEV", role: "DIRECTOR GENERAL", badge: "OC" },
+    // { name: "ANVAROV BEKHRUZ", role: "PROGRAMMER", badge: "OC" },
+    // { name: "USMONOVA OYSHA", role: "CONFERENCE MANAGER", badge: "OC" },
+    // { name: "NASRULLAEV NUSRATILLA", role: "FINANCE MANAGER", badge: "OC" },
+    // { name: "TUYCHIEVA SALIMA", role: "HEAD OF MEDIA", badge: "OC" },
+    // { name: "YULDASHEVA LOLA", role: "VICE HEAD OF MEDIA", badge: "OC" },
+    // { name: "ISMOILOVA HADIJA", role: "HEAD OF VOLUNTEERS", badge: "OC" },
+    // { name: "RASULEV TAIR", role: "VOLUNTEERS COORDINATOR", badge: "OC" },
+    // { name: "NAZAROV JAVOHIR", role: "LEAD GRAPHIC DESIGNER", badge: "OC" },
+    // { name: "EVGENY KOTOV", role: "UI DESIGNER", badge: "OC" },
 ];
 
 function MemberCard({ name, role, badge, photo, large = false }) {
