@@ -19,8 +19,6 @@ interface TeamMember {
   focus: Focus;
 }
 
-const FOCUS_ORDER: Focus[] = ["founder", "digital", "media", "organization"];
-
 const UI: Record<string, Record<string, string>> = {
   en: {
     eyebrow: "The People Behind the Mission", title: "Our", titleGreen: "Team",
@@ -184,12 +182,7 @@ export function TeamPage() {
     return () => controller.abort();
   }, [lang, reloadKey]);
 
-  // Группировка по focus, порядок фиксирован через FOCUS_ORDER
-  const grouped: Record<Focus, TeamMember[]> = { founder: [], digital: [], media: [], organization: [] };
-  (members || []).forEach(m => {
-    if (grouped[m.focus]) grouped[m.focus].push(m);
-    else grouped.organization.push(m); // fallback на случай неизвестного focus
-  });
+  // Все участники в одну секцию, без группировки по focus
 
   return (
     <div style={{ minHeight: "100vh", background: "#060606", color: "#fff", fontFamily: "'Inter','Helvetica Neue',sans-serif", position: "relative", overflowX: "hidden" }}>
@@ -231,20 +224,28 @@ export function TeamPage() {
           </div>
         )}
 
-        {/* ГРУППЫ ПО FOCUS */}
-        {!loading && !error && (
-          FOCUS_ORDER.map((focusKey, gi) => {
-            const list = grouped[focusKey];
-            if (list.length === 0) return null;
-            return (
-              <div key={focusKey} style={{ marginBottom: 72 }}>
-                <FadeIn delay={gi * 40}><SectionLabel label={t[focusKey]} /></FadeIn>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))", gap: 20 }}>
-                  {list.map((m, i) => <MemberCard key={m.id} member={m} delay={i * 60} t={t} />)}
+        {/* ВСЯ КОМАНДА В ОДНУ СЕКЦИЮ, ГОРИЗОНТАЛЬНЫЙ СКРОЛЛ */}
+        {!loading && !error && members && members.length > 0 && (
+          <div style={{ marginBottom: 72 }}>
+            <FadeIn><SectionLabel label={t.founder} /></FadeIn>
+            <div
+              className="yq-team-row"
+              style={{
+                display: "flex",
+                gap: 20,
+                overflowX: "auto",
+                paddingBottom: 12,
+                scrollSnapType: "x proximity",
+                WebkitOverflowScrolling: "touch",
+              }}
+            >
+              {members.map((m, i) => (
+                <div key={m.id} style={{ flex: "0 0 220px", scrollSnapAlign: "start" }}>
+                  <MemberCard member={m} delay={i * 60} t={t} />
                 </div>
-              </div>
-            );
-          })
+              ))}
+            </div>
+          </div>
         )}
 
         {!loading && !error && (members || []).length === 0 && (
@@ -255,7 +256,13 @@ export function TeamPage() {
         )}
       </main>
 
-      <style>{`@keyframes yq-spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{`
+        @keyframes yq-spin { to { transform: rotate(360deg); } }
+        .yq-team-row::-webkit-scrollbar { height: 6px; }
+        .yq-team-row::-webkit-scrollbar-track { background: rgba(255,255,255,0.04); border-radius: 10px; }
+        .yq-team-row::-webkit-scrollbar-thumb { background: rgba(34,197,94,0.35); border-radius: 10px; }
+        .yq-team-row::-webkit-scrollbar-thumb:hover { background: rgba(34,197,94,0.55); }
+      `}</style>
     </div>
   );
 }
