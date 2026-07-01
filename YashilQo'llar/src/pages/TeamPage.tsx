@@ -84,7 +84,22 @@ function SectionLabel({ label }: { label: string }) {
 }
 
 function absUrl(path: string | null) {
-  return absMediaUrl(path);
+  let url = absMediaUrl(path);
+  if (!url) return url;
+
+  // Форсируем https: если бэкенд (через ngrok) вернул http://,
+  // браузер на HTTPS-странице (Vercel) тихо блокирует такую картинку
+  // как Mixed Content — без явной ошибки в консоли.
+  url = url.replace(/^http:\/\//, "https://");
+
+  // <img> не может отправлять кастомные заголовки (в отличие от fetch),
+  // поэтому обходим ngrok-заглушку "Visit Site" через query-параметр —
+  // это единственный способ, который сработает для тега <img>.
+  if (url.includes("ngrok-free.")) {
+    url += (url.includes("?") ? "&" : "?") + "ngrok-skip-browser-warning=true";
+  }
+
+  return url;
 }
 
 function MemberCard({ member, delay, t }: { member: TeamMember; delay: number; t: Record<string, string> }) {
@@ -224,25 +239,20 @@ export function TeamPage() {
           </div>
         )}
 
-        {/* ВСЯ КОМАНДА В ОДНУ СЕКЦИЮ, ГОРИЗОНТАЛЬНЫЙ СКРОЛЛ */}
+        {/* ВСЯ КОМАНДА В ОДНУ СЕКЦИЮ, СЕТКА 4 В РЯД, АДАПТИВНО */}
         {!loading && !error && members && members.length > 0 && (
           <div style={{ marginBottom: 72 }}>
             <FadeIn><SectionLabel label={t.founder} /></FadeIn>
             <div
-              className="yq-team-row"
+              className="yq-team-grid"
               style={{
-                display: "flex",
+                display: "grid",
+                gridTemplateColumns: "repeat(4, 1fr)",
                 gap: 20,
-                overflowX: "auto",
-                paddingBottom: 12,
-                scrollSnapType: "x proximity",
-                WebkitOverflowScrolling: "touch",
               }}
             >
               {members.map((m, i) => (
-                <div key={m.id} style={{ flex: "0 0 220px", scrollSnapAlign: "start" }}>
-                  <MemberCard member={m} delay={i * 60} t={t} />
-                </div>
+                <MemberCard key={m.id} member={m} delay={i * 60} t={t} />
               ))}
             </div>
           </div>
@@ -258,10 +268,17 @@ export function TeamPage() {
 
       <style>{`
         @keyframes yq-spin { to { transform: rotate(360deg); } }
-        .yq-team-row::-webkit-scrollbar { height: 6px; }
-        .yq-team-row::-webkit-scrollbar-track { background: rgba(255,255,255,0.04); border-radius: 10px; }
-        .yq-team-row::-webkit-scrollbar-thumb { background: rgba(34,197,94,0.35); border-radius: 10px; }
-        .yq-team-row::-webkit-scrollbar-thumb:hover { background: rgba(34,197,94,0.55); }
+
+        /* ── Адаптивная сетка команды ── */
+        @media (max-width: 980px) {
+          .yq-team-grid { grid-template-columns: repeat(3, 1fr) !important; }
+        }
+        @media (max-width: 720px) {
+          .yq-team-grid { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+        @media (max-width: 460px) {
+          .yq-team-grid { grid-template-columns: 1fr !important; }
+        }
       `}</style>
     </div>
   );
