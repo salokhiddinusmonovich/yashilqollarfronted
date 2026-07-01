@@ -1,120 +1,269 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { ENDPOINTS, baseHeaders } from "../config/api";
 
-export type UserRole = "Volunteer" | "Organizer" | "Researcher" | "Admin";
-
+/* ─────────────────────────────────────────
+   ТИПЫ — соответствуют ProfileSerializer
+───────────────────────────────────────── */
 export interface User {
-    id: string;
-    name: string;
-    username: string;
-    avatar: string;
-    role: UserRole;
-    region: string;
-    treesPlanted: number;
-    projectsJoined: number;
-    points: number;
-    joinedDate: string;
-    bio: string;
-    badges: string[];
+  tg_id: number;
+  fullname: string;
+  username: string | null;
+  photo: string | null;
+  region: string | null;
+  balance: number;
+  rank: string;
+  projects_count: number;
+  age: number | null;
+  email: string;
+  phone: string;
+  education_place: string | null;
+  experience: string | null;
+  role: string;
 }
 
-interface RegisterData {
-    name: string;
-    username: string;
-    email: string;
-    password: string;
-    region: string;
-    role: UserRole;
+export interface TelegramWidgetData {
+  id: number;
+  first_name: string;
+  last_name?: string;
+  username?: string;
+  photo_url?: string;
+  auth_date: number;
+  hash: string;
 }
 
 interface AuthContextType {
-    user: User | null;
-    login: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
-    register: (data: RegisterData) => Promise<{ ok: boolean; error?: string }>;
-    logout: () => void;
-    isLoggedIn: boolean;
+  user: User | null;
+  isLoggedIn: boolean;
+  isDevMode: boolean;
+  loading: boolean;
+  loginWithTelegram: (data: TelegramWidgetData) => Promise<{ ok: boolean; error?: string }>;
+  loginDev: () => void;
+  logout: () => Promise<void>;
+  updateProfile: (patch: Partial<User>) => Promise<{ ok: boolean; error?: string }>;
+  refetchProfile: () => Promise<void>;
 }
 
-const MOCK_USERS: (User & { email: string; password: string })[] = [
-    {
-        id: "u1", name: "Aziz Karimov", username: "aziz_k",
-        email: "aziz@yashilqollar.uz", password: "demo123",
-        avatar: "AK", role: "Organizer", region: "Toshkent",
-        treesPlanted: 3400, projectsJoined: 14, points: 8820,
-        joinedDate: "2022-03-15",
-        bio: "Founder of Yashil Qo'llar.",
-        badges: ["🌳 Pioneer", "🏆 Top Organizer", "🌍 5-Region"],
-    },
-    {
-        id: "u2", name: "Malika Yusupova", username: "malika_y",
-        email: "malika@yashilqollar.uz", password: "demo123",
-        avatar: "MY", role: "Researcher", region: "Samarqand",
-        treesPlanted: 1200, projectsJoined: 8, points: 4400,
-        joinedDate: "2023-01-10",
-        bio: "Reforestation scientist.",
-        badges: ["🔬 Researcher", "🌱 1000 Trees"],
-    },
-    {
-        id: "u3", name: "Jasur Toshmatov", username: "jasur_t",
-        email: "jasur@yashilqollar.uz", password: "demo123",
-        avatar: "JT", role: "Volunteer", region: "Namangan",
-        treesPlanted: 780, projectsJoined: 6, points: 2960,
-        joinedDate: "2023-06-22",
-        bio: "Community organizer from Namangan.",
-        badges: ["🤝 Community Lead", "🌱 500 Trees"],
-    },
-];
+const ACCESS_KEY = "yq_access_token";
+const REFRESH_KEY = "yq_refresh_token";
+const DEV_MODE_KEY = "yq_dev_mode";
+
+const DEV_MOCK_USER: User = {
+  tg_id: 999999999,
+  fullname: "Dev Tester",
+  username: "dev_tester",
+  photo: null,
+  region: "tashkent_s",
+  balance: 120,
+  rank: "🌱 Nihol (Росток)",
+  projects_count: 2,
+  age: 20,
+  email: "dev@example.com",
+  phone: "+998900000000",
+  education_place: "TDTU",
+  experience: "Dev mode test account",
+  role: "volunteer",
+};
 
 const AuthContext = createContext<AuthContextType>({
-    user: null,
-    login: async () => ({ ok: false }),
-    register: async () => ({ ok: false }),
-    logout: () => { },
-    isLoggedIn: false,
+  user: null,
+  isLoggedIn: false,
+  isDevMode: false,
+  loading: true,
+  loginWithTelegram: async () => ({ ok: false }),
+  loginDev: () => {},
+  logout: async () => {},
+  updateProfile: async () => ({ ok: false }),
+  refetchProfile: async () => {},
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-    const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [isDevMode, setIsDevMode] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-    const login = async (email: string, password: string) => {
-        // TODO: replace with → fetch("/api/auth/login", { method:"POST", body: JSON.stringify({email,password}) })
-        await new Promise(r => setTimeout(r, 600));
-        const found = MOCK_USERS.find(u => u.email === email && u.password === password);
-        if (!found) return { ok: false, error: "Invalid email or password." };
-        const { password: _p, email: _e, ...clean } = found;
-        setUser(clean);
-        return { ok: true };
-    };
+  // ─── Восстановление сессии при загрузке страницы ───
+  useEffect(() => {
+    const dev = localStorage.getItem(DEV_MODE_KEY);
+    if (dev === "1") {
+      setUser(DEV_MOCK_USER);
+      setIsDevMode(true);
+      setLoading(false);
+      return;
+    }
 
-    const register = async (data: RegisterData) => {
-        // TODO: replace with → fetch("/api/auth/register", { method:"POST", body: JSON.stringify(data) })
-        await new Promise(r => setTimeout(r, 800));
-        const exists = MOCK_USERS.find(u => u.email === data.email || u.username === data.username);
-        if (exists) return { ok: false, error: "Email or username already taken." };
-        const newUser: User = {
-            id: `u${Date.now()}`,
-            name: data.name,
-            username: data.username,
-            avatar: data.name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase(),
-            role: data.role,
-            region: data.region,
-            treesPlanted: 0,
-            projectsJoined: 0,
-            points: 0,
-            joinedDate: new Date().toISOString().split("T")[0],
-            bio: "",
-            badges: ["🌱 New Member"],
-        };
-        setUser(newUser);
-        return { ok: true };
-    };
+    const access = localStorage.getItem(ACCESS_KEY);
+    if (!access) {
+      setLoading(false);
+      return;
+    }
 
-    const logout = () => setUser(null);
+    fetchProfile().finally(() => setLoading(false));
+  }, []);
 
-    return (
-        <AuthContext.Provider value={{ user, login, register, logout, isLoggedIn: !!user }}>
-            {children}
-        </AuthContext.Provider>
-    );
+  // ─── GET /me/ с автообновлением токена при 401 ───
+  async function fetchProfile(retried = false): Promise<void> {
+    const access = localStorage.getItem(ACCESS_KEY);
+    if (!access) return;
+
+    const res = await fetch(ENDPOINTS.me, {
+      headers: baseHeaders("en", { Authorization: `Bearer ${access}` }),
+    });
+
+    if (res.status === 401 && !retried) {
+      const refreshed = await tryRefreshToken();
+      if (refreshed) {
+        return fetchProfile(true);
+      }
+      logoutLocal();
+      return;
+    }
+
+    if (!res.ok) {
+      logoutLocal();
+      return;
+    }
+
+    const data: User = await res.json();
+    setUser(data);
+  }
+
+  async function tryRefreshToken(): Promise<boolean> {
+    const refresh = localStorage.getItem(REFRESH_KEY);
+    if (!refresh) return false;
+
+    try {
+      const res = await fetch(ENDPOINTS.tokenRefresh, {
+        method: "POST",
+        headers: baseHeaders("en", { "Content-Type": "application/json" }),
+        body: JSON.stringify({ refresh }),
+      });
+      if (!res.ok) return false;
+      const data = await res.json();
+      if (!data.access) return false;
+      localStorage.setItem(ACCESS_KEY, data.access);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function logoutLocal() {
+    localStorage.removeItem(ACCESS_KEY);
+    localStorage.removeItem(REFRESH_KEY);
+    localStorage.removeItem(DEV_MODE_KEY);
+    setUser(null);
+    setIsDevMode(false);
+  }
+
+  // ─── Вход через настоящий Telegram Login Widget ───
+  const loginWithTelegram = async (data: TelegramWidgetData) => {
+    try {
+      const res = await fetch(ENDPOINTS.login, {
+        method: "POST",
+        headers: baseHeaders("en", { "Content-Type": "application/json" }),
+        body: JSON.stringify(data),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        return { ok: false, error: err.error || "Telegram login failed." };
+      }
+
+      const result = await res.json();
+      localStorage.setItem(ACCESS_KEY, result.access);
+      localStorage.setItem(REFRESH_KEY, result.refresh);
+      localStorage.removeItem(DEV_MODE_KEY);
+      setIsDevMode(false);
+      setUser(result.user);
+      return { ok: true };
+    } catch {
+      return { ok: false, error: "Network error. Check your connection." };
+    }
+  };
+
+  // ─── Dev-режим — временный вход без реального бэкенда ───
+  const loginDev = () => {
+    localStorage.setItem(DEV_MODE_KEY, "1");
+    localStorage.removeItem(ACCESS_KEY);
+    localStorage.removeItem(REFRESH_KEY);
+    setIsDevMode(true);
+    setUser(DEV_MOCK_USER);
+  };
+
+  const logout = async () => {
+    if (!isDevMode) {
+      const refresh = localStorage.getItem(REFRESH_KEY);
+      if (refresh) {
+        try {
+          await fetch(ENDPOINTS.logout, {
+            method: "POST",
+            headers: baseHeaders("en", { "Content-Type": "application/json" }),
+            body: JSON.stringify({ refresh }),
+          });
+        } catch {
+          /* даже если запрос не прошёл — всё равно чистим локально */
+        }
+      }
+    }
+    logoutLocal();
+  };
+
+  const updateProfile = async (patch: Partial<User>) => {
+    if (isDevMode) {
+      setUser(prev => (prev ? { ...prev, ...patch } : prev));
+      return { ok: true };
+    }
+
+    const access = localStorage.getItem(ACCESS_KEY);
+    if (!access) return { ok: false, error: "Not authenticated." };
+
+    try {
+      const res = await fetch(ENDPOINTS.me, {
+        method: "PATCH",
+        headers: baseHeaders("en", {
+          Authorization: `Bearer ${access}`,
+          "Content-Type": "application/json",
+        }),
+        body: JSON.stringify(patch),
+      });
+
+      if (res.status === 401) {
+        const refreshed = await tryRefreshToken();
+        if (refreshed) return updateProfile(patch);
+        logoutLocal();
+        return { ok: false, error: "Session expired, please log in again." };
+      }
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        return { ok: false, error: err.detail || "Failed to update profile." };
+      }
+
+      const data: User = await res.json();
+      setUser(data);
+      return { ok: true };
+    } catch {
+      return { ok: false, error: "Network error." };
+    }
+  };
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        isLoggedIn: !!user,
+        isDevMode,
+        loading,
+        loginWithTelegram,
+        loginDev,
+        logout,
+        updateProfile,
+        refetchProfile: () => fetchProfile(),
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export const useAuth = () => useContext(AuthContext);
