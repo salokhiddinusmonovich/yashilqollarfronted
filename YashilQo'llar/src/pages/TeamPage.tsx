@@ -1,27 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useLang } from "../contexts/LanguageContext";
+import { ENDPOINTS, baseHeaders, absMediaUrl } from "../config/api";
 
 const GREEN = "#22C55E";
-const API_BASE = "http://173.249.19.32:8000";
-
-/* ─────────────────────────────────────────
-   ВАЖНО: на бэке API.urls подключены с ПУСТЫМ
-   префиксом (path('', include('API.urls'))),
-   поэтому /api/ в путях НЕТ. Подтверждено:
-   curl http://173.249.19.32:8000/team/ → 200 OK
-
-   Актуальная схема путей (без /api/, без /auth/):
-     POST  /login/
-     POST  /logout/
-     POST  /token/refresh/
-     GET   /me/            (PATCH тоже)
-     GET   /team/
-     GET   /blog/
-     GET   /blog/<slug>/
-     POST  /blog/<slug>/comment/
-     POST  /blog/<slug>/like/
-     POST  /comment/<id>/like/
-───────────────────────────────────────── */
 
 /* ─────────────────────────────────────────
    ТИПЫ — соответствуют TeamMemberSerializer
@@ -105,9 +86,7 @@ function SectionLabel({ label }: { label: string }) {
 }
 
 function absUrl(path: string | null) {
-  if (!path) return null;
-  if (path.startsWith("http")) return path;
-  return `${API_BASE}${path.startsWith("/") ? "" : "/"}${path}`;
+  return absMediaUrl(path);
 }
 
 function MemberCard({ member, delay, t }: { member: TeamMember; delay: number; t: Record<string, string> }) {
@@ -188,8 +167,8 @@ export function TeamPage() {
     setLoading(true);
     setError(false);
 
-    fetch(`${API_BASE}/team/`, {
-      headers: { "Accept-Language": lang },
+    fetch(ENDPOINTS.team, {
+      headers: baseHeaders(lang),
       signal: controller.signal,
     })
       .then(res => {
