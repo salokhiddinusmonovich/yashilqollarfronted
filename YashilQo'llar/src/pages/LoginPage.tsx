@@ -4,14 +4,6 @@ import { useAuth, TelegramWidgetData } from "../contexts/AuthContext";
 
 const GREEN = "#22C55E";
 
-/* ─────────────────────────────────────────
-   ⚠️ ЗАМЕНИ на реальный username своего бота
-   (без @, то что стоит после t.me/)
-   И не забудь: в BotFather → /setdomain → указать
-   тот домен, с которого реально открывается сайт
-   (например yashilqollarfronted.vercel.app).
-   Telegram Login Widget НЕ работает на localhost.
-───────────────────────────────────────── */
 const BOT_USERNAME = "yashilqollarbot";
 
 declare global {
@@ -90,11 +82,8 @@ function TelegramLoginWidget({ onAuth, onError }: { onAuth: (data: TelegramWidge
 }
 
 export function LoginPage() {
-  const { loginWithTelegram, loginDev, isLoggedIn } = useAuth();
+  const { loginWithTelegram, isLoggedIn } = useAuth();
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"telegram" | "dev">(
-    BOT_USERNAME === "YOUR_BOT_USERNAME" ? "dev" : "telegram"
-  );
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -108,18 +97,12 @@ export function LoginPage() {
     else setError(res.error || "Telegram login failed.");
   };
 
-  const handleDevLogin = () => {
-    loginDev();
-    navigate("/");
-  };
-
   return (
     <div style={{ minHeight: "100vh", background: "#060606", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter',sans-serif", position: "relative", padding: "20px" }}>
       <ForestCanvas />
       <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, background: "radial-gradient(ellipse 80% 60% at 15% 20%, rgba(34,197,94,0.1) 0%, transparent 60%)" }} />
 
       <div style={{ position: "relative", zIndex: 5, width: "100%", maxWidth: 420 }}>
-        {/* Logo */}
         <div style={{ textAlign: "center", marginBottom: 32 }}>
           <Link to="/" style={{ textDecoration: "none" }}>
             <div style={{ display: "inline-flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
@@ -131,61 +114,13 @@ export function LoginPage() {
           <p style={{ margin: 0, fontSize: 14, color: "rgba(255,255,255,0.38)" }}>Sign in to your volunteer account</p>
         </div>
 
-        {/* Card */}
         <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(34,197,94,0.18)", borderRadius: 20, padding: "32px 28px", backdropFilter: "blur(16px)", position: "relative", overflow: "hidden" }}>
           <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg,transparent,${GREEN}60,transparent)` }} />
 
-          {/* Переключатель режимов */}
-          <div style={{ display: "flex", gap: 4, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 11, padding: 4, marginBottom: 24 }}>
-            {(["telegram", "dev"] as const).map(m => (
-              <button
-                key={m}
-                onClick={() => { setMode(m); setError(""); }}
-                style={{
-                  flex: 1, padding: "9px 0", borderRadius: 8, border: "none", cursor: "pointer",
-                  background: mode === m ? GREEN : "transparent",
-                  color: mode === m ? "#000" : "rgba(255,255,255,0.45)",
-                  fontSize: 12, fontWeight: 800, letterSpacing: ".06em",
-                  fontFamily: "'Montserrat',sans-serif", transition: "all .2s",
-                }}
-              >
-                {m === "telegram" ? "✈️ Telegram" : "🛠 Dev-режим"}
-              </button>
-            ))}
-          </div>
-
-          {mode === "telegram" ? (
-            <div>
-              <p style={{ margin: "0 0 20px", fontSize: 13, color: "rgba(255,255,255,0.4)", lineHeight: 1.6, textAlign: "center" }}>
-                Войдите через официальный Telegram Login. Ваш пароль и данные — под контролем самого Telegram.
-              </p>
-              <TelegramLoginWidget onAuth={handleTelegramAuth} onError={setError} />
-              {BOT_USERNAME === "YOUR_BOT_USERNAME" && (
-                <div style={{ marginTop: 16, background: "rgba(250,204,21,0.08)", border: "1px solid rgba(250,204,21,0.25)", borderRadius: 10, padding: "10px 14px", fontSize: 12, color: "#facc15", lineHeight: 1.6 }}>
-                  ⚠️ Бот ещё не настроен в коде (<code>BOT_USERNAME</code>) и виджет не заработает, пока сайт не будет на реальном домене, привязанном в BotFather через <code>/setdomain</code>.
-                </div>
-              )}
-            </div>
-          ) : (
-            <div>
-              <p style={{ margin: "0 0 20px", fontSize: 13, color: "rgba(255,255,255,0.4)", lineHeight: 1.6, textAlign: "center" }}>
-                Временный вход для разработки — без реального Telegram и без обращения к бэкенду. Данные тестовые, не сохраняются на сервере.
-              </p>
-              <button
-                onClick={handleDevLogin}
-                style={{
-                  width: "100%", padding: "14px",
-                  background: GREEN, border: "none", color: "#000",
-                  borderRadius: 11, fontSize: 13, fontWeight: 800,
-                  letterSpacing: ".1em", textTransform: "uppercase",
-                  cursor: "pointer", fontFamily: "'Montserrat',sans-serif",
-                  boxShadow: "0 0 24px rgba(34,197,94,0.25)",
-                }}
-              >
-                Войти как тестовый пользователь →
-              </button>
-            </div>
-          )}
+          <p style={{ margin: "0 0 20px", fontSize: 13, color: "rgba(255,255,255,0.4)", lineHeight: 1.6, textAlign: "center" }}>
+            Войдите через официальный Telegram Login. Ваш пароль и данные — под контролем самого Telegram.
+          </p>
+          <TelegramLoginWidget onAuth={handleTelegramAuth} onError={setError} />
 
           {error && (
             <div style={{ marginTop: 16, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: 9, padding: "10px 14px", fontSize: 13, color: "#f87171" }}>
