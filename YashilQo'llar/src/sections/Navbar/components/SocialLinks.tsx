@@ -1,6 +1,6 @@
 export const SocialLinks = () => {
     return (
-        <div className="items-center box-border caret-transparent gap-x-2 flex shrink-0 min-h-[auto] min-w-[auto] outline-[3px] gap-y-2 no-underline md:gap-x-3 md:gap-y-3">
+        <div className="hidden sm:flex items-center box-border caret-transparent gap-x-2 shrink-0 min-h-[auto] min-w-[auto] outline-[3px] gap-y-2 no-underline md:gap-x-3 md:gap-y-3">
             <div className="bg-white/10 box-border caret-transparent h-[15px] min-h-[auto] min-w-[auto] outline-[3px] no-underline w-px md:h-5"></div>
             <div className="items-center box-border caret-transparent gap-x-[3.2px] flex min-h-[auto] min-w-[auto] outline-[3px] gap-y-[3.2px] no-underline md:gap-x-[4.8px] md:gap-y-[4.8px]">
                 <a
