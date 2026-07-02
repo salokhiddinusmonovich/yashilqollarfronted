@@ -10,7 +10,8 @@ import { TeamPage } from "./pages/TeamPage";
 import { SponsorsPage } from "./pages/SponsorsPage";
 import { ContactPage } from "./pages/ContactPage";
 import { SchedulePage } from "./pages/SchedulePage";
-import { RegisterPage } from "./pages/RegisterPage";
+import { ProfilePage } from "./pages/ProfilePage";
+import { ProjectsPage } from "./pages/ProjectsPage";
 import { LoginPage } from "./pages/LoginPage";
 import { NotFoundPage } from "./sections/NotFoundPage/NotFoundPage";
 
@@ -28,8 +29,9 @@ export default function App() {
             <Route path="/sponsors" element={<SponsorsPage />} />
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/schedule" element={<SchedulePage />} />
-            <Route path="/register" element={<RegisterPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/projects" element={<ProjectsPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
           <Footer />

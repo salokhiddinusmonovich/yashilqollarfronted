@@ -123,11 +123,12 @@ export function ProfileDropdown() {
             {open && (
                 <div style={{
                     position: "absolute", top: "calc(100% + 12px)", right: 0,
-                    width: 300, background: "#0d0d0d",
+                    width: "min(300px, calc(100vw - 24px))", background: "#0d0d0d",
                     border: "1px solid rgba(34,197,94,0.2)",
                     borderRadius: 18, overflow: "hidden",
                     boxShadow: "0 24px 64px rgba(0,0,0,0.7), 0 0 0 1px rgba(34,197,94,0.04)",
                     animation: "dropIn .2s cubic-bezier(.16,1,.3,1)",
+                    maxWidth: "calc(100vw - 24px)",
                 }}>
                     <style>{`
             @keyframes dropIn { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:translateY(0)} }

@@ -409,7 +409,7 @@ export function HomePage() {
             </div>
 
             <div className="yq-btns" style={{ display: "flex", gap: "1rem", marginTop: "2.4rem", flexWrap: "wrap" }}>
-              <Link to="/register" className="yq-btn-primary">
+              <Link to="/login" className="yq-btn-primary">
                 Join Ecosystem
                 <svg width="14" height="12" viewBox="0 0 14 12" fill="none">
                   <path d="M1 6H13M13 6L8 1M13 6L8 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
