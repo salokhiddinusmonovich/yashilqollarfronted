@@ -26,7 +26,7 @@ const UI: Record<string, Record<string, string>> = {
     founder: "Founders", digital: "Digital", media: "Media", organization: "Organization",
     loading: "Loading team…", error: "Couldn't load the team. Please try again.", retry: "Retry",
     empty: "No team members in this group yet.",
-    skills: "Skills",
+    skills: "Info",
   },
   uz: {
     eyebrow: "Missiya ortidagi odamlar", title: "Bizning", titleGreen: "Jamoamiz",
@@ -34,7 +34,7 @@ const UI: Record<string, Record<string, string>> = {
     founder: "Asoschilar", digital: "Raqamli yo'nalish", media: "Media", organization: "Tashkiliy",
     loading: "Jamoa yuklanmoqda…", error: "Jamoani yuklab bo'lmadi. Qayta urinib ko'ring.", retry: "Qayta urinish",
     empty: "Bu guruhda hozircha azolar yo'q.",
-    skills: "Ko'nikmalar",
+    skills: "Info",
   },
   ru: {
     eyebrow: "Люди за миссией", title: "Наша", titleGreen: "Команда",
@@ -42,7 +42,7 @@ const UI: Record<string, Record<string, string>> = {
     founder: "Основатели", digital: "Digital", media: "Медиа", organization: "Организация",
     loading: "Загружаем команду…", error: "Не удалось загрузить команду. Попробуйте ещё раз.", retry: "Повторить",
     empty: "В этой группе пока нет участников.",
-    skills: "Навыки",
+    skills: "Инфо",
   },
 };
 
@@ -81,6 +81,31 @@ function SectionLabel({ label }: { label: string }) {
       <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg,${GREEN}40,transparent)` }} />
     </div>
   );
+}
+
+/** Разбивает поле skills на пункты списка. Бэкенд на разных языках
+ * отдаёт разные разделители: где-то "•", где-то " - " — пробуем оба. */
+function splitSkills(text: string): string[] {
+  let parts = text.split("•").map(s => s.trim()).filter(Boolean);
+  if (parts.length <= 1) {
+    parts = text.split(/\s-\s/).map(s => s.trim()).filter(Boolean);
+  }
+  return parts.length ? parts : [text.trim()];
+}
+
+/** Кастомный порядок карточек на странице команды (не по id из API).
+ * Ищем по подстроке в fullname (без учёта регистра). Кого нет в списке —
+ * уходят в конец, сохраняя свой относительный порядок. */
+const CUSTOM_ORDER = ["abdulboriy", "komronbek", "salokhiddin", "muhammad rizo", "anvarjon"];
+
+function sortByCustomOrder(members: TeamMember[]): TeamMember[] {
+  return [...members].sort((a, b) => {
+    const ia = CUSTOM_ORDER.findIndex(key => a.fullname.toLowerCase().includes(key));
+    const ib = CUSTOM_ORDER.findIndex(key => b.fullname.toLowerCase().includes(key));
+    const posA = ia === -1 ? CUSTOM_ORDER.length : ia;
+    const posB = ib === -1 ? CUSTOM_ORDER.length : ib;
+    return posA - posB;
+  });
 }
 
 function absUrl(path: string | null) {
@@ -144,16 +169,12 @@ function MemberCard({ member, delay, t }: { member: TeamMember; delay: number; t
             <div style={{ marginBottom: 12 }}>
               <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: ".14em", textTransform: "uppercase", color: "rgba(255,255,255,0.28)", marginBottom: 8 }}>{t.skills}</div>
               <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 6 }}>
-                {member.skills
-                  .split("•")
-                  .map(s => s.trim())
-                  .filter(Boolean)
-                  .map((line, i) => (
-                    <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 12.5, color: "rgba(255,255,255,0.5)", lineHeight: 1.55 }}>
-                      <span style={{ color: GREEN, fontSize: 13, lineHeight: 1.4, flexShrink: 0 }}>•</span>
-                      <span>{line}</span>
-                    </li>
-                  ))}
+                {splitSkills(member.skills).map((line, i) => (
+                  <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 12.5, color: "rgba(255,255,255,0.5)", lineHeight: 1.55 }}>
+                    <span style={{ color: GREEN, fontSize: 13, lineHeight: 1.4, flexShrink: 0 }}>•</span>
+                    <span>{line}</span>
+                  </li>
+                ))}
               </ul>
             </div>
           )}
@@ -262,7 +283,7 @@ export function TeamPage() {
                 gap: 20,
               }}
             >
-              {members.map((m, i) => (
+              {sortByCustomOrder(members).map((m, i) => (
                 <MemberCard key={m.id} member={m} delay={i * 60} t={t} />
               ))}
             </div>
