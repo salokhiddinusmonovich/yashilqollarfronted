@@ -30,11 +30,12 @@ function Avatar({ initials, photo, size = 34, color = GREEN }: { initials: strin
     return (
         <div style={{
             width: size, height: size, borderRadius: "50%",
-            background: `${color}1a`, border: `1.5px solid ${color}55`,
+            background: photoUrl ? "rgba(255,255,255,0.06)" : color,
+            border: `1.5px solid ${photoUrl ? color + "55" : "rgba(0,0,0,0.15)"}`,
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: size * 0.32, fontWeight: 800, color,
-            flexShrink: 0, fontFamily: "'Inter',sans-serif", letterSpacing: ".02em",
-            overflow: "hidden",
+            fontSize: size * 0.4, fontWeight: 800, color: "#04140a",
+            flexShrink: 0, fontFamily: "'Inter',sans-serif", letterSpacing: "0",
+            overflow: "hidden", lineHeight: 1,
         }}>
             {photoUrl
                 ? <img src={photoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
