@@ -70,10 +70,10 @@ const AuthContext = createContext<AuthContextType>({
   isDevMode: false,
   loading: true,
   loginWithTelegram: async () => ({ ok: false }),
-  loginDev: () => {},
-  logout: async () => {},
+  loginDev: () => { },
+  logout: async () => { },
   updateProfile: async () => ({ ok: false }),
-  refetchProfile: async () => {},
+  refetchProfile: async () => { },
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -105,26 +105,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const access = localStorage.getItem(ACCESS_KEY);
     if (!access) return;
 
-    const res = await fetch(ENDPOINTS.me, {
-      headers: baseHeaders("en", { Authorization: `Bearer ${access}` }),
-    });
+    try {
+      const res = await fetch(ENDPOINTS.me, {
+        headers: baseHeaders("en", { Authorization: `Bearer ${access}` }),
+      });
 
-    if (res.status === 401 && !retried) {
-      const refreshed = await tryRefreshToken();
-      if (refreshed) {
-        return fetchProfile(true);
+      if (res.status === 401 && !retried) {
+        const refreshed = await tryRefreshToken();
+        if (refreshed) {
+          return fetchProfile(true);
+        }
+        logoutLocal();
+        return;
       }
-      logoutLocal();
-      return;
-    }
 
-    if (!res.ok) {
-      logoutLocal();
-      return;
-    }
+      if (!res.ok) {
+        // Не разлогиниваем при 5xx/сетевых сбоях бэкенда — токен ещё может
+        // быть валиден, просто сервер/туннель сейчас недоступен.
+        console.warn("Failed to fetch profile, status:", res.status);
+        return;
+      }
 
-    const data: User = await res.json();
-    setUser(data);
+      const data: User = await res.json();
+      setUser(data);
+    } catch (err) {
+      // Сетевая ошибка (например, ngrok-туннель сейчас недоступен) —
+      // НЕ разлогиниваем, просто не смогли обновить профиль в этот раз.
+      // Токен в localStorage остаётся на месте, попробуем при следующей
+      // загрузке страницы или после ручного повторного захода.
+      console.warn("fetchProfile network error:", err);
+    }
   }
 
   async function tryRefreshToken(): Promise<boolean> {
