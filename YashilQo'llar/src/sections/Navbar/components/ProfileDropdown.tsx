@@ -1,16 +1,32 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../contexts/AuthContext";
+import { fixMediaUrl } from "../../../config/api";
 
 const GREEN = "#22C55E";
-const ROLE_COLOR: Record<string, string> = {
-    Organizer: "#f97316",
-    Researcher: "#38bdf8",
-    Volunteer: "#22c55e",
-    Admin: "#a78bfa",
-};
 
-function Avatar({ initials, size = 34, color = GREEN }: { initials: string; size?: number; color?: string }) {
+function initialsFrom(fullname: string): string {
+    return fullname
+        .split(" ")
+        .filter(Boolean)
+        .map(w => w[0])
+        .slice(0, 2)
+        .join("")
+        .toUpperCase();
+}
+
+function formatRole(role: string): string {
+    if (!role) return "";
+    return role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
+}
+
+function formatRegion(region: string | null): string | null {
+    if (!region) return null;
+    return region.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function Avatar({ initials, photo, size = 34, color = GREEN }: { initials: string; photo?: string | null; size?: number; color?: string }) {
+    const photoUrl = fixMediaUrl(photo || null);
     return (
         <div style={{
             width: size, height: size, borderRadius: "50%",
@@ -18,8 +34,11 @@ function Avatar({ initials, size = 34, color = GREEN }: { initials: string; size
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: size * 0.32, fontWeight: 800, color,
             flexShrink: 0, fontFamily: "'Inter',sans-serif", letterSpacing: ".02em",
+            overflow: "hidden",
         }}>
-            {initials}
+            {photoUrl
+                ? <img src={photoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                : initials}
         </div>
     );
 }
@@ -54,31 +73,22 @@ export function ProfileDropdown() {
 
     if (!isLoggedIn || !user) {
         return (
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <Link to="/login" style={{
-                    background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.7)",
-                    border: "1px solid rgba(255,255,255,0.12)",
-                    padding: "7px 16px", borderRadius: 8,
-                    fontSize: 11, fontWeight: 700, letterSpacing: ".1em",
-                    textDecoration: "none", fontFamily: "'Montserrat',sans-serif",
-                    transition: "all .2s",
-                }}>
-                    LOGIN
-                </Link>
-                <Link to="/register" style={{
-                    background: GREEN, color: "#000", border: "none",
-                    padding: "8px 16px", borderRadius: 8,
-                    fontSize: 11, fontWeight: 800, letterSpacing: ".08em",
-                    textDecoration: "none", fontFamily: "'Montserrat',sans-serif",
-                    boxShadow: "0 0 16px rgba(34,197,94,0.3)",
-                }}>
-                    JOIN →
-                </Link>
-            </div>
+            <Link to="/login" style={{
+                background: GREEN, color: "#000", border: "none",
+                padding: "8px 18px", borderRadius: 8,
+                fontSize: 11, fontWeight: 800, letterSpacing: ".08em",
+                textDecoration: "none", fontFamily: "'Montserrat',sans-serif",
+                boxShadow: "0 0 16px rgba(34,197,94,0.3)",
+            }}>
+                LOGIN →
+            </Link>
         );
     }
 
-    const rc = ROLE_COLOR[user.role] || GREEN;
+    const initials = initialsFrom(user.fullname || "?");
+    const roleLabel = formatRole(user.role);
+    const regionLabel = formatRegion(user.region);
+    const firstName = (user.fullname || "").split(" ")[0] || user.username || "User";
 
     return (
         <div ref={ref} style={{ position: "relative", zIndex: 100 }}>
@@ -91,14 +101,16 @@ export function ProfileDropdown() {
                 cursor: "pointer", transition: "all .2s",
                 boxShadow: open ? "0 0 20px rgba(34,197,94,0.12)" : "none",
             }}>
-                <Avatar initials={user.avatar} size={30} color={rc} />
+                <Avatar initials={initials} photo={user.photo} size={30} />
                 <div style={{ textAlign: "left" }}>
                     <div style={{ fontSize: 12, fontWeight: 700, color: "#fff", fontFamily: "'Inter',sans-serif", lineHeight: 1.2 }}>
-                        {user.name.split(" ")[0]}
+                        {firstName}
                     </div>
-                    <div style={{ fontSize: 9, color: rc, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase" }}>
-                        {user.role}
-                    </div>
+                    {roleLabel && (
+                        <div style={{ fontSize: 9, color: GREEN, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase" }}>
+                            {roleLabel}
+                        </div>
+                    )}
                 </div>
                 <svg width="10" height="6" viewBox="0 0 10 6" fill="none"
                     style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform .22s", marginLeft: 2, flexShrink: 0 }}>
@@ -122,67 +134,63 @@ export function ProfileDropdown() {
             .pd-link-danger:hover { background: rgba(239,68,68,0.08) !important; color: #f87171 !important; }
           `}</style>
 
-                    {/* Top green shimmer */}
                     <div style={{ height: 2, background: `linear-gradient(90deg,transparent,${GREEN}70,transparent)` }} />
 
                     {/* Header */}
                     <div style={{ padding: "20px 18px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
                         <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 14 }}>
-                            <Avatar initials={user.avatar} size={50} color={rc} />
+                            <Avatar initials={initials} photo={user.photo} size={50} />
                             <div style={{ flex: 1, minWidth: 0 }}>
                                 <div style={{ fontWeight: 700, fontSize: 15, color: "#fff", marginBottom: 2, fontFamily: "'Inter',sans-serif" }}>
-                                    {user.name}
+                                    {user.fullname}
                                 </div>
-                                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", marginBottom: 6 }}>@{user.username}</div>
-                                <div style={{ display: "flex", gap: 5 }}>
-                                    <span style={{
-                                        fontSize: 9, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase",
-                                        padding: "3px 8px", borderRadius: 5,
-                                        background: `${rc}15`, color: rc, border: `1px solid ${rc}30`,
-                                    }}>{user.role}</span>
-                                    <span style={{
-                                        fontSize: 9, fontWeight: 600, letterSpacing: ".06em",
-                                        padding: "3px 8px", borderRadius: 5,
-                                        background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.4)",
-                                        border: "1px solid rgba(255,255,255,0.08)",
-                                    }}>📍 {user.region}</span>
+                                {user.username && (
+                                    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", marginBottom: 6 }}>@{user.username}</div>
+                                )}
+                                <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+                                    {roleLabel && (
+                                        <span style={{
+                                            fontSize: 9, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase",
+                                            padding: "3px 8px", borderRadius: 5,
+                                            background: `${GREEN}15`, color: GREEN, border: `1px solid ${GREEN}30`,
+                                        }}>{roleLabel}</span>
+                                    )}
+                                    {regionLabel && (
+                                        <span style={{
+                                            fontSize: 9, fontWeight: 600, letterSpacing: ".06em",
+                                            padding: "3px 8px", borderRadius: 5,
+                                            background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.4)",
+                                            border: "1px solid rgba(255,255,255,0.08)",
+                                        }}>📍 {regionLabel}</span>
+                                    )}
                                 </div>
                             </div>
                         </div>
 
                         {/* Stats */}
                         <div style={{ display: "flex", gap: 6 }}>
-                            <StatBox icon="🌳" val={user.treesPlanted} lbl="Trees" />
-                            <StatBox icon="📋" val={user.projectsJoined} lbl="Projects" />
-                            <StatBox icon="⭐" val={user.points.toLocaleString()} lbl="Points" />
+                            <StatBox icon="⭐" val={user.balance} lbl="Points" />
+                            <StatBox icon="📋" val={user.projects_count} lbl="Projects" />
                         </div>
-                    </div>
 
-                    {/* Badges */}
-                    {user.badges.length > 0 && (
-                        <div style={{ padding: "12px 18px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                            <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: ".16em", color: "rgba(255,255,255,0.22)", marginBottom: 8 }}>
-                                BADGES
+                        {/* Rank */}
+                        {user.rank && (
+                            <div style={{
+                                marginTop: 10, textAlign: "center", fontSize: 12, fontWeight: 600,
+                                color: "rgba(255,255,255,0.55)", padding: "7px 0",
+                                background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.15)",
+                                borderRadius: 8,
+                            }}>
+                                {user.rank}
                             </div>
-                            <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-                                {user.badges.map((b, i) => (
-                                    <span key={i} style={{
-                                        fontSize: 11, padding: "3px 9px", borderRadius: 20,
-                                        background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)",
-                                        color: "rgba(255,255,255,0.55)",
-                                    }}>{b}</span>
-                                ))}
-                            </div>
-                        </div>
-                    )}
+                        )}
+                    </div>
 
                     {/* Nav */}
                     <div style={{ padding: "8px" }}>
                         {[
                             { icon: "👤", label: "My Profile", to: "/profile" },
                             { icon: "📋", label: "My Projects", to: "/projects" },
-                            { icon: "🏆", label: "Leaderboard", to: "/leaderboard" },
-                            { icon: "⚙️", label: "Settings", to: "/settings" },
                         ].map(item => (
                             <Link key={item.to} to={item.to} onClick={() => setOpen(false)}
                                 className="pd-link"

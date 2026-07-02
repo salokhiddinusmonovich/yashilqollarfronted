@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useLang } from "../contexts/LanguageContext";
-import { ENDPOINTS, baseHeaders, absMediaUrl } from "../config/api";
+import { ENDPOINTS, baseHeaders, fixMediaUrl } from "../config/api";
 
 const GREEN = "#22C55E";
 
@@ -26,7 +26,7 @@ const UI: Record<string, Record<string, string>> = {
     founder: "Founders", digital: "Digital", media: "Media", organization: "Organization",
     loading: "Loading team…", error: "Couldn't load the team. Please try again.", retry: "Retry",
     empty: "No team members in this group yet.",
-    skills: "Info",
+    skills: "Skills",
   },
   uz: {
     eyebrow: "Missiya ortidagi odamlar", title: "Bizning", titleGreen: "Jamoamiz",
@@ -34,7 +34,7 @@ const UI: Record<string, Record<string, string>> = {
     founder: "Asoschilar", digital: "Raqamli yo'nalish", media: "Media", organization: "Tashkiliy",
     loading: "Jamoa yuklanmoqda…", error: "Jamoani yuklab bo'lmadi. Qayta urinib ko'ring.", retry: "Qayta urinish",
     empty: "Bu guruhda hozircha azolar yo'q.",
-    skills: "Info",
+    skills: "Ko'nikmalar",
   },
   ru: {
     eyebrow: "Люди за миссией", title: "Наша", titleGreen: "Команда",
@@ -42,7 +42,7 @@ const UI: Record<string, Record<string, string>> = {
     founder: "Основатели", digital: "Digital", media: "Медиа", organization: "Организация",
     loading: "Загружаем команду…", error: "Не удалось загрузить команду. Попробуйте ещё раз.", retry: "Повторить",
     empty: "В этой группе пока нет участников.",
-    skills: "Инфо",
+    skills: "Навыки",
   },
 };
 
@@ -108,24 +108,7 @@ function sortByCustomOrder(members: TeamMember[]): TeamMember[] {
   });
 }
 
-function absUrl(path: string | null) {
-  let url = absMediaUrl(path);
-  if (!url) return url;
-
-  // Форсируем https: если бэкенд (через ngrok) вернул http://,
-  // браузер на HTTPS-странице (Vercel) тихо блокирует такую картинку
-  // как Mixed Content — без явной ошибки в консоли.
-  url = url.replace(/^http:\/\//, "https://");
-
-  // <img> не может отправлять кастомные заголовки (в отличие от fetch),
-  // поэтому обходим ngrok-заглушку "Visit Site" через query-параметр —
-  // это единственный способ, который сработает для тега <img>.
-  if (url.includes("ngrok-free.")) {
-    url += (url.includes("?") ? "&" : "?") + "ngrok-skip-browser-warning=true";
-  }
-
-  return url;
-}
+const absUrl = fixMediaUrl;
 
 function MemberCard({ member, delay, t }: { member: TeamMember; delay: number; t: Record<string, string> }) {
   const [hov, setHov] = useState(false);
