@@ -142,8 +142,19 @@ function MemberCard({ member, delay, t }: { member: TeamMember; delay: number; t
         <div style={{ padding: "14px 16px 18px" }}>
           {member.skills && (
             <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: ".14em", textTransform: "uppercase", color: "rgba(255,255,255,0.28)", marginBottom: 5 }}>{t.skills}</div>
-              <p style={{ margin: 0, fontSize: 12.5, color: "rgba(255,255,255,0.5)", lineHeight: 1.6 }}>{member.skills}</p>
+              <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: ".14em", textTransform: "uppercase", color: "rgba(255,255,255,0.28)", marginBottom: 8 }}>{t.skills}</div>
+              <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 6 }}>
+                {member.skills
+                  .split("•")
+                  .map(s => s.trim())
+                  .filter(Boolean)
+                  .map((line, i) => (
+                    <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 12.5, color: "rgba(255,255,255,0.5)", lineHeight: 1.55 }}>
+                      <span style={{ color: GREEN, fontSize: 13, lineHeight: 1.4, flexShrink: 0 }}>•</span>
+                      <span>{line}</span>
+                    </li>
+                  ))}
+              </ul>
             </div>
           )}
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>

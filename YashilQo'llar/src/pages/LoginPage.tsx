@@ -12,7 +12,7 @@ const GREEN = "#22C55E";
    (например yashilqollarfronted.vercel.app).
    Telegram Login Widget НЕ работает на localhost.
 ───────────────────────────────────────── */
-const BOT_USERNAME = "YOUR_BOT_USERNAME";
+const BOT_USERNAME = "yashilqollarbot";
 
 declare global {
   interface Window {
