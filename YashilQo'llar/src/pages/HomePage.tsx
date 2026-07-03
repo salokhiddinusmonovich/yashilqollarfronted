@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import logoImg from "./photo_2025-10-08_22-18-51.jpg";
-import { useLang } from "../contexts/LanguageContext";
 
 /* ─────────────────────────────────────────
    GLOBAL CSS
@@ -19,9 +18,12 @@ const GLOBAL_CSS = `
   --font-display: 'Anton', sans-serif;
   --font-sans: 'Inter', sans-serif;
   --font-mono: 'Montserrat', sans-serif;
+  --mx: 50%;
+  --my: 50%;
 }
 
-/* ── Core Animations ── */
+* { -webkit-tap-highlight-color: transparent; }
+
 @keyframes yq-fadeUp    { from { opacity:0; transform:translateY(32px); } to { opacity:1; transform:translateY(0); } }
 @keyframes yq-fadeIn    { from { opacity:0; } to { opacity:1; } }
 @keyframes yq-float     { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-14px)} }
@@ -33,7 +35,8 @@ const GLOBAL_CSS = `
 @keyframes yq-gradShift { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
 @keyframes yq-blink     { 0%,100%{opacity:.4;transform:scale(1)} 50%{opacity:1;transform:scale(1.35)} }
 @keyframes yq-scanline  { 0%{transform:translateY(-100%)} 100%{transform:translateY(100vh)} }
-@keyframes yq-pulseRing { 0%{transform:scale(.9);opacity:.5} 100%{transform:scale(2.2);opacity:0} }
+@keyframes yq-scrollDot { 0%,100%{transform:translateY(0);opacity:.9} 50%{transform:translateY(14px);opacity:.3} }
+@keyframes yq-letterUp  { from{opacity:0;transform:translateY(.7em) rotate(4deg)} to{opacity:1;transform:translateY(0) rotate(0)} }
 
 /* ── Typography ── */
 .hw {
@@ -53,11 +56,11 @@ const GLOBAL_CSS = `
   background-size: 300% 300%;
   animation: yq-gradShift 4s ease infinite;
 }
-.hw:nth-child(1) { animation: yq-fadeUp 1s cubic-bezier(.16,1,.3,1) .1s both; }
-.hw:nth-child(2) { animation: yq-fadeUp 1s cubic-bezier(.16,1,.3,1) .22s both; }
+.hw-letter { display: inline-block; will-change: transform, opacity; }
 
-.yq-sub { animation: yq-fadeUp .8s ease .4s both; }
-.yq-btns { animation: yq-fadeUp .8s ease .52s both; }
+.yq-eyebrow { animation: yq-fadeUp .7s ease 0s both; }
+.yq-sub { animation: yq-fadeUp .8s ease .55s both; }
+.yq-btns { animation: yq-fadeUp .8s ease .68s both; }
 
 /* ── Buttons ── */
 .yq-btn-primary {
@@ -68,10 +71,11 @@ const GLOBAL_CSS = `
   padding: 16px 34px; border-radius: 12px;
   display: inline-flex; align-items: center; gap: 10px;
   text-decoration: none; cursor: pointer;
-  transition: all .3s cubic-bezier(.16,1,.3,1);
-  box-shadow: 0 4px 24px rgba(34,197,94,0.2);
+  transition: box-shadow .3s cubic-bezier(.16,1,.3,1), filter .3s;
+  box-shadow: 0 4px 24px rgba(34,197,94,0.22);
+  position: relative;
 }
-.yq-btn-primary:hover { transform: translateY(-3px); box-shadow: 0 14px 36px rgba(34,197,94,.4); filter:brightness(1.06); }
+.yq-btn-primary:hover { box-shadow: 0 14px 40px rgba(34,197,94,.45); filter:brightness(1.08); }
 
 .yq-btn-ghost {
   background: rgba(255,255,255,0.025);
@@ -82,10 +86,10 @@ const GLOBAL_CSS = `
   padding: 16px 34px; border-radius: 12px;
   display: inline-flex; align-items: center; gap: 10px;
   text-decoration: none; cursor: pointer;
-  transition: all .3s cubic-bezier(.16,1,.3,1);
+  transition: border-color .3s, color .3s, background .3s;
   backdrop-filter: blur(12px);
 }
-.yq-btn-ghost:hover { border-color:rgba(34,197,94,.5); color:#fff; transform:translateY(-3px); background:rgba(34,197,94,.06); }
+.yq-btn-ghost:hover { border-color:rgba(34,197,94,.5); color:#fff; background:rgba(34,197,94,.06); }
 
 /* ── Hero layout ── */
 .yq-hero-container {
@@ -93,7 +97,7 @@ const GLOBAL_CSS = `
   background: var(--dark);
   padding-top: clamp(5rem,11vw,9rem);
   padding-bottom: 5rem;
-  min-height: 92vh;
+  min-height: 100vh;
   display: flex; align-items: center;
 }
 .yq-hero-grid {
@@ -114,7 +118,6 @@ const GLOBAL_CSS = `
 .yq-ring-b { position:absolute; width:145%; height:145%; border-radius:50%; border:1px dashed rgba(34,197,94,.09); animation:yq-spin-rev 34s linear infinite; }
 .yq-ring-c { position:absolute; width:170%; height:170%; border-radius:50%; border:1px solid rgba(34,197,94,.04); animation:yq-ringPulse 6s ease-in-out infinite; }
 
-/* Orbiting dot on ring-a */
 .yq-orbit-dot {
   position:absolute; width:8px; height:8px; border-radius:50%;
   background:#22c55e; box-shadow:0 0 12px #22c55e;
@@ -136,14 +139,13 @@ const GLOBAL_CSS = `
 .yq-metric-dashboard {
   display: grid; grid-template-columns: repeat(3,1fr);
   gap: 1.1rem; margin-top: 3.5rem; max-width: 580px;
-  animation: yq-fadeUp .8s ease .62s both;
 }
 .yq-metric-card {
   background: rgba(255,255,255,0.02);
   border: 1px solid rgba(255,255,255,0.05);
   border-radius: 16px; padding: 20px;
   display: flex; flex-direction: column;
-  transition: all .28s ease;
+  transition: border-color .28s, background .28s, transform .28s;
   backdrop-filter: blur(10px);
   position: relative; overflow: hidden;
 }
@@ -154,7 +156,7 @@ const GLOBAL_CSS = `
 }
 .yq-metric-card:hover { border-color:rgba(34,197,94,.28); background:rgba(34,197,94,.03); transform:translateY(-4px); }
 .yq-metric-card:hover::before { opacity:1; }
-.yq-metric-number { font-family:var(--font-display); font-size:clamp(1.6rem,3vw,2.4rem); color:#fff; line-height:1; margin-bottom:6px; }
+.yq-metric-number { font-family:var(--font-display); font-size:clamp(1.6rem,3vw,2.4rem); color:#fff; line-height:1; margin-bottom:6px; font-variant-numeric: tabular-nums; }
 .yq-metric-label  { font-family:var(--font-mono); font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:rgba(255,255,255,.35); }
 .yq-metric-dot    { width:6px; height:6px; border-radius:50%; background:#22c55e; box-shadow:0 0 8px #22c55e; margin-bottom:14px; animation:yq-blink 2.5s infinite; }
 
@@ -163,6 +165,44 @@ const GLOBAL_CSS = `
 .yq-ticker-track  { display:flex; width:max-content; animation:yq-ticker 38s linear infinite; }
 .yq-ticker-item   { display:flex; align-items:center; gap:10px; padding:0 40px; font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:rgba(255,255,255,.28); white-space:nowrap; }
 .yq-ticker-dot    { width:4px; height:4px; border-radius:50%; background:#22c55e; }
+
+/* ── Scroll indicator ── */
+.yq-scroll-indicator {
+  position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  z-index: 5; opacity: .5;
+}
+.yq-scroll-indicator span {
+  font-family: var(--font-mono); font-size: 9px; font-weight: 700;
+  letter-spacing: .2em; text-transform: uppercase; color: rgba(255,255,255,.4);
+}
+.yq-scroll-dot-wrap {
+  width: 20px; height: 32px; border: 1.5px solid rgba(255,255,255,.2); border-radius: 12px;
+  display: flex; justify-content: center; padding-top: 6px;
+}
+.yq-scroll-dot { width: 3px; height: 6px; border-radius: 2px; background: #22c55e; animation: yq-scrollDot 1.6s ease-in-out infinite; }
+
+/* ── Spotlight (follows cursor) ── */
+.yq-spotlight {
+  position: fixed; inset: 0; pointer-events: none; z-index: 1;
+  background: radial-gradient(600px circle at var(--mx) var(--my), rgba(34,197,94,0.08), transparent 45%);
+  transition: background .1s ease-out;
+}
+
+/* ── Section: manifesto ── */
+.yq-manifesto {
+  padding: clamp(5rem,10vw,8rem) clamp(1.5rem,5vw,5rem);
+  max-width: 1300px; margin: 0 auto; position: relative; z-index: 2;
+}
+.yq-manifesto-line {
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem,4.2vw,3.6rem);
+  line-height: 1.15; text-transform: uppercase; letter-spacing: -0.01em;
+  color: rgba(255,255,255,.14);
+  transition: color .5s ease;
+}
+.yq-manifesto-line.active { color: #fff; }
+.yq-manifesto-line .hl { color: var(--green); }
 
 /* ── Responsive ── */
 @media(max-width:1024px){
@@ -178,61 +218,38 @@ const GLOBAL_CSS = `
   .yq-logo-anim { width:55vw; max-width:220px; }
   .yq-ring-container { height:280px; min-height:280px; }
   .yq-metric-dashboard { grid-template-columns:1fr; max-width:300px; }
+  .yq-scroll-indicator { display: none; }
 }
 `;
 
 /* ─────────────────────────────────────────
-   PARTICLE + LEAF CANVAS  (same DNA as ContactPage)
+   PARTICLE + LEAF CANVAS
 ───────────────────────────────────────── */
 function ForestCanvas() {
-  const ref = useRef(null);
+  const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
-    const canvas = ref.current;
-    const ctx = canvas.getContext("2d");
-    let id, w, h;
-    const nodes = [], leaves = [], pulses = [];
+    const canvas = ref.current!;
+    const ctx = canvas.getContext("2d")!;
+    let id: number, w: number, h: number;
+    const nodes: any[] = [], leaves: any[] = [], pulses: any[] = [];
 
     const resize = () => { w = canvas.width = canvas.offsetWidth; h = canvas.height = canvas.offsetHeight; };
 
     const init = () => {
       resize();
       nodes.length = 0; leaves.length = 0; pulses.length = 0;
-
       for (let i = 0; i < 90; i++) {
-        nodes.push({
-          x: Math.random() * w, y: Math.random() * h,
-          vx: (Math.random() - .5) * .45, vy: (Math.random() - .5) * .45,
-          r: Math.random() * 2.2 + .6,
-          a: Math.random() * .65 + .2,
-          pulse: Math.random() * Math.PI * 2,
-          pulseSpeed: Math.random() * .028 + .01,
-        });
+        nodes.push({ x: Math.random() * w, y: Math.random() * h, vx: (Math.random() - .5) * .45, vy: (Math.random() - .5) * .45, r: Math.random() * 2.2 + .6, a: Math.random() * .65 + .2, pulse: Math.random() * Math.PI * 2, pulseSpeed: Math.random() * .028 + .01 });
       }
       for (let i = 0; i < 28; i++) {
-        leaves.push({
-          x: Math.random() * w, y: Math.random() * h + h,
-          vx: (Math.random() - .5) * .65,
-          vy: -(Math.random() * .85 + .28),
-          size: Math.random() * 12 + 6,
-          rot: Math.random() * Math.PI * 2,
-          vrot: (Math.random() - .5) * .022,
-          a: Math.random() * .38 + .13,
-          wobble: Math.random() * Math.PI * 2,
-          wobbleSpeed: Math.random() * .022 + .008,
-          hue: Math.random() * 30,
-        });
+        leaves.push({ x: Math.random() * w, y: Math.random() * h + h, vx: (Math.random() - .5) * .65, vy: -(Math.random() * .85 + .28), size: Math.random() * 12 + 6, rot: Math.random() * Math.PI * 2, vrot: (Math.random() - .5) * .022, a: Math.random() * .38 + .13, wobble: Math.random() * Math.PI * 2, wobbleSpeed: Math.random() * .022 + .008, hue: Math.random() * 30 });
       }
       for (let i = 0; i < 6; i++) {
-        pulses.push({
-          x: Math.random() * w, y: Math.random() * h,
-          r: 0, maxR: Math.random() * 200 + 80,
-          speed: Math.random() * .8 + .35,
-          delay: i * 40,
-        });
+        pulses.push({ x: Math.random() * w, y: Math.random() * h, r: 0, maxR: Math.random() * 200 + 80, speed: Math.random() * .8 + .35, delay: i * 40 });
       }
     };
 
-    const drawLeaf = (x, y, size, rot, alpha, hue) => {
+    const drawLeaf = (x: number, y: number, size: number, rot: number, alpha: number, hue: number) => {
       ctx.save();
       ctx.translate(x, y); ctx.rotate(rot);
       ctx.globalAlpha = alpha;
@@ -247,11 +264,6 @@ function ForestCanvas() {
       ctx.beginPath();
       ctx.moveTo(0, -size * .85); ctx.quadraticCurveTo(size * .08, 0, 0, size * .3);
       ctx.strokeStyle = "rgba(255,255,255,0.22)"; ctx.lineWidth = .85; ctx.stroke();
-      for (let v = -1; v <= 1; v += 2) {
-        ctx.beginPath();
-        ctx.moveTo(0, -size * .4); ctx.quadraticCurveTo(v * size * .38, -size * .1, v * size * .48, size * .0);
-        ctx.strokeStyle = "rgba(255,255,255,0.10)"; ctx.lineWidth = .45; ctx.stroke();
-      }
       ctx.restore(); ctx.globalAlpha = 1;
     };
 
@@ -259,7 +271,6 @@ function ForestCanvas() {
     const tick = () => {
       frame++;
       ctx.clearRect(0, 0, w, h);
-      // pulse rings
       for (const p of pulses) {
         if (frame < p.delay) continue;
         p.r += p.speed;
@@ -268,7 +279,6 @@ function ForestCanvas() {
         ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
         ctx.strokeStyle = `rgba(34,197,94,${.16 * fade})`; ctx.lineWidth = 1.5; ctx.stroke();
       }
-      // network
       for (let i = 0; i < nodes.length; i++) {
         for (let j = i + 1; j < nodes.length; j++) {
           const dx = nodes[i].x - nodes[j].x, dy = nodes[i].y - nodes[j].y;
@@ -279,7 +289,6 @@ function ForestCanvas() {
           }
         }
       }
-      // nodes
       for (const n of nodes) {
         n.pulse += n.pulseSpeed;
         n.x += n.vx; n.y += n.vy;
@@ -292,7 +301,6 @@ function ForestCanvas() {
         ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(34,197,94,${pa})`; ctx.fill();
       }
-      // leaves
       for (const l of leaves) {
         l.wobble += l.wobbleSpeed;
         l.x += l.vx + Math.sin(l.wobble) * .5;
@@ -309,20 +317,91 @@ function ForestCanvas() {
     return () => { cancelAnimationFrame(id); window.removeEventListener("resize", onResize); };
   }, []);
 
+  return <canvas ref={ref} style={{ position: "fixed", inset: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 0 }} />;
+}
+
+/* ─────────────────────────────────────────
+   NOISE TEXTURE OVERLAY — убирает "плоскость" фона
+───────────────────────────────────────── */
+function NoiseOverlay() {
   return (
-    <canvas ref={ref} style={{
-      position: "fixed", inset: 0, width: "100%", height: "100%",
-      pointerEvents: "none", zIndex: 0,
-    }} />
+    <svg style={{ position: "fixed", inset: 0, zIndex: 1, opacity: 0.03, pointerEvents: "none" }}>
+      <filter id="yqNoise"><feTurbulence baseFrequency="0.85" numOctaves={2} stitchTiles="stitch" /></filter>
+      <rect width="100%" height="100%" filter="url(#yqNoise)" />
+    </svg>
+  );
+}
+
+/* ─────────────────────────────────────────
+   SPOTLIGHT — фон "светится" под курсором
+───────────────────────────────────────── */
+function Spotlight() {
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      document.documentElement.style.setProperty("--mx", `${e.clientX}px`);
+      document.documentElement.style.setProperty("--my", `${e.clientY}px`);
+    };
+    window.addEventListener("mousemove", onMove);
+    return () => window.removeEventListener("mousemove", onMove);
+  }, []);
+  return <div className="yq-spotlight" />;
+}
+
+/* ─────────────────────────────────────────
+   SPLIT-TEXT REVEAL — буквы каскадом
+───────────────────────────────────────── */
+function SplitReveal({ text, baseDelay = 0 }: { text: string; baseDelay?: number }) {
+  return (
+    <>
+      {text.split("").map((ch, i) => (
+        <span
+          key={i}
+          className="hw-letter"
+          style={{ animation: `yq-letterUp .7s cubic-bezier(.16,1,.3,1) ${baseDelay + i * 0.028}s both` }}
+        >
+          {ch === " " ? "\u00A0" : ch}
+        </span>
+      ))}
+    </>
+  );
+}
+
+/* ─────────────────────────────────────────
+   MAGNETIC LINK — тянется к курсору
+───────────────────────────────────────── */
+function MagneticLink({ to, className, children }: { to: string; className?: string; children: React.ReactNode }) {
+  const ref = useRef<HTMLAnchorElement>(null);
+
+  const handleMove = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    const el = ref.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const x = e.clientX - rect.left - rect.width / 2;
+    const y = e.clientY - rect.top - rect.height / 2;
+    el.style.transform = `translate(${x * 0.22}px, ${y * 0.3}px)`;
+  };
+  const reset = () => { if (ref.current) ref.current.style.transform = "translate(0,0)"; };
+
+  return (
+    <Link
+      ref={ref}
+      to={to}
+      className={className}
+      onMouseMove={handleMove}
+      onMouseLeave={reset}
+      style={{ transition: "transform .18s cubic-bezier(.16,1,.3,1)" }}
+    >
+      {children}
+    </Link>
   );
 }
 
 /* ─────────────────────────────────────────
    ANIMATED COUNTER
 ───────────────────────────────────────── */
-function Counter({ target, suffix = "" }) {
+function Counter({ target }: { target: string }) {
   const [val, setVal] = useState(0);
-  const ref = useRef(null);
+  const ref = useRef<HTMLSpanElement>(null);
   useEffect(() => {
     const obs = new IntersectionObserver(([e]) => {
       if (!e.isIntersecting) return;
@@ -337,15 +416,66 @@ function Counter({ target, suffix = "" }) {
   const num = parseInt(target.replace(/\D/g, "")) || 0;
   const plus = target.includes("+") ? "+" : "";
   const pct = target.includes("%") ? "%" : "";
-  return <span ref={ref}>{val >= num ? target : val + plus + pct + suffix}</span>;
+  return <span ref={ref}>{val >= num ? target : val + plus + pct}</span>;
+}
+
+/* ─────────────────────────────────────────
+   SCROLL-DRIVEN REVEAL — реагирует на прогресс скролла,
+   не просто "появился/не появился"
+───────────────────────────────────────── */
+function ScrollReveal({ children, style = {} }: { children: React.ReactNode; style?: React.CSSProperties }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    let raf: number;
+    const update = () => {
+      const el = ref.current;
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        const vh = window.innerHeight;
+        const p = Math.max(0, Math.min(1, 1 - (rect.top - vh * 0.15) / (vh * 0.6)));
+        setProgress(p);
+      }
+      raf = requestAnimationFrame(update);
+    };
+    raf = requestAnimationFrame(update);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      style={{
+        opacity: progress,
+        transform: `translateY(${(1 - progress) * 36}px) scale(${0.96 + progress * 0.04})`,
+        willChange: "transform, opacity",
+        ...style,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────
+   MANIFESTO — построчный текст, подсвечивается по скроллу
+───────────────────────────────────────── */
+function ManifestoLine({ children }: { children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [active, setActive] = useState(false);
+  useEffect(() => {
+    const obs = new IntersectionObserver(([e]) => setActive(e.isIntersecting), { threshold: 0.6 });
+    if (ref.current) obs.observe(ref.current);
+    return () => obs.disconnect();
+  }, []);
+  return <div ref={ref} className={`yq-manifesto-line${active ? " active" : ""}`}>{children}</div>;
 }
 
 /* ─────────────────────────────────────────
    MAIN COMPONENT
 ───────────────────────────────────────── */
 export function HomePage() {
-  const { dict } = useLang();
-
   const metrics = [
     { number: "1,000+", label: "Active Volunteers" },
     { number: "45+", label: "Eco Projects" },
@@ -362,16 +492,15 @@ export function HomePage() {
     <>
       <style>{GLOBAL_CSS}</style>
 
-      {/* ── SHARED CANVAS (same as ContactPage) ── */}
       <ForestCanvas />
+      <NoiseOverlay />
+      <Spotlight />
 
-      {/* ── DEEP GRADIENT OVERLAY ── */}
       <div style={{
         position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0,
         background: "radial-gradient(ellipse 75% 60% at 10% 25%, rgba(34,197,94,0.11) 0%, transparent 60%), radial-gradient(ellipse 55% 50% at 88% 75%, rgba(16,185,129,0.07) 0%, transparent 58%)",
       }} />
 
-      {/* ── SCANLINE SWEEP ── */}
       <div style={{
         position: "fixed", top: 0, left: 0, width: "100%", height: "3px",
         background: "linear-gradient(90deg, transparent, rgba(34,197,94,0.08), transparent)",
@@ -383,22 +512,16 @@ export function HomePage() {
       <section className="yq-hero-container" style={{ position: "relative", zIndex: 2 }}>
         <div className="yq-hero-grid">
 
-          {/* LEFT */}
           <div className="yq-content-col">
-            {/* Eyebrow */}
-            <div style={{
-              display: "inline-flex", alignItems: "center", gap: 10,
-              marginBottom: "1.6rem",
-              animation: "yq-fadeUp .7s ease 0s both",
-            }}>
+            <div className="yq-eyebrow" style={{ display: "inline-flex", alignItems: "center", gap: 10, marginBottom: "1.6rem" }}>
               <span style={{ width: 32, height: 1.5, background: "#22c55e", borderRadius: 2, display: "inline-block" }} />
               <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 800, letterSpacing: ".28em", textTransform: "uppercase", color: "#22c55e" }}>
                 Official Platform
               </span>
             </div>
 
-            <h1 className="hw">Yashil Qo'llar</h1>
-            <h1 className="hw"><span className="hw-em">Platform</span></h1>
+            <h1 className="hw"><SplitReveal text="Yashil Qo'llar" baseDelay={0.1} /></h1>
+            <h1 className="hw"><span className="hw-em"><SplitReveal text="Platform" baseDelay={0.55} /></span></h1>
 
             <div className="yq-sub" style={{ marginTop: "1.6rem", maxWidth: 520 }}>
               <p style={{ color: "rgba(255,255,255,0.42)", fontFamily: "var(--font-sans)", fontSize: "1.05rem", lineHeight: 1.72, margin: 0 }}>
@@ -409,42 +532,44 @@ export function HomePage() {
             </div>
 
             <div className="yq-btns" style={{ display: "flex", gap: "1rem", marginTop: "2.4rem", flexWrap: "wrap" }}>
-              <Link to="/login" className="yq-btn-primary">
+              <MagneticLink to="/login" className="yq-btn-primary">
                 Join Ecosystem
                 <svg width="14" height="12" viewBox="0 0 14 12" fill="none">
                   <path d="M1 6H13M13 6L8 1M13 6L8 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-              </Link>
-              <Link to="/about" className="yq-btn-ghost">Read Blueprint</Link>
+              </MagneticLink>
+              <MagneticLink to="/about" className="yq-btn-ghost">Read Blueprint</MagneticLink>
             </div>
 
-            {/* Metric cards */}
             <div className="yq-metric-dashboard">
               {metrics.map((m, i) => (
-                <div className="yq-metric-card" key={i}>
-                  <div className="yq-metric-dot" />
-                  <span className="yq-metric-number">
-                    <Counter target={m.number} />
-                  </span>
-                  <span className="yq-metric-label">{m.label}</span>
-                </div>
+                <ScrollReveal key={i} style={{ transitionDelay: `${i * 60}ms` }}>
+                  <div className="yq-metric-card">
+                    <div className="yq-metric-dot" />
+                    <span className="yq-metric-number"><Counter target={m.number} /></span>
+                    <span className="yq-metric-label">{m.label}</span>
+                  </div>
+                </ScrollReveal>
               ))}
             </div>
           </div>
 
-          {/* RIGHT — planetary logo */}
           <div className="yq-logo-col">
             <div className="yq-ring-container">
               <img src={logoImg} alt="Yashil Qo'llar" className="yq-logo-anim" />
               <div className="yq-ring-a" />
               <div className="yq-ring-b" />
               <div className="yq-ring-c" />
-              {/* orbiting dots */}
               <div className="yq-orbit-dot" />
               <div className="yq-orbit-dot-b" />
             </div>
           </div>
 
+        </div>
+
+        <div className="yq-scroll-indicator">
+          <span>Scroll</span>
+          <div className="yq-scroll-dot-wrap"><div className="yq-scroll-dot" /></div>
         </div>
       </section>
 
@@ -462,6 +587,32 @@ export function HomePage() {
           ))}
         </div>
       </div>
+
+      {/* ── MANIFESTO ── */}
+      <section className="yq-manifesto">
+        <ManifestoLine>We don't count <span className="hl">trees planted.</span></ManifestoLine>
+        <ManifestoLine>We count <span className="hl">trees survived.</span></ManifestoLine>
+        <ManifestoLine>Every project, <span className="hl">GPS-tagged.</span></ManifestoLine>
+        <ManifestoLine>Every result, <span className="hl">public.</span></ManifestoLine>
+      </section>
+
+      {/* ── FINAL CTA ── */}
+      <section style={{ position: "relative", zIndex: 2, padding: "clamp(4rem,8vw,7rem) clamp(1.5rem,5vw,5rem) clamp(6rem,10vw,9rem)", maxWidth: 1300, margin: "0 auto", textAlign: "center" }}>
+        <ScrollReveal>
+          <h2 className="hw" style={{ fontSize: "clamp(2rem,5vw,4rem)", marginBottom: "1.4rem" }}>
+            Ready to plant<br /><span className="hw-em">the future?</span>
+          </h2>
+          <p style={{ color: "rgba(255,255,255,0.4)", fontFamily: "var(--font-sans)", fontSize: "1rem", maxWidth: 460, margin: "0 auto 2.2rem", lineHeight: 1.7 }}>
+            Join volunteers across all 14 regions of Uzbekistan already tracked, verified, and growing.
+          </p>
+          <MagneticLink to="/login" className="yq-btn-primary">
+            Join Ecosystem
+            <svg width="14" height="12" viewBox="0 0 14 12" fill="none">
+              <path d="M1 6H13M13 6L8 1M13 6L8 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </MagneticLink>
+        </ScrollReveal>
+      </section>
     </>
   );
 }

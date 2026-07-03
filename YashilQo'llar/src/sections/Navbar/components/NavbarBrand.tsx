@@ -5,7 +5,7 @@ export const NavbarBrand = () => {
     return (
         <Link
             to="/"
-            className="items-center box-border caret-transparent gap-x-2 flex shrink-0 text-[16.8px] font-black tracking-[0.672px] leading-[26.88px] min-h-[auto] min-w-[auto] outline-[3px] gap-y-2 no-underline uppercase text-nowrap font-montserrat md:gap-x-[10.4px] md:text-xl md:tracking-[0.8px] md:leading-8 md:gap-y-[10.4px]"
+            className="items-center box-border caret-transparent gap-x-2 flex shrink min-w-0 flex-1 text-[16.8px] font-black tracking-[0.672px] leading-[26.88px] outline-[3px] gap-y-2 no-underline uppercase font-montserrat md:flex-none md:gap-x-[10.4px] md:text-xl md:tracking-[0.8px] md:leading-8"
         >
             <div style={{
                 width: 34,
@@ -22,7 +22,10 @@ export const NavbarBrand = () => {
                     style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                 />
             </div>
-            <span className="box-border caret-transparent block text-[16.8px] tracking-[0.672px] leading-[26.88px] min-h-[auto] min-w-[auto] outline-[3px] no-underline text-nowrap md:text-xl md:tracking-[0.8px] md:leading-8">
+            <span
+                className="box-border caret-transparent block tracking-[0.672px] leading-[26.88px] min-w-0 outline-[3px] no-underline truncate md:text-xl md:tracking-[0.8px] md:leading-8"
+                style={{ fontSize: "clamp(11px, 3.4vw, 16.8px)" }}
+            >
                 Yashil Qo'llar MUN
             </span>
         </Link>
