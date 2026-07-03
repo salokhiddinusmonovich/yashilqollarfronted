@@ -5,7 +5,7 @@ export const NavbarBrand = () => {
     return (
         <Link
             to="/"
-            className="items-center box-border caret-transparent gap-x-2 flex shrink min-w-0 flex-1 text-[16.8px] font-black tracking-[0.672px] leading-[26.88px] outline-[3px] gap-y-2 no-underline uppercase font-montserrat md:flex-none md:gap-x-[10.4px] md:text-xl md:tracking-[0.8px] md:leading-8"
+            className="hidden sm:flex items-center box-border caret-transparent gap-x-2 shrink min-w-0 flex-1 text-[16.8px] font-black tracking-[0.672px] leading-[26.88px] outline-[3px] gap-y-2 no-underline uppercase font-montserrat md:flex-none md:gap-x-[10.4px] md:text-xl md:tracking-[0.8px] md:leading-8"
         >
             <div style={{
                 width: 34,
@@ -23,8 +23,8 @@ export const NavbarBrand = () => {
                 />
             </div>
             <span
-                className="box-border caret-transparent block tracking-[0.672px] leading-[26.88px] min-w-0 outline-[3px] no-underline truncate md:text-xl md:tracking-[0.8px] md:leading-8"
-                style={{ fontSize: "clamp(11px, 3.4vw, 16.8px)" }}
+                className="hidden sm:block box-border caret-transparent tracking-[0.672px] leading-[26.88px] min-w-0 outline-[3px] no-underline truncate md:text-xl md:tracking-[0.8px] md:leading-8"
+                style={{ fontSize: "clamp(12px, 3.4vw, 16.8px)", color: "#ffffff" }}
             >
                 Yashil Qo'llar MUN
             </span>
