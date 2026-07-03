@@ -4,6 +4,14 @@ import { useAuth, TelegramWidgetData } from "../contexts/AuthContext";
 
 const GREEN = "#22C55E";
 
+/* ─────────────────────────────────────────
+   ⚠️ ЗАМЕНИ на реальный username своего бота
+   (без @, то что стоит после t.me/)
+   И не забудь: в BotFather → /setdomain → указать
+   тот домен, с которого реально открывается сайт
+   (например yashilqollarfronted.vercel.app).
+   Telegram Login Widget НЕ работает на localhost.
+───────────────────────────────────────── */
 const BOT_USERNAME = "yashilqollarbot";
 
 declare global {
@@ -103,6 +111,7 @@ export function LoginPage() {
       <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, background: "radial-gradient(ellipse 80% 60% at 15% 20%, rgba(34,197,94,0.1) 0%, transparent 60%)" }} />
 
       <div style={{ position: "relative", zIndex: 5, width: "100%", maxWidth: 420 }}>
+        {/* Logo */}
         <div style={{ textAlign: "center", marginBottom: 32 }}>
           <Link to="/" style={{ textDecoration: "none" }}>
             <div style={{ display: "inline-flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
@@ -110,17 +119,44 @@ export function LoginPage() {
               <span style={{ fontFamily: "'Montserrat',sans-serif", fontWeight: 800, fontSize: 15, letterSpacing: ".1em", color: "#fff" }}>YASHIL QO'LLAR</span>
             </div>
           </Link>
-          <h1 style={{ margin: "0 0 6px", fontSize: 26, fontWeight: 800, color: "#fff", letterSpacing: "-0.02em" }}>Welcome back</h1>
-          <p style={{ margin: 0, fontSize: 14, color: "rgba(255,255,255,0.38)" }}>Sign in to your volunteer account</p>
+          <h1 style={{ margin: "0 0 6px", fontSize: 26, fontWeight: 800, color: "#fff", letterSpacing: "-0.02em" }}>Присоединяйся</h1>
+          <p style={{ margin: 0, fontSize: 14, color: "rgba(255,255,255,0.38)" }}>Один клик через Telegram — без пароля</p>
         </div>
 
+        {/* Card */}
         <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(34,197,94,0.18)", borderRadius: 20, padding: "32px 28px", backdropFilter: "blur(16px)", position: "relative", overflow: "hidden" }}>
           <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg,transparent,${GREEN}60,transparent)` }} />
 
-          <p style={{ margin: "0 0 20px", fontSize: 13, color: "rgba(255,255,255,0.4)", lineHeight: 1.6, textAlign: "center" }}>
-            Войдите через официальный Telegram Login. Ваш пароль и данные — под контролем самого Telegram.
+          {/* Пошаговая инструкция — снимает путаницу "что вообще происходит" */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 22 }}>
+            {[
+              { n: "1", t: "Жми кнопку ниже" },
+              { n: "2", t: "Подтверди вход в Telegram" },
+              { n: "3", t: "Готово — ты в аккаунте" },
+            ].map(s => (
+              <div key={s.n} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ width: 24, height: 24, borderRadius: "50%", background: `${GREEN}18`, border: `1px solid ${GREEN}40`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, color: GREEN, flexShrink: 0 }}>{s.n}</div>
+                <span style={{ fontSize: 13, color: "rgba(255,255,255,0.55)" }}>{s.t}</span>
+              </div>
+            ))}
+          </div>
+
+          <p style={{ margin: "0 0 20px", fontSize: 12.5, color: "rgba(255,255,255,0.35)", lineHeight: 1.6, textAlign: "center" }}>
+            Никакого пароля и отдельной регистрации — Telegram сам подтверждает, что это ты.
           </p>
           <TelegramLoginWidget onAuth={handleTelegramAuth} onError={setError} />
+
+          {/* Fallback для тех, у кого виджет не открылся (частая проблема на мобиле) */}
+          <a
+            href={`https://t.me/${BOT_USERNAME}`}
+            target="_blank" rel="noreferrer"
+            style={{
+              display: "block", textAlign: "center", marginTop: 14,
+              fontSize: 12, color: "rgba(255,255,255,0.35)", textDecoration: "underline",
+            }}
+          >
+            Кнопка не открывается? Открыть бота напрямую →
+          </a>
 
           {error && (
             <div style={{ marginTop: 16, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: 9, padding: "10px 14px", fontSize: 13, color: "#f87171" }}>
