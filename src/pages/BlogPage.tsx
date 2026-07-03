@@ -339,9 +339,9 @@ function ArticleModal({ slug, onClose }: { slug: string; onClose: () => void }) 
           <h1 style={{ margin: "0 0 16px", fontSize: "clamp(20px,4vw,30px)", fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 1.15, color: "#fff" }}>{article.title}</h1>
 
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}>
-            <Avatar initials={article.author_name.split(" ").map(w => w[0]).slice(0, 2).join("")} photo={article.author_photo} />
+            <Avatar initials={(article.author_name || "?").split(" ").map(w => w[0]).slice(0, 2).join("")} photo={article.author_photo} />
             <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.8)" }}>{article.author_name}</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.8)" }}>{article.author_name || "Yashil Qo'llar"}</div>
               {article.author_role && <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)" }}>{article.author_role}</div>}
             </div>
           </div>
@@ -492,24 +492,55 @@ export function BlogPage() {
 
         {featured && !search && (
           <FadeIn>
-            <div onClick={() => setActiveSlug(featured.slug)} style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(34,197,94,0.18)", borderRadius: 20, overflow: "hidden", cursor: "pointer", marginBottom: 28, display: "grid", gridTemplateColumns: featured.cover_image ? "1fr 1fr" : "1fr", minHeight: 280 }}>
+            <div onClick={() => setActiveSlug(featured.slug)} style={{
+              position: "relative", background: "rgba(255,255,255,0.025)", border: "1px solid rgba(34,197,94,0.18)",
+              borderRadius: 22, overflow: "hidden", cursor: "pointer", marginBottom: 28,
+              display: "grid", gridTemplateColumns: featured.cover_image ? "1.1fr 1fr" : "1fr", minHeight: 320,
+              transition: "border-color .25s, transform .25s",
+            }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = GREEN + "50"; (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(34,197,94,0.18)"; (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}
+            >
               {featured.cover_image ? (
-                <div style={{ position: "relative" }}>
+                <div style={{ position: "relative", overflow: "hidden" }}>
                   <img src={fixMediaUrl(featured.cover_image) || ""} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(105deg, transparent 55%, rgba(15,15,15,0.85) 100%)" }} />
                   {featured.has_video && (
-                    <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.25)" }}>
-                      <div style={{ width: 56, height: 56, borderRadius: "50%", background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, backdropFilter: "blur(4px)" }}>▶️</div>
+                    <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.2)" }}>
+                      <div style={{ width: 60, height: 60, borderRadius: "50%", background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, backdropFilter: "blur(4px)" }}>▶️</div>
                     </div>
                   )}
                 </div>
               ) : featured.has_video && (
                 <div style={{ position: "absolute", inset: 0, background: "radial-gradient(circle at 30% 40%, rgba(34,197,94,0.12), transparent 60%)", pointerEvents: "none" }} />
               )}
-              <div style={{ padding: "32px 28px", display: "flex", flexDirection: "column", justifyContent: "center", gap: 6 }}>
-                <CatBadge cat={featured.tags[0]?.name || "Featured"} />
-                <h2 style={{ margin: "8px 0", fontSize: "clamp(18px,2.5vw,26px)", fontWeight: 800, color: "#fff" }}>{featured.title}</h2>
+              <div style={{ padding: "36px 32px", display: "flex", flexDirection: "column", justifyContent: "center", gap: 4, position: "relative" }}>
+                <span style={{
+                  position: "absolute", top: 20, right: 20, fontSize: 9, fontWeight: 800, letterSpacing: ".18em",
+                  color: GREEN, textTransform: "uppercase", opacity: .7,
+                }}>Featured</span>
+
+                <div style={{ marginBottom: 12 }}><CatBadge cat={featured.tags[0]?.name || "Featured"} /></div>
+
+                <h2 style={{ margin: "0 0 14px", fontSize: "clamp(20px,2.8vw,30px)", fontWeight: 900, letterSpacing: "-0.02em", lineHeight: 1.15, color: "#fff" }}>{featured.title}</h2>
+
                 <AuthorRow name={featured.author_name} role={featured.author_role} photo={featured.author_photo} />
-                <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginTop: 10 }}>❤️ {featured.likes_count} · 💬 {featured.comments_count}</div>
+
+                <div style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "18px 0" }} />
+
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                  <div style={{ display: "flex", gap: 16 }}>
+                    <span style={{ fontSize: 12.5, color: "rgba(255,255,255,0.45)", display: "flex", alignItems: "center", gap: 5 }}>❤️ {featured.likes_count}</span>
+                    <span style={{ fontSize: 12.5, color: "rgba(255,255,255,0.45)", display: "flex", alignItems: "center", gap: 5 }}>💬 {featured.comments_count}</span>
+                    <span style={{ fontSize: 12.5, color: "rgba(255,255,255,0.3)" }}>{featured.read_time_minutes} min</span>
+                  </div>
+                  <span style={{
+                    display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 800,
+                    color: GREEN, letterSpacing: ".03em",
+                  }}>
+                    Read article →
+                  </span>
+                </div>
               </div>
             </div>
           </FadeIn>
