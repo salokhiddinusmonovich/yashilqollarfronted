@@ -1,24 +1,11 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth, TelegramWidgetData } from "../contexts/AuthContext";
+import { useAuth, User } from "../contexts/AuthContext";
+import { ENDPOINTS, baseHeaders } from "../config/api";
 
 const GREEN = "#22C55E";
-
-/* ─────────────────────────────────────────
-   ⚠️ ЗАМЕНИ на реальный username своего бота
-   (без @, то что стоит после t.me/)
-   И не забудь: в BotFather → /setdomain → указать
-   тот домен, с которого реально открывается сайт
-   (например yashilqollarfronted.vercel.app).
-   Telegram Login Widget НЕ работает на localhost.
-───────────────────────────────────────── */
-const BOT_USERNAME = "yashilqollarbot";
-
-declare global {
-  interface Window {
-    onTelegramAuth?: (user: TelegramWidgetData) => void;
-  }
-}
+const POLL_INTERVAL_MS = 2000;
+const TIMEOUT_MS = 5 * 60 * 1000; // 5 минут на подтверждение
 
 function ForestCanvas() {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -54,56 +41,74 @@ function ForestCanvas() {
   return <canvas ref={ref} style={{ position: "fixed", inset: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 0 }} />;
 }
 
-function TelegramLoginWidget({ onAuth, onError }: { onAuth: (data: TelegramWidgetData) => void; onError: (msg: string) => void }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (BOT_USERNAME === "YOUR_BOT_USERNAME") {
-      onError("Bot username is not configured yet.");
-      return;
-    }
-
-    window.onTelegramAuth = (user: TelegramWidgetData) => onAuth(user);
-
-    const script = document.createElement("script");
-    script.src = "https://telegram.org/js/telegram-widget.js?22";
-    script.async = true;
-    script.setAttribute("data-telegram-login", BOT_USERNAME);
-    script.setAttribute("data-size", "large");
-    script.setAttribute("data-radius", "12");
-    script.setAttribute("data-onauth", "onTelegramAuth(user)");
-    script.setAttribute("data-request-access", "write");
-
-    containerRef.current?.appendChild(script);
-
-    return () => {
-      delete window.onTelegramAuth;
-      if (containerRef.current) containerRef.current.innerHTML = "";
-    };
-  }, [onAuth, onError]);
-
-  return (
-    <div style={{ display: "flex", justifyContent: "center", minHeight: 50 }}>
-      <div ref={containerRef} />
-    </div>
-  );
-}
+type Stage = "idle" | "waiting" | "error";
 
 export function LoginPage() {
-  const { loginWithTelegram, isLoggedIn } = useAuth();
+  const { loginWithTokens, isLoggedIn } = useAuth();
   const navigate = useNavigate();
+
+  const [stage, setStage] = useState<Stage>("idle");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const pollRef = useRef<number | null>(null);
+  const timeoutRef = useRef<number | null>(null);
 
   useEffect(() => { if (isLoggedIn) navigate("/"); }, [isLoggedIn]);
 
-  const handleTelegramAuth = async (data: TelegramWidgetData) => {
-    setError(""); setLoading(true);
-    const res = await loginWithTelegram(data);
-    setLoading(false);
-    if (res.ok) navigate("/");
-    else setError(res.error || "Telegram login failed.");
+  useEffect(() => {
+    return () => {
+      if (pollRef.current) window.clearInterval(pollRef.current);
+      if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
+  const stopPolling = () => {
+    if (pollRef.current) { window.clearInterval(pollRef.current); pollRef.current = null; }
+    if (timeoutRef.current) { window.clearTimeout(timeoutRef.current); timeoutRef.current = null; }
   };
+
+  const pollStatus = useCallback((token: string) => {
+    pollRef.current = window.setInterval(async () => {
+      try {
+        const res = await fetch(ENDPOINTS.loginTokenStatus(token), { headers: baseHeaders("en") });
+        if (res.status === 404) {
+          stopPolling();
+          setStage("error");
+          setError("Ссылка устарела. Попробуй ещё раз.");
+          return;
+        }
+        const data = await res.json();
+        if (data.status === "confirmed") {
+          stopPolling();
+          loginWithTokens(data.access, data.refresh, data.user as User);
+          navigate("/");
+        }
+      } catch {
+        // временный сбой сети — пробуем на следующем тике, не обрываем сразу
+      }
+    }, POLL_INTERVAL_MS);
+
+    timeoutRef.current = window.setTimeout(() => {
+      stopPolling();
+      setStage("error");
+      setError("Время ожидания истекло. Попробуй войти ещё раз.");
+    }, TIMEOUT_MS);
+  }, [loginWithTokens, navigate]);
+
+  const handleStart = async () => {
+    setError(""); setStage("waiting");
+    try {
+      const res = await fetch(ENDPOINTS.loginToken, { method: "POST", headers: baseHeaders("en") });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      window.open(data.deep_link, "_blank");
+      pollStatus(data.token);
+    } catch {
+      setStage("error");
+      setError("Не удалось начать вход. Проверь соединение и попробуй снова.");
+    }
+  };
+
+  const handleRetry = () => { stopPolling(); setStage("idle"); setError(""); };
 
   return (
     <div style={{ minHeight: "100vh", background: "#060606", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter',sans-serif", position: "relative", padding: "20px" }}>
@@ -111,7 +116,6 @@ export function LoginPage() {
       <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, background: "radial-gradient(ellipse 80% 60% at 15% 20%, rgba(34,197,94,0.1) 0%, transparent 60%)" }} />
 
       <div style={{ position: "relative", zIndex: 5, width: "100%", maxWidth: 420 }}>
-        {/* Logo */}
         <div style={{ textAlign: "center", marginBottom: 32 }}>
           <Link to="/" style={{ textDecoration: "none" }}>
             <div style={{ display: "inline-flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
@@ -120,63 +124,82 @@ export function LoginPage() {
             </div>
           </Link>
           <h1 style={{ margin: "0 0 6px", fontSize: 26, fontWeight: 800, color: "#fff", letterSpacing: "-0.02em" }}>Присоединяйся</h1>
-          <p style={{ margin: 0, fontSize: 14, color: "rgba(255,255,255,0.38)" }}>Один клик через Telegram — без пароля</p>
+          <p style={{ margin: 0, fontSize: 14, color: "rgba(255,255,255,0.38)" }}>Вход прямо через приложение Telegram</p>
         </div>
 
-        {/* Card */}
         <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(34,197,94,0.18)", borderRadius: 20, padding: "32px 28px", backdropFilter: "blur(16px)", position: "relative", overflow: "hidden" }}>
           <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg,transparent,${GREEN}60,transparent)` }} />
 
-          {/* Пошаговая инструкция — снимает путаницу "что вообще происходит" */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 22 }}>
-            {[
-              { n: "1", t: "Жми кнопку ниже" },
-              { n: "2", t: "Подтверди вход в Telegram" },
-              { n: "3", t: "Готово — ты в аккаунте" },
-            ].map(s => (
-              <div key={s.n} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{ width: 24, height: 24, borderRadius: "50%", background: `${GREEN}18`, border: `1px solid ${GREEN}40`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, color: GREEN, flexShrink: 0 }}>{s.n}</div>
-                <span style={{ fontSize: 13, color: "rgba(255,255,255,0.55)" }}>{s.t}</span>
+          {stage === "idle" && (
+            <>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 24 }}>
+                {[
+                  { n: "1", t: "Жми кнопку — откроется Telegram" },
+                  { n: "2", t: "Бот пришлёт: «Вход подтверждён»" },
+                  { n: "3", t: "Вернись на эту вкладку — готово" },
+                ].map(s => (
+                  <div key={s.n} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{ width: 24, height: 24, borderRadius: "50%", background: `${GREEN}18`, border: `1px solid ${GREEN}40`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800, color: GREEN, flexShrink: 0 }}>{s.n}</div>
+                    <span style={{ fontSize: 13, color: "rgba(255,255,255,0.55)" }}>{s.t}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
 
-          <p style={{ margin: "0 0 20px", fontSize: 12.5, color: "rgba(255,255,255,0.35)", lineHeight: 1.6, textAlign: "center" }}>
-            Никакого пароля и отдельной регистрации — Telegram сам подтверждает, что это ты.
-          </p>
-          <TelegramLoginWidget onAuth={handleTelegramAuth} onError={setError} />
+              <button onClick={handleStart} style={{
+                width: "100%", padding: "15px", background: GREEN, border: "none", color: "#000",
+                borderRadius: 12, fontSize: 13, fontWeight: 800, letterSpacing: ".08em",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+                cursor: "pointer", fontFamily: "'Montserrat',sans-serif",
+                boxShadow: "0 0 26px rgba(34,197,94,0.28)",
+              }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" /></svg>
+                Продолжить в Telegram
+              </button>
 
-          {/* Fallback для тех, у кого виджет не открылся (частая проблема на мобиле) */}
-          <a
-            href={`https://t.me/${BOT_USERNAME}`}
-            target="_blank" rel="noreferrer"
-            style={{
-              display: "block", textAlign: "center", marginTop: 14,
-              fontSize: 12, color: "rgba(255,255,255,0.35)", textDecoration: "underline",
-            }}
-          >
-            Кнопка не открывается? Открыть бота напрямую →
-          </a>
+              <p style={{ margin: "16px 0 0", fontSize: 11.5, color: "rgba(255,255,255,0.3)", lineHeight: 1.6, textAlign: "center" }}>
+                Ты остаёшься внутри Telegram — номер телефона нигде вводить не нужно.
+              </p>
+            </>
+          )}
 
-          {error && (
-            <div style={{ marginTop: 16, background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: 9, padding: "10px 14px", fontSize: 13, color: "#f87171" }}>
-              {error}
+          {stage === "waiting" && (
+            <div style={{ textAlign: "center", padding: "12px 0" }}>
+              <div style={{ width: 40, height: 40, margin: "0 auto 18px", borderRadius: "50%", border: "3px solid rgba(34,197,94,0.15)", borderTopColor: GREEN, animation: "yq-spin .8s linear infinite" }} />
+              <p style={{ margin: "0 0 6px", fontSize: 14, fontWeight: 600, color: "#fff" }}>Ждём подтверждения…</p>
+              <p style={{ margin: 0, fontSize: 12.5, color: "rgba(255,255,255,0.4)", lineHeight: 1.6 }}>
+                Открылся Telegram — найди сообщение от бота и дождись "✅ Вход подтверждён". Эта страница обновится сама.
+              </p>
+              <button onClick={handleRetry} style={{
+                marginTop: 18, background: "transparent", border: "none",
+                color: "rgba(255,255,255,0.35)", fontSize: 12, textDecoration: "underline", cursor: "pointer",
+              }}>
+                Отменить
+              </button>
             </div>
           )}
 
-          {loading && (
-            <div style={{ marginTop: 16, textAlign: "center", fontSize: 12, color: "rgba(255,255,255,0.4)" }}>
-              Signing in…
+          {stage === "error" && (
+            <div style={{ textAlign: "center" }}>
+              <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: 10, padding: "12px 16px", fontSize: 13, color: "#f87171", marginBottom: 16 }}>
+                {error}
+              </div>
+              <button onClick={handleRetry} style={{
+                width: "100%", padding: "13px", background: GREEN, border: "none", color: "#000",
+                borderRadius: 11, fontSize: 12, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase",
+                cursor: "pointer", fontFamily: "'Montserrat',sans-serif",
+              }}>
+                Попробовать снова
+              </button>
             </div>
           )}
         </div>
 
         <p style={{ textAlign: "center", marginTop: 20, fontSize: 12, color: "rgba(255,255,255,0.25)", lineHeight: 1.6 }}>
-          Отдельной формы регистрации нет — первый вход через Telegram сам создаёт аккаунт.
+          Отдельной формы регистрации нет — первое подтверждение в боте само создаёт аккаунт.
         </p>
       </div>
 
-      <style>{`input::placeholder{color:rgba(255,255,255,0.18)}`}</style>
+      <style>{`@keyframes yq-spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }

@@ -39,6 +39,8 @@ export const ENDPOINTS = {
     blogComment: (slug: string) => `${API_BASE}/blog/${slug}/comment/`,
     blogLike: (slug: string) => `${API_BASE}/blog/${slug}/like/`,
     commentLike: (id: number | string) => `${API_BASE}/comment/${id}/like/`,
+    loginToken: `${API_BASE}/login/token/`,
+    loginTokenStatus: (token: string) => `${API_BASE}/login/token/${token}/`,
 } as const;
 
 /**

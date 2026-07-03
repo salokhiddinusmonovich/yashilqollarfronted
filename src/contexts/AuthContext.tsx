@@ -37,6 +37,7 @@ interface AuthContextType {
   isDevMode: boolean;
   loading: boolean;
   loginWithTelegram: (data: TelegramWidgetData) => Promise<{ ok: boolean; error?: string }>;
+  loginWithTokens: (access: string, refresh: string, user: User) => void;
   loginDev: () => void;
   logout: () => Promise<void>;
   updateProfile: (patch: Partial<User>) => Promise<{ ok: boolean; error?: string }>;
@@ -70,10 +71,11 @@ const AuthContext = createContext<AuthContextType>({
   isDevMode: false,
   loading: true,
   loginWithTelegram: async () => ({ ok: false }),
-  loginDev: () => { },
-  logout: async () => { },
+  loginWithTokens: () => {},
+  loginDev: () => {},
+  logout: async () => {},
   updateProfile: async () => ({ ok: false }),
-  refetchProfile: async () => { },
+  refetchProfile: async () => {},
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -150,7 +152,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!res.ok) return false;
       const data = await res.json();
       if (!data.access) return false;
+
       localStorage.setItem(ACCESS_KEY, data.access);
+
+      // ВАЖНО: на бэке включена ротация refresh-токенов
+      // (ROTATE_REFRESH_TOKENS + BLACKLIST_AFTER_ROTATION) — старый
+      // refresh становится нерабочим сразу после использования.
+      // Бэкенд присылает новый refresh в этом же ответе — сохраняем его,
+      // иначе следующий рефреш упадёт и разлогинит пользователя.
+      if (data.refresh) {
+        localStorage.setItem(REFRESH_KEY, data.refresh);
+      }
+
       return true;
     } catch {
       return false;
@@ -192,6 +205,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   // ─── Dev-режим — временный вход без реального бэкенда ───
+  // ─── Прямая установка сессии — после подтверждения через бота (deep-link) ───
+  const loginWithTokens = (access: string, refresh: string, userData: User) => {
+    localStorage.setItem(ACCESS_KEY, access);
+    localStorage.setItem(REFRESH_KEY, refresh);
+    localStorage.removeItem(DEV_MODE_KEY);
+    setIsDevMode(false);
+    setUser(userData);
+  };
+
   const loginDev = () => {
     localStorage.setItem(DEV_MODE_KEY, "1");
     localStorage.removeItem(ACCESS_KEY);
@@ -265,6 +287,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isDevMode,
         loading,
         loginWithTelegram,
+        loginWithTokens,
         loginDev,
         logout,
         updateProfile,
