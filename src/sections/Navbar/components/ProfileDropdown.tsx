@@ -190,23 +190,18 @@ export function ProfileDropdown() {
 
                     {/* Nav */}
                     <div style={{ padding: "8px" }}>
-                        {[
-                            { icon: "👤", label: "My Profile", to: "/profile" },
-                            { icon: "📋", label: "My Projects", to: "/projects" },
-                        ].map(item => (
-                            <Link key={item.to} to={item.to} onClick={() => setOpen(false)}
-                                className="pd-link"
-                                style={{
-                                    display: "flex", alignItems: "center", gap: 11,
-                                    padding: "10px 12px", borderRadius: 9,
-                                    textDecoration: "none", color: "rgba(255,255,255,0.6)",
-                                    fontSize: 13, fontWeight: 500, transition: "all .15s",
-                                    fontFamily: "'Inter',sans-serif",
-                                }}>
-                                <span style={{ fontSize: 16, width: 22, textAlign: "center" }}>{item.icon}</span>
-                                {item.label}
-                            </Link>
-                        ))}
+                        <Link to="/profile" onClick={() => setOpen(false)}
+                            className="pd-link"
+                            style={{
+                                display: "flex", alignItems: "center", gap: 11,
+                                padding: "10px 12px", borderRadius: 9,
+                                textDecoration: "none", color: "rgba(255,255,255,0.6)",
+                                fontSize: 13, fontWeight: 500, transition: "all .15s",
+                                fontFamily: "'Inter',sans-serif",
+                            }}>
+                            <span style={{ fontSize: 16, width: 22, textAlign: "center" }}>📊</span>
+                            Dashboard
+                        </Link>
                     </div>
 
                     {/* Divider + sign out */}

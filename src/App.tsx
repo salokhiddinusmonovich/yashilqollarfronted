@@ -11,7 +11,6 @@ import { SponsorsPage } from "./pages/SponsorsPage";
 import { ContactPage } from "./pages/ContactPage";
 import { SchedulePage } from "./pages/SchedulePage";
 import { ProfilePage } from "./pages/ProfilePage";
-import { ProjectsPage } from "./pages/ProjectsPage";
 import { LoginPage } from "./pages/LoginPage";
 import { NotFoundPage } from "./sections/NotFoundPage/NotFoundPage";
 
@@ -31,7 +30,6 @@ export default function App() {
             <Route path="/schedule" element={<SchedulePage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/projects" element={<ProjectsPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
           <Footer />

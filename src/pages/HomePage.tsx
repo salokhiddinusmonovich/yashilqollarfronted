@@ -249,6 +249,41 @@ const GLOBAL_CSS = `
   box-shadow: 0 0 16px rgba(34,197,94,.5);
 }
 
+/* ── Intro loader ── */
+@keyframes yq-loaderPulse { 0%,100% { transform: scale(1); filter: drop-shadow(0 0 20px rgba(34,197,94,.5)); } 50% { transform: scale(1.08); filter: drop-shadow(0 0 44px rgba(34,197,94,.9)); } }
+.yq-loader {
+  position: fixed; inset: 0; z-index: 9999;
+  background: #030503;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 26px;
+  transition: opacity .7s cubic-bezier(.76,0,.24,1), transform .8s cubic-bezier(.76,0,.24,1);
+}
+.yq-loader.yq-loader-out { opacity: 0; transform: scale(1.06); pointer-events: none; }
+.yq-loader-logo { width: 88px; height: 88px; border-radius: 50%; animation: yq-loaderPulse 1.4s ease-in-out infinite; }
+.yq-loader-bar-track { width: 220px; height: 2px; background: rgba(255,255,255,.08); border-radius: 2px; overflow: hidden; }
+.yq-loader-bar-fill { height: 100%; background: linear-gradient(90deg,#22c55e,#6ee7b7); border-radius: 2px; transition: width .18s ease-out; }
+.yq-loader-pct { font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: .25em; color: rgba(255,255,255,.4); }
+
+/* ── Custom cursor ── */
+@media (pointer: fine) {
+  body { cursor: none; }
+  a, button { cursor: none; }
+}
+.yq-cursor-dot, .yq-cursor-ring {
+  position: fixed; top: 0; left: 0; z-index: 10000; pointer-events: none;
+  border-radius: 50%; transform: translate(-50%,-50%);
+}
+.yq-cursor-dot { width: 6px; height: 6px; background: #22c55e; }
+.yq-cursor-ring {
+  width: 34px; height: 34px; border: 1.5px solid rgba(34,197,94,.55);
+  transition: width .22s ease, height .22s ease, border-color .22s ease, background .22s ease;
+}
+.yq-cursor-ring.yq-cursor-hover { width: 56px; height: 56px; background: rgba(34,197,94,.08); border-color: rgba(34,197,94,.9); }
+@media (pointer: coarse) { .yq-cursor-dot, .yq-cursor-ring { display: none; } body, a, button { cursor: auto; } }
+
+/* ── 3D tilt wrapper ── */
+.yq-tilt-wrap { perspective: 1100px; }
+.yq-tilt-inner { transition: transform .12s ease-out; transform-style: preserve-3d; }
+
 /* ── Section: manifesto ── */
 .yq-manifesto {
   padding: clamp(5rem,10vw,8rem) clamp(1.5rem,5vw,5rem);
@@ -623,10 +658,111 @@ function VideoModal({ onClose }: { onClose: () => void }) {
 }
 
 /* ─────────────────────────────────────────
+   INTRO LOADER — кинематографичная загрузка
+   при первом заходе на сайт
+───────────────────────────────────────── */
+function IntroLoader({ onDone }: { onDone: () => void }) {
+  const [pct, setPct] = useState(0);
+  const [leaving, setLeaving] = useState(false);
+
+  useEffect(() => {
+    const t = setInterval(() => {
+      setPct(p => {
+        const next = Math.min(100, p + Math.random() * 14 + 6);
+        if (next >= 100) {
+          clearInterval(t);
+          setTimeout(() => setLeaving(true), 200);
+          setTimeout(onDone, 900);
+        }
+        return next;
+      });
+    }, 130);
+    return () => clearInterval(t);
+  }, [onDone]);
+
+  return (
+    <div className={`yq-loader${leaving ? " yq-loader-out" : ""}`}>
+      <img src={logoImg} alt="" className="yq-loader-logo" />
+      <div className="yq-loader-bar-track"><div className="yq-loader-bar-fill" style={{ width: `${pct}%` }} /></div>
+      <span className="yq-loader-pct">{Math.floor(pct)}%</span>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────
+   CUSTOM CURSOR — точка + кольцо, увеличивается
+   над интерактивными элементами
+───────────────────────────────────────── */
+function CustomCursor() {
+  const dotRef = useRef<HTMLDivElement>(null);
+  const ringRef = useRef<HTMLDivElement>(null);
+  const pos = useRef({ x: -100, y: -100 });
+  const ring = useRef({ x: -100, y: -100 });
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => { pos.current = { x: e.clientX, y: e.clientY }; };
+    const onOver = (e: MouseEvent) => {
+      const target = (e.target as HTMLElement)?.closest("a, button");
+      ringRef.current?.classList.toggle("yq-cursor-hover", !!target);
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseover", onOver);
+
+    let raf: number;
+    const tick = () => {
+      ring.current.x += (pos.current.x - ring.current.x) * 0.18;
+      ring.current.y += (pos.current.y - ring.current.y) * 0.18;
+      if (dotRef.current) dotRef.current.style.transform = `translate(${pos.current.x}px, ${pos.current.y}px) translate(-50%,-50%)`;
+      if (ringRef.current) ringRef.current.style.transform = `translate(${ring.current.x}px, ${ring.current.y}px) translate(-50%,-50%)`;
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseover", onOver);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  return (
+    <>
+      <div ref={dotRef} className="yq-cursor-dot" />
+      <div ref={ringRef} className="yq-cursor-ring" />
+    </>
+  );
+}
+
+/* ─────────────────────────────────────────
+   TILT3D — 3D-наклон под курсор мыши
+───────────────────────────────────────── */
+function Tilt3D({ children }: { children: React.ReactNode }) {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+
+  const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = wrapRef.current!.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width - 0.5;
+    const py = (e.clientY - rect.top) / rect.height - 0.5;
+    if (innerRef.current) {
+      innerRef.current.style.transform = `rotateY(${px * 16}deg) rotateX(${-py * 16}deg)`;
+    }
+  };
+  const reset = () => { if (innerRef.current) innerRef.current.style.transform = "rotateY(0) rotateX(0)"; };
+
+  return (
+    <div ref={wrapRef} className="yq-tilt-wrap" onMouseMove={handleMove} onMouseLeave={reset}>
+      <div ref={innerRef} className="yq-tilt-inner">{children}</div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────
    MAIN COMPONENT
 ───────────────────────────────────────── */
 export function HomePage() {
   const [videoOpen, setVideoOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const metrics = [
     { number: "1,000+", label: "Active Volunteers" },
@@ -643,6 +779,9 @@ export function HomePage() {
   return (
     <>
       <style>{GLOBAL_CSS}</style>
+
+      {loading && <IntroLoader onDone={() => setLoading(false)} />}
+      <CustomCursor />
 
       <ForestCanvas />
       <NoiseOverlay />
@@ -715,14 +854,16 @@ export function HomePage() {
           </div>
 
           <div className="yq-logo-col">
-            <div className="yq-ring-container">
-              <img src={logoImg} alt="Yashil Qo'llar" className="yq-logo-anim" />
-              <div className="yq-ring-a" />
-              <div className="yq-ring-b" />
-              <div className="yq-ring-c" />
-              <div className="yq-orbit-dot" />
-              <div className="yq-orbit-dot-b" />
-            </div>
+            <Tilt3D>
+              <div className="yq-ring-container">
+                <img src={logoImg} alt="Yashil Qo'llar" className="yq-logo-anim" />
+                <div className="yq-ring-a" />
+                <div className="yq-ring-b" />
+                <div className="yq-ring-c" />
+                <div className="yq-orbit-dot" />
+                <div className="yq-orbit-dot-b" />
+              </div>
+            </Tilt3D>
           </div>
 
         </div>
@@ -778,5 +919,5 @@ export function HomePage() {
     </>
   );
 }
-  
+
 export default HomePage;
