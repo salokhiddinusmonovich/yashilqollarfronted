@@ -1,66 +1,129 @@
-import { Link } from "react-router-dom";
+import { NavLink, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../contexts/AuthContext";
+import { useLang, Lang } from "../../../contexts/LanguageContext";
 import { fixMediaUrl } from "../../../config/api";
 
 const GREEN = "#22C55E";
 
-export const MobileActions = ({
-    open,
-    onToggle,
-}: {
-    open: boolean;
-    onToggle: () => void;
-}) => {
-    const { user, isLoggedIn } = useAuth();
+const NAV_LINKS = [
+    { to: "/", label: "Home", end: true },
+    { to: "/about", label: "About" },
+    { to: "/blog", label: "Blog" },
+    { to: "/team", label: "Team" },
+    { to: "/sponsors", label: "Sponsors" },
+    { to: "/contact", label: "Contact" },
+];
+
+const LANGS: { code: Lang; label: string }[] = [
+    { code: "en", label: "EN" },
+    { code: "ru", label: "RU" },
+    { code: "uz", label: "UZ" },
+];
+
+export const MobileMenu = ({ onClose }: { onClose: () => void }) => {
+    const { user, isLoggedIn, logout } = useAuth();
+    const { lang, setLang } = useLang();
+    const navigate = useNavigate();
+
+    const initials = isLoggedIn && user
+        ? user.fullname.split(" ").filter(Boolean).map(w => w[0]).slice(0, 2).join("").toUpperCase()
+        : "";
+    const photoUrl = isLoggedIn && user ? fixMediaUrl(user.photo) : null;
 
     return (
-        <div className="items-center box-border caret-transparent gap-x-3 flex shrink-0 min-h-[auto] min-w-[auto] outline-[3px] gap-y-3 no-underline md:hidden">
-            {isLoggedIn && user ? (
-                <Link to="/profile" aria-label="Profile" style={{
-                    width: 36, height: 36, borderRadius: "50%", flexShrink: 0, overflow: "hidden",
-                    background: GREEN, border: `1.5px solid ${GREEN}80`,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 13, fontWeight: 800, color: "#04140a", textDecoration: "none",
-                }}>
-                    {fixMediaUrl(user.photo) ? (
-                        <img src={fixMediaUrl(user.photo)!} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                    ) : (
-                        user.fullname.split(" ").filter(Boolean).map(w => w[0]).slice(0, 2).join("").toUpperCase()
-                    )}
-                </Link>
-            ) : (
-                <Link to="/login" style={{
-                    background: GREEN, color: "#000", border: "none",
-                    padding: "7px 14px", borderRadius: 8,
-                    fontSize: 10.5, fontWeight: 800, letterSpacing: ".06em",
-                    textDecoration: "none", fontFamily: "'Montserrat',sans-serif",
-                    whiteSpace: "nowrap",
-                }}>
-                    LOGIN
-                </Link>
-            )}
+        <div style={{
+            position: "fixed", top: 56, left: 0, right: 0, zIndex: 999,
+            background: "#0a0a0a", borderBottom: "1px solid rgba(34,197,94,0.2)",
+            maxHeight: "calc(100vh - 56px)", overflowY: "auto",
+            animation: "yq-menuDrop .22s cubic-bezier(.16,1,.3,1)",
+        }}>
+            <style>{`@keyframes yq-menuDrop { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }`}</style>
 
-            <button
-                aria-label={open ? "Close menu" : "Open menu"}
-                onClick={onToggle}
-                className="items-center bg-white/5 caret-transparent flex text-[13.3333px] h-9 justify-center leading-[normal] min-h-[auto] min-w-[auto] outline-[3px] text-center no-underline w-9 border p-0 rounded-[10px] border-white/10 transition-colors hover:bg-white/10"
-            >
-                <div className="box-border caret-transparent gap-x-[5px] flex flex-col min-h-[auto] min-w-[auto] outline-[3px] gap-y-[5px] no-underline w-5">
-                    {open ? (
-                        <>
-                            <span className="bg-white/80 block h-0.5 w-full rounded-sm rotate-45 translate-y-[7px] transition-transform"></span>
-                            <span className="bg-white/80 block h-0.5 w-full rounded-sm opacity-0 transition-opacity"></span>
-                            <span className="bg-white/80 block h-0.5 w-full rounded-sm -rotate-45 -translate-y-[7px] transition-transform"></span>
-                        </>
-                    ) : (
-                        <>
-                            <span className="bg-white/80 block h-0.5 w-full rounded-sm transition-transform"></span>
-                            <span className="bg-white/80 block h-0.5 w-full rounded-sm transition-opacity"></span>
-                            <span className="bg-white/80 block h-0.5 w-full rounded-sm transition-transform"></span>
-                        </>
-                    )}
+            {/* ── PROFILE / LOGIN ── */}
+            <div style={{ padding: "18px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                {isLoggedIn && user ? (
+                    <>
+                        <Link to="/profile" onClick={onClose} style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none" }}>
+                            <div style={{
+                                width: 44, height: 44, borderRadius: "50%", flexShrink: 0, overflow: "hidden",
+                                background: GREEN, border: `1.5px solid ${GREEN}80`,
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                fontSize: 16, fontWeight: 800, color: "#04140a",
+                            }}>
+                                {photoUrl ? <img src={photoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : initials}
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontWeight: 700, fontSize: 14, color: "#fff" }}>{user.fullname}</div>
+                                <div style={{ fontSize: 11, color: GREEN, fontWeight: 600 }}>{user.rank}</div>
+                            </div>
+                            <span style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", fontWeight: 700, letterSpacing: ".05em" }}>DASHBOARD →</span>
+                        </Link>
+                        <button
+                            onClick={() => { logout(); onClose(); navigate("/"); }}
+                            style={{
+                                marginTop: 12, width: "100%", padding: "9px", background: "rgba(239,68,68,0.08)",
+                                border: "1px solid rgba(239,68,68,0.2)", color: "#f87171", borderRadius: 9,
+                                fontSize: 12, fontWeight: 600, cursor: "pointer",
+                            }}
+                        >
+                            🚪 Sign out
+                        </button>
+                    </>
+                ) : (
+                    <Link
+                        to="/login" onClick={onClose}
+                        style={{
+                            display: "block", textAlign: "center", padding: "12px", background: GREEN,
+                            color: "#000", borderRadius: 10, fontSize: 12, fontWeight: 800,
+                            letterSpacing: ".08em", textTransform: "uppercase", textDecoration: "none",
+                            fontFamily: "'Montserrat',sans-serif",
+                        }}
+                    >
+                        Login →
+                    </Link>
+                )}
+            </div>
+
+            {/* ── NAV LINKS ── */}
+            <nav style={{ padding: "10px 8px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                {NAV_LINKS.map(item => (
+                    <NavLink
+                        key={item.to}
+                        to={item.to}
+                        end={item.end}
+                        onClick={onClose}
+                        style={({ isActive }) => ({
+                            display: "block", padding: "12px 14px", borderRadius: 9,
+                            fontSize: 14, fontWeight: 600, textDecoration: "none",
+                            color: isActive ? GREEN : "rgba(255,255,255,0.7)",
+                            background: isActive ? "rgba(34,197,94,0.08)" : "transparent",
+                        })}
+                    >
+                        {item.label}
+                    </NavLink>
+                ))}
+            </nav>
+
+            {/* ── LANGUAGE ── */}
+            <div style={{ padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase" }}>Language</span>
+                <div style={{ display: "flex", gap: 4, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 9, padding: 3 }}>
+                    {LANGS.map(l => (
+                        <button
+                            key={l.code}
+                            onClick={() => setLang(l.code)}
+                            style={{
+                                padding: "6px 12px", borderRadius: 7, border: "none", cursor: "pointer",
+                                background: lang === l.code ? GREEN : "transparent",
+                                color: lang === l.code ? "#000" : "rgba(255,255,255,0.5)",
+                                fontSize: 11, fontWeight: 800, fontFamily: "'Montserrat',sans-serif",
+                            }}
+                        >
+                            {l.label}
+                        </button>
+                    ))}
                 </div>
-            </button>
+            </div>
         </div>
     );
 };
