@@ -15,12 +15,12 @@ interface CommentNode {
 interface ArticleListItem {
   id: number; title: string; slug: string; cover_image: string | null; tags: Tag[];
   read_time_minutes: number; likes_count: number; comments_count: number; created_at: string; is_featured: boolean;
-  author_name: string; author_role: string | null; has_video: boolean;
+  author_name: string; author_role: string | null; author_photo: string | null; has_video: boolean;
 }
 interface GalleryImage { id: number; image: string; }
 interface ArticleDetail {
   id: number; title: string; slug: string; cover_image: string | null; content: string;
-  author_name: string; author_role: string | null; tags: Tag[]; read_time_minutes: number;
+  author_name: string; author_role: string | null; author_photo: string | null; tags: Tag[]; read_time_minutes: number;
   likes_count: number; created_at: string; comments: CommentNode[];
   video: string | null; video_url: string | null; gallery_images: GalleryImage[];
 }
@@ -71,8 +71,13 @@ function FadeIn({ children, delay = 0 }: { children: React.ReactNode; delay?: nu
   return <div ref={ref} style={{ opacity: vis ? 1 : 0, transform: vis ? "translateY(0)" : "translateY(22px)", transition: `opacity .75s cubic-bezier(.16,1,.3,1) ${delay}ms,transform .75s cubic-bezier(.16,1,.3,1) ${delay}ms` }}>{children}</div>;
 }
 
-function Avatar({ initials, size = 32 }: { initials: string; size?: number }) {
-  return <div style={{ width: size, height: size, borderRadius: "50%", background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.35)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: size * .32, fontWeight: 700, color: GREEN, flexShrink: 0 }}>{initials}</div>;
+function Avatar({ initials, size = 32, photo }: { initials: string; size?: number; photo?: string | null }) {
+  const photoUrl = fixMediaUrl(photo || null);
+  return (
+    <div style={{ width: size, height: size, borderRadius: "50%", background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.35)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: size * .32, fontWeight: 700, color: GREEN, flexShrink: 0, overflow: "hidden" }}>
+      {photoUrl ? <img src={photoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : initials}
+    </div>
+  );
 }
 
 function CatBadge({ cat }: { cat: string }) {
@@ -102,12 +107,12 @@ function CoverOrPlaceholder({ cover, hasVideo, hov, title }: { cover: string | n
   return null;
 }
 
-function AuthorRow({ name, role }: { name: string; role: string | null }) {
+function AuthorRow({ name, role, photo }: { name: string; role: string | null; photo?: string | null }) {
   if (!name) return null;
   const initials = name.split(" ").filter(Boolean).map(w => w[0]).slice(0, 2).join("").toUpperCase();
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-      <Avatar initials={initials} size={22} />
+      <Avatar initials={initials} size={22} photo={photo} />
       <div style={{ minWidth: 0 }}>
         <div style={{ fontSize: 11.5, fontWeight: 600, color: "rgba(255,255,255,0.6)", lineHeight: 1.2 }}>{name}</div>
         {role && <div style={{ fontSize: 10, color: "rgba(255,255,255,0.32)" }}>{role}</div>}
@@ -216,6 +221,25 @@ function CommentItem({ comment, onLike, onReply, depth = 0 }: { comment: Comment
   );
 }
 
+function ReadingProgress({ containerRef }: { containerRef: React.RefObject<HTMLDivElement> }) {
+  const [progress, setProgress] = useState(0);
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const max = el.scrollHeight - el.clientHeight;
+      setProgress(max > 0 ? Math.min(100, (el.scrollTop / max) * 100) : 0);
+    };
+    el.addEventListener("scroll", onScroll);
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [containerRef]);
+  return (
+    <div style={{ position: "sticky", top: 0, left: 0, right: 0, height: 2, background: "rgba(255,255,255,0.06)", zIndex: 5 }}>
+      <div style={{ height: "100%", width: `${progress}%`, background: GREEN, boxShadow: `0 0 8px ${GREEN}`, transition: "width .1s linear" }} />
+    </div>
+  );
+}
+
 /* ─────────────────────────────────────────
    МОДАЛКА СТАТЬИ
 ───────────────────────────────────────── */
@@ -226,6 +250,7 @@ function ArticleModal({ slug, onClose }: { slug: string; onClose: () => void }) 
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [commentText, setCommentText] = useState("");
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch(ENDPOINTS.blogDetail(slug), { headers: baseHeaders("en") })
@@ -288,8 +313,9 @@ function ArticleModal({ slug, onClose }: { slug: string; onClose: () => void }) 
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.88)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-      <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 760, maxHeight: "92vh", overflowY: "auto", background: "#0f0f0f", borderRadius: "20px 20px 0 0", border: "1px solid rgba(34,197,94,0.2)", borderBottom: "none", animation: "slideUp .3s cubic-bezier(.16,1,.3,1)" }}>
+      <div ref={scrollRef} onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 760, maxHeight: "92vh", overflowY: "auto", background: "#0f0f0f", borderRadius: "20px 20px 0 0", border: "1px solid rgba(34,197,94,0.2)", borderBottom: "none", animation: "slideUp .3s cubic-bezier(.16,1,.3,1)" }}>
         <style>{`@keyframes slideUp{from{transform:translateY(60px);opacity:0}to{transform:translateY(0);opacity:1}} @keyframes yq-spin{to{transform:rotate(360deg)}}`}</style>
+        <ReadingProgress containerRef={scrollRef} />
 
         {article.cover_image && !article.video && !article.video_url && (
           <div style={{ width: "100%", height: 260, overflow: "hidden", position: "relative", flexShrink: 0 }}>
@@ -313,7 +339,7 @@ function ArticleModal({ slug, onClose }: { slug: string; onClose: () => void }) 
           <h1 style={{ margin: "0 0 16px", fontSize: "clamp(20px,4vw,30px)", fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 1.15, color: "#fff" }}>{article.title}</h1>
 
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}>
-            <Avatar initials={article.author_name.split(" ").map(w => w[0]).slice(0, 2).join("")} />
+            <Avatar initials={article.author_name.split(" ").map(w => w[0]).slice(0, 2).join("")} photo={article.author_photo} />
             <div>
               <div style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.8)" }}>{article.author_name}</div>
               {article.author_role && <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)" }}>{article.author_role}</div>}
@@ -381,7 +407,7 @@ function PostCard({ post, onClick, delay = 0 }: { post: ArticleListItem; onClick
             <span style={{ fontSize: 10, color: "rgba(255,255,255,0.25)" }}>{post.read_time_minutes} min</span>
           </div>
           <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, lineHeight: 1.3, color: "#fff" }}>{post.title}</h3>
-          <AuthorRow name={post.author_name} role={post.author_role} />
+          <AuthorRow name={post.author_name} role={post.author_role} photo={post.author_photo} />
         </div>
         <div style={{ padding: "10px 18px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
           <span style={{ fontSize: 11, color: "rgba(255,255,255,0.3)" }}>❤️ {post.likes_count}</span>
@@ -400,6 +426,7 @@ export function BlogPage() {
   const [error, setError] = useState(false);
   const [search, setSearch] = useState("");
   const [activeSlug, setActiveSlug] = useState<string | null>(null);
+  const [activeTag, setActiveTag] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(ENDPOINTS.blog, { headers: baseHeaders("en") })
@@ -408,7 +435,10 @@ export function BlogPage() {
       .catch(() => setError(true));
   }, []);
 
-  const filtered = (posts || []).filter(p => !search || p.title.toLowerCase().includes(search.toLowerCase()));
+  const allTags = Array.from(new Map((posts || []).flatMap(p => p.tags).map(t => [t.slug, t])).values());
+  const filtered = (posts || [])
+    .filter(p => !search || p.title.toLowerCase().includes(search.toLowerCase()))
+    .filter(p => !activeTag || p.tags.some(t => t.slug === activeTag));
   const featured = (posts || []).find(p => p.is_featured);
   const rest = filtered.filter(p => p.id !== featured?.id);
 
@@ -430,6 +460,25 @@ export function BlogPage() {
             <p style={{ margin: "0 0 24px", fontSize: 15, color: "rgba(255,255,255,0.38)", maxWidth: 520, lineHeight: 1.75 }}>Reports, research, and honest stories from our work across Uzbekistan.</p>
             <input type="text" placeholder="Search posts…" value={search} onChange={e => setSearch(e.target.value)}
               style={{ width: "100%", maxWidth: 320, padding: "9px 14px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)", borderRadius: 10, color: "#fff", fontSize: 13, outline: "none" }} />
+
+            {allTags.length > 0 && (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 16 }}>
+                <button onClick={() => setActiveTag(null)} style={{
+                  padding: "6px 14px", borderRadius: 999, fontSize: 11, fontWeight: 700, letterSpacing: ".05em",
+                  cursor: "pointer", background: !activeTag ? GREEN : "rgba(255,255,255,0.04)",
+                  color: !activeTag ? "#000" : "rgba(255,255,255,0.5)",
+                  border: `1px solid ${!activeTag ? GREEN : "rgba(255,255,255,0.09)"}`,
+                }}>All</button>
+                {allTags.map(t => (
+                  <button key={t.slug} onClick={() => setActiveTag(t.slug === activeTag ? null : t.slug)} style={{
+                    padding: "6px 14px", borderRadius: 999, fontSize: 11, fontWeight: 700, letterSpacing: ".05em",
+                    cursor: "pointer", background: activeTag === t.slug ? GREEN : "rgba(255,255,255,0.04)",
+                    color: activeTag === t.slug ? "#000" : "rgba(255,255,255,0.5)",
+                    border: `1px solid ${activeTag === t.slug ? GREEN : "rgba(255,255,255,0.09)"}`,
+                  }}>{t.name}</button>
+                ))}
+              </div>
+            )}
           </div>
         </FadeIn>
 
@@ -459,7 +508,7 @@ export function BlogPage() {
               <div style={{ padding: "32px 28px", display: "flex", flexDirection: "column", justifyContent: "center", gap: 6 }}>
                 <CatBadge cat={featured.tags[0]?.name || "Featured"} />
                 <h2 style={{ margin: "8px 0", fontSize: "clamp(18px,2.5vw,26px)", fontWeight: 800, color: "#fff" }}>{featured.title}</h2>
-                <AuthorRow name={featured.author_name} role={featured.author_role} />
+                <AuthorRow name={featured.author_name} role={featured.author_role} photo={featured.author_photo} />
                 <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginTop: 10 }}>❤️ {featured.likes_count} · 💬 {featured.comments_count}</div>
               </div>
             </div>
