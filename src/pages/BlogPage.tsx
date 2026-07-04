@@ -19,7 +19,7 @@ interface ArticleListItem {
 }
 interface GalleryImage { id: number; image: string; }
 interface ArticleDetail {
-  id: number; title: string; slug: string; cover_image: string | null; content: string;
+  id: number; title: string; slug: string; cover_image: string | null; content: string | null;
   author_name: string; author_role: string | null; author_photo: string | null; tags: Tag[]; read_time_minutes: number;
   likes_count: number; created_at: string; comments: CommentNode[];
   video: string | null; video_url: string | null; gallery_images: GalleryImage[];
@@ -351,9 +351,11 @@ function ArticleModal({ slug, onClose }: { slug: string; onClose: () => void }) 
           <ArticleVideo video={article.video} videoUrl={article.video_url} />
           <PhotoGallery images={article.gallery_images} />
 
-          <div style={{ fontSize: 15, color: "rgba(255,255,255,0.65)", lineHeight: 1.85, marginBottom: 28 }}>
-            {article.content.split("\n\n").map((para, i) => <p key={i} style={{ marginBottom: 18 }}>{para}</p>)}
-          </div>
+          {article.content && (
+            <div style={{ fontSize: 15, color: "rgba(255,255,255,0.65)", lineHeight: 1.85, marginBottom: 28 }}>
+              {article.content.split("\n\n").map((para, i) => <p key={i} style={{ marginBottom: 18 }}>{para}</p>)}
+            </div>
+          )}
 
           {article.tags.length > 0 && (
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 24 }}>
