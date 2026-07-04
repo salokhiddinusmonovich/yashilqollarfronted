@@ -18,7 +18,7 @@ export const NavbarBrand = () => {
             }}>
                 <img
                     src={logoImg}
-                    alt="Yashil Qo'llar MUN"
+                    alt="Yashil Qo'llar"
                     style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                 />
             </div>
@@ -26,7 +26,7 @@ export const NavbarBrand = () => {
                 className="hidden sm:block box-border caret-transparent tracking-[0.672px] leading-[26.88px] min-w-0 outline-[3px] no-underline truncate md:text-xl md:tracking-[0.8px] md:leading-8"
                 style={{ fontSize: "clamp(12px, 3.4vw, 16.8px)", color: "#ffffff" }}
             >
-                Yashil Qo'llar MUN
+                Yashil Qo'llar
             </span>
         </Link>
     );

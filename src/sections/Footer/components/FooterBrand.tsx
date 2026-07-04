@@ -10,11 +10,11 @@ export const FooterBrand = () => {
             >
                 <img
                     src={logoImg}
-                    alt="Yashil Qo'llar MUN"
+                    alt="Yashil Qo'llar"
                     className="box-border caret-transparent h-[26px] max-w-full min-h-[auto] min-w-[auto] outline-[3px] no-underline align-baseline w-[26px]"
                 />
                 <span className="box-border caret-transparent block font-black tracking-[0.96px] min-h-[auto] min-w-[auto] outline-[3px] no-underline uppercase font-montserrat">
-                    Yashil Qo'llar MUN
+                    Yashil Qo'llar
                 </span>
             </a>
             <p className="box-border caret-transparent text-stone-500 text-[12.8px] leading-[20.48px] max-w-[260px] min-h-[auto] min-w-[auto] outline-[3px] no-underline mb-4">
