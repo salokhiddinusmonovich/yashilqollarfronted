@@ -2,22 +2,28 @@
 //
 // Единая точка правды для адреса бэкенда.
 // На Vercel задаётся через переменную окружения VITE_API_BASE
-// (Project Settings → Environment Variables).
+// (Project Settings → Environments → [Production/Preview/Development] → Environment Variables).
 // Локально можно положить .env файл рядом с package.json:
 //
-//   VITE_API_BASE=https://chug-subpar-graves.ngrok-free.dev
+//   VITE_API_BASE=http://173.249.19.32:8000
 //
-// Если переменная не задана — используется текущий ngrok-адрес как fallback.
+// (или на https://api.yashilqollar.uz, если уже настроен на этом IP)
+//
+// Если переменная не задана — используется реальный прод-бэкенд как fallback.
 
 export const API_BASE =
     import.meta.env.VITE_API_BASE?.replace(/\/$/, "") ||
-    "https://chug-subpar-graves.ngrok-free.dev";
+    "https://api.yashilqollar.uz";
 
 /* ─────────────────────────────────────────
-   СХЕМА ПУТЕЙ БЭКЕНДА (без /api/, без /auth/)
-   Подтверждено curl на localhost:8000:
+   СХЕМА ПУТЕЙ БЭКЕНДА (без /api/, без /auth/ —
+   /api/docs/ это ТОЛЬКО путь для Swagger-документации,
+   сами эндпоинты ниже префикса не имеют)
 
-     POST  /login/
+     POST  /login/                 (Telegram widget)
+     POST  /register/              (email + password)          НОВОЕ
+     POST  /login/password/        (email + password)          НОВОЕ
+     POST  /login/google/          (Google id_token)            НОВОЕ
      POST  /logout/
      POST  /token/refresh/
      GET   /me/            (PATCH тоже)
@@ -30,6 +36,9 @@ export const API_BASE =
 ───────────────────────────────────────── */
 export const ENDPOINTS = {
     login: `${API_BASE}/login/`,
+    register: `${API_BASE}/register/`,
+    loginPassword: `${API_BASE}/login/password/`,
+    loginGoogle: `${API_BASE}/login/google/`,
     logout: `${API_BASE}/logout/`,
     tokenRefresh: `${API_BASE}/token/refresh/`,
     me: `${API_BASE}/me/`,
@@ -41,15 +50,18 @@ export const ENDPOINTS = {
     commentLike: (id: number | string) => `${API_BASE}/comment/${id}/like/`,
     loginToken: `${API_BASE}/login/token/`,
     loginTokenStatus: (token: string) => `${API_BASE}/login/token/${token}/`,
+    projects: `${API_BASE}/projects/`,
+    projectDetail: (id: number | string) => `${API_BASE}/projects/${id}/`,
+    projectJoin: (id: number | string) => `${API_BASE}/projects/${id}/join/`,
 } as const;
 
 /**
  * Заголовки, обязательные почти для каждого запроса:
  * - Accept-Language: чтобы бэкенд вернул текст на нужном языке
- * - ngrok-skip-browser-warning: чтобы бесплатный ngrok не подсовывал
- *   HTML-заглушку вместо JSON (актуально, пока бэкенд за ngrok;
- *   после переезда на настоящий домен этот заголовок можно убрать,
- *   он просто будет игнорироваться сервером — не критично оставлять).
+ * - ngrok-skip-browser-warning: раньше требовался для бесплатного ngrok-туннеля.
+ *   Теперь бэкенд на реальном домене — заголовок безвреден (сервер его просто
+ *   игнорирует), но если хочешь окончательно убрать зависимость от ngrok-эпохи,
+ *   можешь удалить эту строку.
  */
 export function baseHeaders(lang: string, extra?: Record<string, string>) {
     return {
@@ -70,14 +82,16 @@ export function absMediaUrl(path: string | null): string | null {
 /**
  * Приводит ссылку на медиа-файл в "рабочее" состояние:
  * 1. Строит абсолютный URL, если бэкенд отдал относительный путь.
- * 2. Форсирует https — если бэкенд (через ngrok) вернул http://,
- *    браузер на HTTPS-странице (Vercel) тихо блокирует такую картинку
- *    как Mixed Content, без явной ошибки в консоли.
- * 3. Добавляет query-параметр ngrok-skip-browser-warning — тег <img>
- *    не может отправлять кастомные заголовки (в отличие от fetch),
- *    поэтому это единственный способ обойти HTML-заглушку ngrok "Visit Site".
- *
- * Используй эту функцию для ЛЮБОГО <img src> с бэкенда, а не только в TeamPage.
+ * 2. Форсирует https — если бэкенд вернул http:// (например, всё ещё отдаёт
+ *    ссылки на IP без SSL), браузер на HTTPS-странице (Vercel) тихо
+ *    блокирует такую картинку как Mixed Content, без явной ошибки в консоли.
+ *    ⚠️ Если бэкенд реально доступен только по http://173.249.19.32:8000
+ *    (ещё без SSL-сертификата на домене), эта принудительная замена на
+ *    https сломает картинки — тогда временно закомментируй строку ниже,
+ *    пока не будет настроен SSL на api.yashilqollar.uz (например, через
+ *    Let's Encrypt/Certbot или прокси типа Nginx/Caddy).
+ * 3. Добавляет query-параметр ngrok-skip-browser-warning — безвреден на
+ *    реальном домене, оставлен для обратной совместимости.
  */
 export function fixMediaUrl(path: string | null): string | null {
     let url = absMediaUrl(path);

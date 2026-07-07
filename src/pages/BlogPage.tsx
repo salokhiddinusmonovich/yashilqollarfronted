@@ -10,23 +10,40 @@ const DARK = "#060606";
 ───────────────────────────────────────── */
 interface Tag { id: number; name: string; slug: string; }
 interface CommentNode {
-  id: number; user_name: string; text: string; likes_count: number; created_at: string; replies: CommentNode[];
+  id: number; user_id: number; user_name: string; user_photo: string | null; text: string;
+  likes_count: number; is_liked_by_me: boolean; created_at: string; replies: CommentNode[];
 }
 interface ArticleListItem {
   id: number; title: string; slug: string; cover_image: string | null; tags: Tag[];
-  read_time_minutes: number; likes_count: number; comments_count: number; created_at: string; is_featured: boolean;
+  read_time_minutes: number; likes_count: number; is_liked_by_me: boolean; comments_count: number; created_at: string; is_featured: boolean;
   author_name: string; author_role: string | null; author_photo: string | null; has_video: boolean;
 }
 interface GalleryImage { id: number; image: string; }
 interface ArticleDetail {
   id: number; title: string; slug: string; cover_image: string | null; content: string | null;
   author_name: string; author_role: string | null; author_photo: string | null; tags: Tag[]; read_time_minutes: number;
-  likes_count: number; created_at: string; comments: CommentNode[];
+  likes_count: number; is_liked_by_me: boolean; created_at: string; comments: CommentNode[];
   video: string | null; video_url: string | null; gallery_images: GalleryImage[];
+}
+interface EcoProjectItem {
+  id: number; title: string; description: string | null; date: string; location_name: string;
+  photo: string | null; gallery_images: GalleryImage[]; is_active: boolean; max_participants: number;
+  participants_count: number; region: string; region_display: string; is_joined: boolean; chat_link: string | null;
 }
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+}
+
+function timeAgo(iso: string) {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins}m`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d`;
+  return formatDate(iso);
 }
 
 function getAccessToken() { return localStorage.getItem("yq_access_token"); }
@@ -42,6 +59,24 @@ function youtubeEmbedUrl(url: string): string | null {
 }
 
 /* ─────────────────────────────────────────
+   TOAST — заменяет alert(), не блокирует, вписан в дизайн
+───────────────────────────────────────── */
+function Toast({ message, onDone }: { message: string; onDone: () => void }) {
+  useEffect(() => { const t = setTimeout(onDone, 2600); return () => clearTimeout(t); }, [onDone]);
+  return (
+    <div style={{
+      position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 500,
+      background: "#161616", border: "1px solid rgba(34,197,94,0.3)", borderRadius: 12,
+      padding: "12px 20px", color: "#fff", fontSize: 13, fontWeight: 600,
+      boxShadow: "0 12px 32px rgba(0,0,0,0.5)", animation: "yq-toastIn .25s cubic-bezier(.16,1,.3,1)",
+      maxWidth: "calc(100vw - 32px)", textAlign: "center",
+    }}>
+      {message}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────
    ФОНОВЫЙ CANVAS
 ───────────────────────────────────────── */
 function ForestCanvas() {
@@ -49,33 +84,61 @@ function ForestCanvas() {
   useEffect(() => {
     const canvas = ref.current!; const ctx = canvas.getContext("2d")!;
     let id: number, w: number, h: number;
-    const nodes: any[] = [], leaves: any[] = [], pulses: any[] = [];
+    const nodes: any[] = [];
     const resize = () => { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; };
     const init = () => {
-      resize(); nodes.length = 0; leaves.length = 0; pulses.length = 0;
-      for (let i = 0; i < 80; i++) nodes.push({ x: Math.random() * w, y: Math.random() * h, vx: (Math.random() - .5) * .45, vy: (Math.random() - .5) * .45, r: Math.random() * 2 + .5, a: Math.random() * .65 + .2, pulse: Math.random() * Math.PI * 2, ps: Math.random() * .028 + .01 });
-      for (let i = 0; i < 22; i++) leaves.push({ x: Math.random() * w, y: Math.random() * h + h, vx: (Math.random() - .5) * .65, vy: -(Math.random() * .85 + .28), size: Math.random() * 11 + 5, rot: Math.random() * Math.PI * 2, vrot: (Math.random() - .5) * .022, a: Math.random() * .36 + .12, wobble: Math.random() * Math.PI * 2, ws: Math.random() * .022 + .008, hue: Math.random() * 30 });
+      resize(); nodes.length = 0;
+      for (let i = 0; i < 55; i++) nodes.push({ x: Math.random() * w, y: Math.random() * h, vx: (Math.random() - .5) * .35, vy: (Math.random() - .5) * .35, r: Math.random() * 1.8 + .5, a: Math.random() * .5 + .15 });
     };
-    const drawLeaf = (x: number, y: number, size: number, rot: number, alpha: number, hue: number) => { ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.globalAlpha = alpha; ctx.beginPath(); ctx.moveTo(0, -size); ctx.bezierCurveTo(size * .7, -size * .6, size * .7, size * .5, 0, size * .35); ctx.bezierCurveTo(-size * .7, size * .5, -size * .7, -size * .6, 0, -size); const g = ctx.createLinearGradient(0, -size, 0, size * .35); g.addColorStop(0, `hsl(${142 + hue},80%,52%)`); g.addColorStop(1, `hsl(${155 + hue},72%,38%)`); ctx.fillStyle = g; ctx.fill(); ctx.beginPath(); ctx.moveTo(0, -size * .85); ctx.quadraticCurveTo(size * .08, 0, 0, size * .3); ctx.strokeStyle = "rgba(255,255,255,0.22)"; ctx.lineWidth = .85; ctx.stroke(); ctx.restore(); ctx.globalAlpha = 1; };
-    let frame = 0;
-    const tick = () => { frame++; ctx.clearRect(0, 0, w, h); for (let i = 0; i < nodes.length; i++)for (let j = i + 1; j < nodes.length; j++) { const dx = nodes[i].x - nodes[j].x, dy = nodes[i].y - nodes[j].y, d = Math.sqrt(dx * dx + dy * dy); if (d < 155) { ctx.beginPath(); ctx.moveTo(nodes[i].x, nodes[i].y); ctx.lineTo(nodes[j].x, nodes[j].y); ctx.strokeStyle = `rgba(34,197,94,${.17 * (1 - d / 155)})`; ctx.lineWidth = .78; ctx.stroke(); } } for (const n of nodes) { n.pulse += n.ps; n.x += n.vx; n.y += n.vy; if (n.x < 0) n.x = w; if (n.x > w) n.x = 0; if (n.y < 0) n.y = h; if (n.y > h) n.y = 0; const pa = n.a * (.65 + .35 * Math.sin(n.pulse)); const grd = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r * 5); grd.addColorStop(0, `rgba(34,197,94,${pa * .55})`); grd.addColorStop(1, "transparent"); ctx.beginPath(); ctx.arc(n.x, n.y, n.r * 5, 0, Math.PI * 2); ctx.fillStyle = grd; ctx.fill(); ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2); ctx.fillStyle = `rgba(34,197,94,${pa})`; ctx.fill(); } for (const l of leaves) { l.wobble += l.ws; l.x += l.vx + Math.sin(l.wobble) * .5; l.y += l.vy; l.rot += l.vrot; if (l.y < -30) { l.y = h + 30; l.x = Math.random() * w; } drawLeaf(l.x, l.y, l.size, l.rot, l.a, l.hue); } id = requestAnimationFrame(tick); };
+    const tick = () => {
+      ctx.clearRect(0, 0, w, h);
+      for (const n of nodes) {
+        n.x += n.vx; n.y += n.vy;
+        if (n.x < 0) n.x = w; if (n.x > w) n.x = 0;
+        if (n.y < 0) n.y = h; if (n.y > h) n.y = 0;
+        ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(34,197,94,${n.a})`; ctx.fill();
+      }
+      id = requestAnimationFrame(tick);
+    };
     init(); tick(); window.addEventListener("resize", init);
     return () => { cancelAnimationFrame(id); window.removeEventListener("resize", init); };
   }, []);
-  return <canvas ref={ref} style={{ position: "fixed", inset: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 0 }} />;
+  return <canvas ref={ref} style={{ position: "fixed", inset: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 0, opacity: 0.5 }} />;
 }
 
 function FadeIn({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
   const ref = useRef<HTMLDivElement>(null); const [vis, setVis] = useState(false);
   useEffect(() => { const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setVis(true); obs.disconnect(); } }, { threshold: 0.06 }); if (ref.current) obs.observe(ref.current); return () => obs.disconnect(); }, []);
-  return <div ref={ref} style={{ opacity: vis ? 1 : 0, transform: vis ? "translateY(0)" : "translateY(22px)", transition: `opacity .75s cubic-bezier(.16,1,.3,1) ${delay}ms,transform .75s cubic-bezier(.16,1,.3,1) ${delay}ms` }}>{children}</div>;
+  return <div ref={ref} style={{ opacity: vis ? 1 : 0, transform: vis ? "translateY(0)" : "translateY(18px)", transition: `opacity .6s cubic-bezier(.16,1,.3,1) ${delay}ms,transform .6s cubic-bezier(.16,1,.3,1) ${delay}ms` }}>{children}</div>;
 }
 
-function Avatar({ initials, size = 32, photo }: { initials: string; size?: number; photo?: string | null }) {
+function Avatar({ initials, size = 32, photo, onClick }: { initials: string; size?: number; photo?: string | null; onClick?: () => void }) {
   const photoUrl = fixMediaUrl(photo || null);
   return (
-    <div style={{ width: size, height: size, borderRadius: "50%", background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.35)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: size * .32, fontWeight: 700, color: GREEN, flexShrink: 0, overflow: "hidden" }}>
+    <div onClick={onClick} style={{ width: size, height: size, borderRadius: "50%", background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.35)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: size * .32, fontWeight: 700, color: GREEN, flexShrink: 0, overflow: "hidden", cursor: onClick ? "pointer" : "default" }}>
       {photoUrl ? <img src={photoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : initials}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────
+   МИНИ-ПРОФИЛЬ АВТОРА — то, что реально доступно с бэкенда
+   (name/role/photo). Полноценная страница профиля для произвольного
+   юзера потребует отдельного публичного эндпоинта — сейчас на бэке
+   есть только /me/ (для себя) и /team/ (для команды). Для авторов
+   статей (все — is_admin=True) это обычно те же люди, что в /team/.
+───────────────────────────────────────── */
+function AuthorPopover({ name, role, photo, onClose }: { name: string; role: string | null; photo?: string | null; onClose: () => void }) {
+  const initials = (name || "?").split(" ").filter(Boolean).map(w => w[0]).slice(0, 2).join("").toUpperCase();
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: "#0f0f0f", border: "1px solid rgba(34,197,94,0.25)", borderRadius: 18, padding: 28, width: "100%", maxWidth: 300, textAlign: "center" }}>
+        <Avatar initials={initials} photo={photo} size={72} />
+        <div style={{ fontSize: 17, fontWeight: 700, color: "#fff", marginTop: 14 }}>{name || "Yashil Qo'llar"}</div>
+        {role && <div style={{ fontSize: 12.5, color: GREEN, fontWeight: 600, marginTop: 4 }}>{role}</div>}
+        <button onClick={onClose} style={{ marginTop: 20, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)", padding: "8px 20px", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>Close</button>
+      </div>
     </div>
   );
 }
@@ -84,64 +147,63 @@ function CatBadge({ cat }: { cat: string }) {
   return <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", padding: "3px 9px", borderRadius: 5, background: `${GREEN}14`, color: GREEN, border: `1px solid ${GREEN}28` }}>{cat}</span>;
 }
 
-function CoverOrPlaceholder({ cover, hasVideo, hov, title }: { cover: string | null; hasVideo: boolean; hov: boolean; title: string }) {
-  if (cover) {
-    return (
-      <div style={{ width: "100%", height: 180, overflow: "hidden", flexShrink: 0, position: "relative" }}>
-        <img src={fixMediaUrl(cover) || ""} alt={title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", transform: hov ? "scale(1.04)" : "scale(1)", transition: "transform .4s ease" }} />
-        {hasVideo && (
-          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.25)" }}>
-            <div style={{ width: 42, height: 42, borderRadius: "50%", background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.3)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(4px)" }}>▶️</div>
-          </div>
-        )}
-      </div>
-    );
-  }
-  if (hasVideo) {
-    return (
-      <div style={{ width: "100%", height: 180, flexShrink: 0, background: "linear-gradient(135deg, rgba(34,197,94,0.18), rgba(6,6,6,1))", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ width: 46, height: 46, borderRadius: "50%", background: "rgba(34,197,94,0.15)", border: `1.5px solid ${GREEN}55`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>▶️</div>
-      </div>
-    );
-  }
-  return null;
-}
-
-function AuthorRow({ name, role, photo }: { name: string; role: string | null; photo?: string | null }) {
-  if (!name) return null;
-  const initials = name.split(" ").filter(Boolean).map(w => w[0]).slice(0, 2).join("").toUpperCase();
+/* Большое сердце, всплывающее по центру медиа при двойном тапе — как в Instagram */
+function LikeBurst({ show }: { show: number }) {
+  if (!show) return null;
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-      <Avatar initials={initials} size={22} photo={photo} />
-      <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: 11.5, fontWeight: 600, color: "rgba(255,255,255,0.6)", lineHeight: 1.2 }}>{name}</div>
-        {role && <div style={{ fontSize: 10, color: "rgba(255,255,255,0.32)" }}>{role}</div>}
-      </div>
+    <div key={show} style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
+      <svg width="86" height="86" viewBox="0 0 24 24" style={{ animation: "yq-heartPop .7s ease forwards" }}>
+        <path d="M12 21s-7.5-4.6-10-9.1C.5 8.6 2 5 5.6 5c2 0 3.4 1.1 4.4 2.6C11 6.1 12.4 5 14.4 5 18 5 19.5 8.6 22 11.9 19.5 16.4 12 21 12 21z" fill="#fff" />
+      </svg>
     </div>
   );
 }
 
 /* ─────────────────────────────────────────
-   ГАЛЕРЕЯ ФОТО — карусель с точками и стрелками
+   МЕДИА ПОСТА — фото/видео с двойным тапом для лайка
+───────────────────────────────────────── */
+function PostMedia({ cover, hasVideo, title, onDoubleTap, burstKey }: { cover: string | null; hasVideo: boolean; title: string; onDoubleTap: () => void; burstKey: number }) {
+  const lastTap = useRef(0);
+  const handleTap = () => {
+    const now = Date.now();
+    if (now - lastTap.current < 320) onDoubleTap();
+    lastTap.current = now;
+  };
+
+  if (!cover && !hasVideo) return null;
+
+  return (
+    <div onClick={handleTap} style={{ width: "100%", aspectRatio: "4/5", position: "relative", background: "#111", cursor: "pointer", userSelect: "none" }}>
+      {cover ? (
+        <img src={fixMediaUrl(cover) || ""} alt={title} draggable={false} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+      ) : (
+        <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, rgba(34,197,94,0.18), rgba(6,6,6,1))" }} />
+      )}
+      {hasVideo && (
+        <div style={{ position: "absolute", top: 12, right: 12, width: 30, height: 30, borderRadius: "50%", background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>▶</div>
+      )}
+      <LikeBurst show={burstKey} />
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────
+   ГАЛЕРЕЯ ФОТО — карусель с точками и стрелками (внутри модалки)
 ───────────────────────────────────────── */
 function PhotoGallery({ images }: { images: GalleryImage[] }) {
   const [idx, setIdx] = useState(0);
   if (images.length === 0) return null;
-
   const go = (dir: number) => setIdx(i => (i + dir + images.length) % images.length);
-
   return (
     <div style={{ marginBottom: 24 }}>
       <div style={{ position: "relative", width: "100%", aspectRatio: "16/10", borderRadius: 14, overflow: "hidden", background: "#111" }}>
         <img src={fixMediaUrl(images[idx].image) || ""} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
         {images.length > 1 && (
           <>
-            <button onClick={() => go(-1)} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", width: 34, height: 34, borderRadius: "50%", background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", cursor: "pointer", backdropFilter: "blur(6px)" }}>‹</button>
-            <button onClick={() => go(1)} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", width: 34, height: 34, borderRadius: "50%", background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", cursor: "pointer", backdropFilter: "blur(6px)" }}>›</button>
+            <button onClick={() => go(-1)} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", width: 34, height: 34, borderRadius: "50%", background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", cursor: "pointer" }}>‹</button>
+            <button onClick={() => go(1)} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", width: 34, height: 34, borderRadius: "50%", background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", cursor: "pointer" }}>›</button>
             <div style={{ position: "absolute", bottom: 10, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 6 }}>
-              {images.map((_, i) => (
-                <span key={i} onClick={() => setIdx(i)} style={{ width: i === idx ? 18 : 6, height: 6, borderRadius: 4, background: i === idx ? GREEN : "rgba(255,255,255,0.4)", cursor: "pointer", transition: "all .2s" }} />
-              ))}
+              {images.map((_, i) => <span key={i} onClick={() => setIdx(i)} style={{ width: i === idx ? 18 : 6, height: 6, borderRadius: 4, background: i === idx ? GREEN : "rgba(255,255,255,0.4)", cursor: "pointer" }} />)}
             </div>
           </>
         )}
@@ -150,32 +212,12 @@ function PhotoGallery({ images }: { images: GalleryImage[] }) {
   );
 }
 
-/* ─────────────────────────────────────────
-   ВИДЕО — файл или YouTube-embed
-───────────────────────────────────────── */
 function ArticleVideo({ video, videoUrl }: { video: string | null; videoUrl: string | null }) {
-  if (video) {
-    const src = fixMediaUrl(video);
-    return (
-      <div style={{ marginBottom: 24, borderRadius: 14, overflow: "hidden", background: "#000" }}>
-        <video src={src || ""} controls style={{ width: "100%", display: "block", maxHeight: 420 }} />
-      </div>
-    );
-  }
+  if (video) return <div style={{ marginBottom: 24, borderRadius: 14, overflow: "hidden", background: "#000" }}><video src={fixMediaUrl(video) || ""} controls style={{ width: "100%", display: "block", maxHeight: 420 }} /></div>;
   if (videoUrl) {
     const embed = youtubeEmbedUrl(videoUrl);
-    if (embed) {
-      return (
-        <div style={{ marginBottom: 24, borderRadius: 14, overflow: "hidden", aspectRatio: "16/9" }}>
-          <iframe src={embed} title="Video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen style={{ width: "100%", height: "100%", border: "none" }} />
-        </div>
-      );
-    }
-    return (
-      <a href={videoUrl} target="_blank" rel="noreferrer" style={{ display: "block", marginBottom: 24, padding: "14px 18px", borderRadius: 12, background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)", color: GREEN, textDecoration: "none", fontSize: 13, fontWeight: 600 }}>
-        ▶️ Watch video
-      </a>
-    );
+    if (embed) return <div style={{ marginBottom: 24, borderRadius: 14, overflow: "hidden", aspectRatio: "16/9" }}><iframe src={embed} title="Video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen style={{ width: "100%", height: "100%", border: "none" }} /></div>;
+    return <a href={videoUrl} target="_blank" rel="noreferrer" style={{ display: "block", marginBottom: 24, padding: "14px 18px", borderRadius: 12, background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)", color: GREEN, textDecoration: "none", fontSize: 13, fontWeight: 600 }}>▶ Watch video</a>;
   }
   return null;
 }
@@ -183,25 +225,37 @@ function ArticleVideo({ video, videoUrl }: { video: string | null; videoUrl: str
 /* ─────────────────────────────────────────
    КОММЕНТАРИИ — рекурсивное дерево
 ───────────────────────────────────────── */
-function CommentItem({ comment, onLike, onReply, depth = 0 }: { comment: CommentNode; onLike: (id: number) => void; onReply: (parentId: number, text: string) => void; depth?: number }) {
+function CommentItem({ comment, onReply, onAuthorClick, onNotice, depth = 0 }: {
+  comment: CommentNode; onReply: (parentId: number, text: string) => void;
+  onAuthorClick: (name: string) => void; onNotice: (msg: string) => void; depth?: number;
+}) {
+  const { isLoggedIn } = useAuth();
   const [showReply, setShowReply] = useState(false);
   const [replyText, setReplyText] = useState("");
+  const [liked, setLiked] = useState(comment.is_liked_by_me);
+  const [likeCount, setLikeCount] = useState(comment.likes_count);
   const submitReply = () => { if (!replyText.trim()) return; onReply(comment.id, replyText); setReplyText(""); setShowReply(false); };
+
+  const toggleLike = () => {
+    if (!isLoggedIn) { onNotice("Sign in to like comments."); return; }
+    fetch(ENDPOINTS.commentLike(comment.id), { method: "POST", headers: authHeaders() })
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then((data: { likes_count: number; liked: boolean }) => { setLiked(data.liked); setLikeCount(data.likes_count); })
+      .catch(() => onNotice("Couldn't update your like. Try again."));
+  };
 
   return (
     <div style={{ marginLeft: depth > 0 ? 20 : 0, borderLeft: depth > 0 ? "1px solid rgba(34,197,94,0.15)" : "none", paddingLeft: depth > 0 ? 14 : 0 }}>
       <div style={{ display: "flex", gap: 10, marginBottom: 8 }}>
-        <Avatar initials={comment.user_name.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase()} size={28} />
+        <Avatar initials={comment.user_name.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase()} photo={comment.user_photo} size={28} onClick={() => onAuthorClick(comment.user_name)} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.8)" }}>{comment.user_name}</span>
-            <span style={{ fontSize: 11, color: "rgba(255,255,255,0.25)" }}>{formatDate(comment.created_at)}</span>
+            <span onClick={() => onAuthorClick(comment.user_name)} style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.8)", cursor: "pointer" }}>{comment.user_name}</span>
+            <span style={{ fontSize: 11, color: "rgba(255,255,255,0.25)" }}>{timeAgo(comment.created_at)}</span>
           </div>
           <p style={{ margin: "0 0 8px", fontSize: 13, color: "rgba(255,255,255,0.6)", lineHeight: 1.65 }}>{comment.text}</p>
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <button onClick={() => onLike(comment.id)} style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.35)", fontSize: 11, fontWeight: 600, padding: 0 }}>
-              🤍 {comment.likes_count}
-            </button>
+            <button onClick={toggleLike} style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "none", cursor: "pointer", color: liked ? GREEN : "rgba(255,255,255,0.35)", fontSize: 11, fontWeight: 600, padding: 0 }}>{liked ? "♥" : "♡"} {likeCount}</button>
             {depth < 2 && <button onClick={() => setShowReply(s => !s)} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.35)", fontSize: 11, fontWeight: 600, padding: 0 }}>Reply</button>}
           </div>
           {showReply && (
@@ -216,7 +270,7 @@ function CommentItem({ comment, onLike, onReply, depth = 0 }: { comment: Comment
           )}
         </div>
       </div>
-      {comment.replies.map(r => <CommentItem key={r.id} comment={r} onLike={onLike} onReply={onReply} depth={depth + 1} />)}
+      {comment.replies.map(r => <CommentItem key={r.id} comment={r} onReply={onReply} onAuthorClick={onAuthorClick} onNotice={onNotice} depth={depth + 1} />)}
     </div>
   );
 }
@@ -224,12 +278,8 @@ function CommentItem({ comment, onLike, onReply, depth = 0 }: { comment: Comment
 function ReadingProgress({ containerRef }: { containerRef: React.RefObject<HTMLDivElement> }) {
   const [progress, setProgress] = useState(0);
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const onScroll = () => {
-      const max = el.scrollHeight - el.clientHeight;
-      setProgress(max > 0 ? Math.min(100, (el.scrollTop / max) * 100) : 0);
-    };
+    const el = containerRef.current; if (!el) return;
+    const onScroll = () => { const max = el.scrollHeight - el.clientHeight; setProgress(max > 0 ? Math.min(100, (el.scrollTop / max) * 100) : 0); };
     el.addEventListener("scroll", onScroll);
     return () => el.removeEventListener("scroll", onScroll);
   }, [containerRef]);
@@ -241,21 +291,24 @@ function ReadingProgress({ containerRef }: { containerRef: React.RefObject<HTMLD
 }
 
 /* ─────────────────────────────────────────
-   МОДАЛКА СТАТЬИ
+   МОДАЛКА СТАТЬИ (полный вид с комментариями)
 ───────────────────────────────────────── */
-function ArticleModal({ slug, onClose }: { slug: string; onClose: () => void }) {
+function ArticleModal({ slug, onClose, onNotice, onAuthorClick }: {
+  slug: string; onClose: () => void; onNotice: (msg: string) => void; onAuthorClick: (name: string, role: string | null, photo?: string | null) => void;
+}) {
   const { isLoggedIn } = useAuth();
   const [article, setArticle] = useState<ArticleDetail | null>(null);
   const [error, setError] = useState(false);
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [commentText, setCommentText] = useState("");
+  const [burst, setBurst] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch(ENDPOINTS.blogDetail(slug), { headers: baseHeaders("en") })
       .then(res => { if (!res.ok) throw new Error(); return res.json(); })
-      .then((data: ArticleDetail) => { setArticle(data); setLikeCount(data.likes_count); })
+      .then((data: ArticleDetail) => { setArticle(data); setLikeCount(data.likes_count); setLiked(data.is_liked_by_me); })
       .catch(() => setError(true));
   }, [slug]);
 
@@ -266,40 +319,34 @@ function ArticleModal({ slug, onClose }: { slug: string; onClose: () => void }) 
     return () => { document.removeEventListener("keydown", esc); document.body.style.overflow = ""; };
   }, [onClose]);
 
-  const handleLike = async () => {
-    if (!isLoggedIn) { alert("Войди через Telegram, чтобы лайкать статьи."); return; }
-    if (liked) return;
-    setLiked(true); setLikeCount(c => c + 1);
-    try {
-      await fetch(ENDPOINTS.blogLike(slug), { method: "POST", headers: authHeaders() });
-    } catch { setLiked(false); setLikeCount(c => c - 1); }
-  };
-
-  const handleLikeComment = async (id: number) => {
-    if (!isLoggedIn) { alert("Войди через Telegram, чтобы лайкать комментарии."); return; }
-    try { await fetch(ENDPOINTS.commentLike(id), { method: "POST", headers: authHeaders() }); } catch { }
+  const doLike = () => {
+    if (!isLoggedIn) { onNotice("Sign in to like posts."); return; }
+    if (!liked) setBurst(k => k + 1);
+    fetch(ENDPOINTS.blogLike(slug), { method: "POST", headers: authHeaders() })
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then((data: { likes_count: number; liked: boolean }) => { setLiked(data.liked); setLikeCount(data.likes_count); })
+      .catch(() => onNotice("Couldn't update your like. Try again."));
   };
 
   const submitComment = async (text: string, parent: number | null = null) => {
-    if (!isLoggedIn) { alert("Войди через Telegram, чтобы комментировать."); return; }
+    if (!isLoggedIn) { onNotice("Sign in to comment."); return; }
+    if (!text.trim()) return;
     try {
-      const res = await fetch(ENDPOINTS.blogComment(slug), {
-        method: "POST",
-        headers: authHeaders(),
-        body: JSON.stringify({ text, parent }),
-      });
+      const res = await fetch(ENDPOINTS.blogComment(slug), { method: "POST", headers: authHeaders(), body: JSON.stringify({ text, parent }) });
       if (res.ok) {
         const refreshed = await fetch(ENDPOINTS.blogDetail(slug), { headers: baseHeaders("en") });
         if (refreshed.ok) setArticle(await refreshed.json());
         setCommentText("");
+      } else {
+        onNotice("Couldn't post your comment. Try again.");
       }
-    } catch { }
+    } catch { onNotice("Network error. Check your connection."); }
   };
 
   if (error) {
     return (
       <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.88)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <p style={{ color: "rgba(255,255,255,0.5)" }}>Не удалось загрузить статью.</p>
+        <p style={{ color: "rgba(255,255,255,0.5)" }}>Couldn't load this post.</p>
       </div>
     );
   }
@@ -313,78 +360,69 @@ function ArticleModal({ slug, onClose }: { slug: string; onClose: () => void }) 
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.88)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-      <div ref={scrollRef} onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 760, maxHeight: "92vh", overflowY: "auto", background: "#0f0f0f", borderRadius: "20px 20px 0 0", border: "1px solid rgba(34,197,94,0.2)", borderBottom: "none", animation: "slideUp .3s cubic-bezier(.16,1,.3,1)" }}>
-        <style>{`@keyframes slideUp{from{transform:translateY(60px);opacity:0}to{transform:translateY(0);opacity:1}} @keyframes yq-spin{to{transform:rotate(360deg)}}`}</style>
+      <div ref={scrollRef} onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 600, maxHeight: "92vh", overflowY: "auto", background: "#0f0f0f", borderRadius: "20px 20px 0 0", border: "1px solid rgba(34,197,94,0.2)", borderBottom: "none", animation: "slideUp .3s cubic-bezier(.16,1,.3,1)" }}>
         <ReadingProgress containerRef={scrollRef} />
 
-        {article.cover_image && !article.video && !article.video_url && (
-          <div style={{ width: "100%", height: 260, overflow: "hidden", position: "relative", flexShrink: 0 }}>
-            <img src={fixMediaUrl(article.cover_image) || ""} alt={article.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top,rgba(15,15,15,1) 0%,rgba(15,15,15,0.3) 50%,transparent 100%)" }} />
-            <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, background: "rgba(0,0,0,0.6)", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", borderRadius: 8, width: 34, height: 34, cursor: "pointer", fontSize: 16 }}>✕</button>
+        {/* IG-style header */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 18px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+          <Avatar initials={(article.author_name || "?").split(" ").map(w => w[0]).slice(0, 2).join("")} photo={article.author_photo} onClick={() => onAuthorClick(article.author_name, article.author_role, article.author_photo)} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div onClick={() => onAuthorClick(article.author_name, article.author_role, article.author_photo)} style={{ fontSize: 13, fontWeight: 700, color: "#fff", cursor: "pointer" }}>{article.author_name || "Yashil Qo'llar"}</div>
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)" }}>{timeAgo(article.created_at)} · {article.read_time_minutes} min read</div>
           </div>
+          <button onClick={onClose} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)", borderRadius: 8, width: 30, height: 30, cursor: "pointer", fontSize: 14 }}>✕</button>
+        </div>
+
+        {article.cover_image && !article.video && !article.video_url && (
+          <PostMedia cover={article.cover_image} hasVideo={false} title={article.title} onDoubleTap={doLike} burstKey={burst} />
         )}
 
-        <div style={{ padding: "28px 28px 48px", position: "relative" }}>
-          {(!article.cover_image || article.video || article.video_url) && (
-            <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)", borderRadius: 8, width: 32, height: 32, cursor: "pointer", fontSize: 15 }}>✕</button>
-          )}
-
-          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, marginBottom: 16 }}>
+        <div style={{ padding: "20px 18px 48px" }}>
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, marginBottom: 14 }}>
             <CatBadge cat={article.tags[0]?.name || "Article"} />
-            <span style={{ fontSize: 11, color: "rgba(255,255,255,0.3)" }}>{article.read_time_minutes} min read</span>
-            <span style={{ fontSize: 11, color: "rgba(255,255,255,0.25)" }}>{formatDate(article.created_at)}</span>
           </div>
 
-          <h1 style={{ margin: "0 0 16px", fontSize: "clamp(20px,4vw,30px)", fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 1.15, color: "#fff" }}>{article.title}</h1>
-
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}>
-            <Avatar initials={(article.author_name || "?").split(" ").map(w => w[0]).slice(0, 2).join("")} photo={article.author_photo} />
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.8)" }}>{article.author_name || "Yashil Qo'llar"}</div>
-              {article.author_role && <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)" }}>{article.author_role}</div>}
-            </div>
-          </div>
-
-          <div style={{ height: 1, background: "rgba(255,255,255,0.07)", marginBottom: 24 }} />
+          <h1 style={{ margin: "0 0 16px", fontSize: "clamp(19px,3.6vw,26px)", fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 1.2, color: "#fff" }}>{article.title}</h1>
 
           <ArticleVideo video={article.video} videoUrl={article.video_url} />
           <PhotoGallery images={article.gallery_images} />
 
           {article.content && (
-            <div style={{ fontSize: 15, color: "rgba(255,255,255,0.65)", lineHeight: 1.85, marginBottom: 28 }}>
+            <div style={{ fontSize: 15, color: "rgba(255,255,255,0.65)", lineHeight: 1.85, marginBottom: 24 }}>
               {article.content.split("\n\n").map((para, i) => <p key={i} style={{ marginBottom: 18 }}>{para}</p>)}
             </div>
           )}
 
           {article.tags.length > 0 && (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 24 }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 20 }}>
               {article.tags.map(tag => <span key={tag.id} style={{ fontSize: 11, padding: "3px 10px", borderRadius: 20, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.45)" }}>#{tag.name}</span>)}
             </div>
           )}
 
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 32 }}>
-            <button onClick={handleLike} style={{ display: "flex", alignItems: "center", gap: 7, padding: "9px 18px", borderRadius: 9, background: liked ? "rgba(34,197,94,0.12)" : "rgba(255,255,255,0.04)", border: `1px solid ${liked ? GREEN + "40" : "rgba(255,255,255,0.09)"}`, color: liked ? GREEN : "rgba(255,255,255,0.5)", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
-              {liked ? "❤️" : "🤍"} {likeCount} likes
+          {/* action row */}
+          <div style={{ display: "flex", alignItems: "center", gap: 18, padding: "8px 0 18px", borderTop: "1px solid rgba(255,255,255,0.06)", marginTop: 4 }}>
+            <button onClick={doLike} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", cursor: "pointer", color: liked ? GREEN : "rgba(255,255,255,0.6)", fontSize: 22, padding: 0 }}>
+              {liked ? "♥" : "♡"}
             </button>
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>{likeCount} likes</span>
+            <span style={{ fontSize: 13, color: "rgba(255,255,255,0.4)" }}>{article.comments.length} comments</span>
           </div>
 
-          <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: 24 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.4)", letterSpacing: ".14em", textTransform: "uppercase", marginBottom: 20 }}>
-              {article.comments.length} comments
-            </div>
-
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: 20 }}>
             <div style={{ display: "flex", gap: 10, marginBottom: 24, alignItems: "flex-start" }}>
               <Avatar initials="ME" size={30} />
               <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
-                <textarea value={commentText} onChange={e => setCommentText(e.target.value)} placeholder={isLoggedIn ? "Add a comment…" : "Войди через Telegram, чтобы комментировать"} rows={3}
+                <textarea value={commentText} onChange={e => setCommentText(e.target.value)} placeholder={isLoggedIn ? "Add a comment…" : "Sign in to comment"} rows={3}
                   style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)", borderRadius: 10, color: "#fff", fontSize: 13, padding: "10px 12px", fontFamily: "'Inter',sans-serif", outline: "none", resize: "vertical", boxSizing: "border-box" }} />
                 <button onClick={() => submitComment(commentText)} style={{ alignSelf: "flex-end", background: GREEN, border: "none", color: "#000", padding: "8px 20px", borderRadius: 8, fontSize: 12, fontWeight: 800, cursor: "pointer" }}>Post →</button>
               </div>
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-              {article.comments.map(c => <CommentItem key={c.id} comment={c} onLike={handleLikeComment} onReply={(pid, text) => submitComment(text, pid)} />)}
+              {article.comments.map(c => (
+                <CommentItem key={c.id} comment={c} onReply={(pid, text) => submitComment(text, pid)}
+                  onAuthorClick={(name) => onAuthorClick(name, null, null)} onNotice={onNotice} />
+              ))}
             </div>
           </div>
         </div>
@@ -394,26 +432,109 @@ function ArticleModal({ slug, onClose }: { slug: string; onClose: () => void }) 
 }
 
 /* ─────────────────────────────────────────
-   КАРТОЧКА ПОСТА
+   ЛЕНТА ЭКО-ПРОЕКТОВ (плоггингов) — новое, из /projects/
 ───────────────────────────────────────── */
-function PostCard({ post, onClick, delay = 0 }: { post: ArticleListItem; onClick: () => void; delay?: number }) {
-  const [hov, setHov] = useState(false);
+function EcoProjectsStrip({ onNotice }: { onNotice: (msg: string) => void }) {
+  const { isLoggedIn } = useAuth();
+  const [projects, setProjects] = useState<EcoProjectItem[] | null>(null);
+
+  useEffect(() => {
+    fetch(ENDPOINTS.projects, { headers: authHeaders() })
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then(setProjects)
+      .catch(() => setProjects([]));
+  }, []);
+
+  const join = (proj: EcoProjectItem) => {
+    if (!isLoggedIn) { onNotice("Sign in to join a project."); return; }
+    fetch(ENDPOINTS.projectJoin(proj.id), { method: "POST", headers: authHeaders() })
+      .then(res => res.ok ? onNotice(`You're on the list for "${proj.title}"!`) : Promise.reject())
+      .catch(() => onNotice("Couldn't join right now. Try again."));
+  };
+
+  if (!projects || projects.length === 0) return null;
+
+  return (
+    <FadeIn>
+      <div style={{ marginBottom: 30 }}>
+        <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: ".2em", textTransform: "uppercase", color: GREEN, marginBottom: 12 }}>Upcoming eco-projects</div>
+        <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 6, marginLeft: -16, marginRight: -16, paddingLeft: 16, paddingRight: 16 }}>
+          {projects.map(p => (
+            <div key={p.id} style={{ flex: "0 0 auto", width: 200, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, overflow: "hidden" }}>
+              <div style={{ width: "100%", height: 110, background: "#111" }}>
+                {p.photo ? <img src={fixMediaUrl(p.photo) || ""} alt={p.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : null}
+              </div>
+              <div style={{ padding: "10px 12px" }}>
+                <div style={{ fontSize: 12.5, fontWeight: 700, color: "#fff", marginBottom: 4, lineHeight: 1.3 }}>{p.title}</div>
+                <div style={{ fontSize: 10.5, color: "rgba(255,255,255,0.4)", marginBottom: 8 }}>{p.region_display} · {formatDate(p.date)}</div>
+                <button onClick={() => join(p)} disabled={p.is_joined} style={{
+                  width: "100%", padding: "6px 0", borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: p.is_joined ? "default" : "pointer",
+                  background: p.is_joined ? "rgba(34,197,94,0.1)" : GREEN, color: p.is_joined ? GREEN : "#000",
+                  border: p.is_joined ? "1px solid rgba(34,197,94,0.3)" : "none",
+                }}>
+                  {p.is_joined ? "You're in ✓" : `Join (${p.participants_count}/${p.max_participants})`}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </FadeIn>
+  );
+}
+
+
+function FeedPost({ post, onOpen, onNotice, onAuthorClick, delay = 0 }: {
+  post: ArticleListItem; onOpen: () => void; onNotice: (msg: string) => void;
+  onAuthorClick: (name: string, role: string | null, photo?: string | null) => void; delay?: number;
+}) {
+  const { isLoggedIn } = useAuth();
+  const [liked, setLiked] = useState(post.is_liked_by_me);
+  const [likeCount, setLikeCount] = useState(post.likes_count);
+  const [burst, setBurst] = useState(0);
+
+  const doLike = () => {
+    if (!isLoggedIn) { onNotice("Sign in to like posts."); return; }
+    if (!liked) setBurst(k => k + 1); // only pop the heart animation when actually liking, not unliking
+    fetch(ENDPOINTS.blogLike(post.slug), { method: "POST", headers: authHeaders() })
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then((data: { likes_count: number; liked: boolean }) => { setLiked(data.liked); setLikeCount(data.likes_count); })
+      .catch(() => onNotice("Couldn't update your like. Try again."));
+  };
+
   return (
     <FadeIn delay={delay}>
-      <div onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)} onClick={onClick}
-        style={{ background: "rgba(255,255,255,0.025)", border: `1px solid ${hov ? GREEN + "35" : "rgba(255,255,255,0.07)"}`, borderRadius: 18, overflow: "hidden", cursor: "pointer", transform: hov ? "translateY(-4px)" : "none", transition: "all .25s ease", backdropFilter: "blur(8px)", display: "flex", flexDirection: "column" }}>
-        <CoverOrPlaceholder cover={post.cover_image} hasVideo={post.has_video} hov={hov} title={post.title} />
-        <div style={{ padding: "18px 18px 12px", flex: 1, display: "flex", flexDirection: "column", gap: 10 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-            <CatBadge cat={post.tags[0]?.name || "Post"} />
-            <span style={{ fontSize: 10, color: "rgba(255,255,255,0.25)" }}>{post.read_time_minutes} min</span>
+      <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, overflow: "hidden", marginBottom: 22 }}>
+        {/* header */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px" }}>
+          <Avatar initials={(post.author_name || "?").split(" ").map(w => w[0]).slice(0, 2).join("")} photo={post.author_photo} onClick={() => onAuthorClick(post.author_name, post.author_role, post.author_photo)} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div onClick={() => onAuthorClick(post.author_name, post.author_role, post.author_photo)} style={{ fontSize: 12.5, fontWeight: 700, color: "#fff", cursor: "pointer" }}>{post.author_name || "Yashil Qo'llar"}</div>
+            <div style={{ fontSize: 10.5, color: "rgba(255,255,255,0.35)" }}>{timeAgo(post.created_at)}</div>
           </div>
-          <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, lineHeight: 1.3, color: "#fff" }}>{post.title}</h3>
-          <AuthorRow name={post.author_name} role={post.author_role} photo={post.author_photo} />
+          {post.is_featured && <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: ".12em", color: GREEN, textTransform: "uppercase" }}>Featured</span>}
         </div>
-        <div style={{ padding: "10px 18px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-          <span style={{ fontSize: 11, color: "rgba(255,255,255,0.3)" }}>❤️ {post.likes_count}</span>
-          <span style={{ fontSize: 11, color: "rgba(255,255,255,0.3)" }}>💬 {post.comments_count}</span>
+
+        {/* media */}
+        <div onClick={onOpen} style={{ cursor: "pointer" }}>
+          <PostMedia cover={post.cover_image} hasVideo={post.has_video} title={post.title} onDoubleTap={doLike} burstKey={burst} />
+        </div>
+
+        {/* actions */}
+        <div style={{ padding: "12px 14px 6px", display: "flex", alignItems: "center", gap: 16 }}>
+          <button onClick={doLike} style={{ background: "none", border: "none", cursor: "pointer", color: liked ? GREEN : "rgba(255,255,255,0.65)", fontSize: 22, padding: 0, lineHeight: 1 }}>{liked ? "♥" : "♡"}</button>
+          <button onClick={onOpen} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.65)", fontSize: 20, padding: 0, lineHeight: 1 }}>💬</button>
+        </div>
+
+        <div style={{ padding: "0 14px 14px" }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", marginBottom: 6 }}>{likeCount} likes</div>
+          <div style={{ fontSize: 13.5, color: "rgba(255,255,255,0.75)", lineHeight: 1.5, marginBottom: 6 }}>
+            <span style={{ fontWeight: 700, color: "#fff", marginRight: 6 }}>{post.author_name}</span>
+            {post.title}
+          </div>
+          {post.comments_count > 0 && (
+            <div onClick={onOpen} style={{ fontSize: 12.5, color: "rgba(255,255,255,0.35)", cursor: "pointer" }}>View all {post.comments_count} comments</div>
+          )}
         </div>
       </div>
     </FadeIn>
@@ -429,6 +550,8 @@ export function BlogPage() {
   const [search, setSearch] = useState("");
   const [activeSlug, setActiveSlug] = useState<string | null>(null);
   const [activeTag, setActiveTag] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [authorPopover, setAuthorPopover] = useState<{ name: string; role: string | null; photo?: string | null } | null>(null);
 
   useEffect(() => {
     fetch(ENDPOINTS.blog, { headers: baseHeaders("en") })
@@ -441,119 +564,65 @@ export function BlogPage() {
   const filtered = (posts || [])
     .filter(p => !search || p.title.toLowerCase().includes(search.toLowerCase()))
     .filter(p => !activeTag || p.tags.some(t => t.slug === activeTag));
-  const featured = (posts || []).find(p => p.is_featured);
-  const rest = filtered.filter(p => p.id !== featured?.id);
+
+  const showAuthor = (name: string, role: string | null, photo?: string | null) => setAuthorPopover({ name, role, photo });
 
   return (
     <div style={{ minHeight: "100vh", background: DARK, color: "#fff", fontFamily: "'Inter','Helvetica Neue',sans-serif", position: "relative", overflowX: "hidden" }}>
+      <style>{`
+        @keyframes slideUp{from{transform:translateY(60px);opacity:0}to{transform:translateY(0);opacity:1}}
+        @keyframes yq-spin{to{transform:rotate(360deg)}}
+        @keyframes yq-heartPop{0%{transform:scale(0);opacity:0}25%{transform:scale(1.15);opacity:1}45%{transform:scale(0.95)}100%{transform:scale(1);opacity:0}}
+        @keyframes yq-toastIn{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
+      `}</style>
       <ForestCanvas />
       <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, background: "radial-gradient(ellipse 75% 55% at 10% 15%, rgba(34,197,94,0.09) 0%, transparent 58%)" }} />
 
-      <main style={{ position: "relative", zIndex: 1, maxWidth: 1280, margin: "0 auto", padding: "clamp(100px,12vw,130px) clamp(16px,5vw,60px) 100px" }}>
+      <main style={{ position: "relative", zIndex: 1, maxWidth: 560, margin: "0 auto", padding: "clamp(90px,10vw,120px) 16px 100px" }}>
         <FadeIn>
-          <div style={{ marginBottom: 40 }}>
+          <div style={{ marginBottom: 28 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
               <span style={{ width: 28, height: 1.5, background: GREEN, borderRadius: 2, display: "inline-block" }} />
               <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: ".28em", textTransform: "uppercase", color: GREEN }}>Yashil Qo'llar Journal</span>
             </div>
-            <h1 style={{ margin: "0 0 12px", fontSize: "clamp(36px,6vw,64px)", fontWeight: 900, letterSpacing: "-0.03em", lineHeight: 1 }}>
-              From the <span style={{ color: GREEN, textShadow: "0 0 60px rgba(34,197,94,0.4)" }}>field.</span>
+            <h1 style={{ margin: "0 0 10px", fontSize: "clamp(28px,7vw,40px)", fontWeight: 900, letterSpacing: "-0.03em", lineHeight: 1 }}>
+              From the <span style={{ color: GREEN }}>field.</span>
             </h1>
-            <p style={{ margin: "0 0 24px", fontSize: 15, color: "rgba(255,255,255,0.38)", maxWidth: 520, lineHeight: 1.75 }}>Reports, research, and honest stories from our work across Uzbekistan.</p>
             <input type="text" placeholder="Search posts…" value={search} onChange={e => setSearch(e.target.value)}
-              style={{ width: "100%", maxWidth: 320, padding: "9px 14px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)", borderRadius: 10, color: "#fff", fontSize: 13, outline: "none" }} />
-
+              style={{ width: "100%", padding: "10px 14px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)", borderRadius: 10, color: "#fff", fontSize: 13, outline: "none", boxSizing: "border-box" }} />
             {allTags.length > 0 && (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 16 }}>
-                <button onClick={() => setActiveTag(null)} style={{
-                  padding: "6px 14px", borderRadius: 999, fontSize: 11, fontWeight: 700, letterSpacing: ".05em",
-                  cursor: "pointer", background: !activeTag ? GREEN : "rgba(255,255,255,0.04)",
-                  color: !activeTag ? "#000" : "rgba(255,255,255,0.5)",
-                  border: `1px solid ${!activeTag ? GREEN : "rgba(255,255,255,0.09)"}`,
-                }}>All</button>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 14 }}>
+                <button onClick={() => setActiveTag(null)} style={{ padding: "6px 14px", borderRadius: 999, fontSize: 11, fontWeight: 700, cursor: "pointer", background: !activeTag ? GREEN : "rgba(255,255,255,0.04)", color: !activeTag ? "#000" : "rgba(255,255,255,0.5)", border: `1px solid ${!activeTag ? GREEN : "rgba(255,255,255,0.09)"}` }}>All</button>
                 {allTags.map(t => (
-                  <button key={t.slug} onClick={() => setActiveTag(t.slug === activeTag ? null : t.slug)} style={{
-                    padding: "6px 14px", borderRadius: 999, fontSize: 11, fontWeight: 700, letterSpacing: ".05em",
-                    cursor: "pointer", background: activeTag === t.slug ? GREEN : "rgba(255,255,255,0.04)",
-                    color: activeTag === t.slug ? "#000" : "rgba(255,255,255,0.5)",
-                    border: `1px solid ${activeTag === t.slug ? GREEN : "rgba(255,255,255,0.09)"}`,
-                  }}>{t.name}</button>
+                  <button key={t.slug} onClick={() => setActiveTag(t.slug === activeTag ? null : t.slug)} style={{ padding: "6px 14px", borderRadius: 999, fontSize: 11, fontWeight: 700, cursor: "pointer", background: activeTag === t.slug ? GREEN : "rgba(255,255,255,0.04)", color: activeTag === t.slug ? "#000" : "rgba(255,255,255,0.5)", border: `1px solid ${activeTag === t.slug ? GREEN : "rgba(255,255,255,0.09)"}` }}>{t.name}</button>
                 ))}
               </div>
             )}
           </div>
         </FadeIn>
 
-        {error && <p style={{ color: "rgba(255,255,255,0.4)", textAlign: "center", padding: "60px 0" }}>Не удалось загрузить статьи.</p>}
+        {error && <p style={{ color: "rgba(255,255,255,0.4)", textAlign: "center", padding: "60px 0" }}>Couldn't load posts.</p>}
         {!error && !posts && (
           <div style={{ display: "flex", justifyContent: "center", padding: "80px 0" }}>
             <div style={{ width: 34, height: 34, borderRadius: "50%", border: "3px solid rgba(34,197,94,0.15)", borderTopColor: GREEN, animation: "yq-spin .8s linear infinite" }} />
           </div>
         )}
-        {!error && posts && posts.length === 0 && <p style={{ color: "rgba(255,255,255,0.35)", textAlign: "center", padding: "60px 0" }}>Пока нет статей. Скоро появятся!</p>}
+        {!error && posts && posts.length === 0 && <p style={{ color: "rgba(255,255,255,0.35)", textAlign: "center", padding: "60px 0" }}>No posts yet — check back soon!</p>}
 
-        {featured && !search && (
-          <FadeIn>
-            <div onClick={() => setActiveSlug(featured.slug)} style={{
-              position: "relative", background: "rgba(255,255,255,0.025)", border: "1px solid rgba(34,197,94,0.18)",
-              borderRadius: 22, overflow: "hidden", cursor: "pointer", marginBottom: 28,
-              display: "grid", gridTemplateColumns: featured.cover_image ? "1.1fr 1fr" : "1fr", minHeight: 320,
-              transition: "border-color .25s, transform .25s",
-            }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = GREEN + "50"; (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(34,197,94,0.18)"; (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}
-            >
-              {featured.cover_image ? (
-                <div style={{ position: "relative", overflow: "hidden" }}>
-                  <img src={fixMediaUrl(featured.cover_image) || ""} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(105deg, transparent 55%, rgba(15,15,15,0.85) 100%)" }} />
-                  {featured.has_video && (
-                    <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.2)" }}>
-                      <div style={{ width: 60, height: 60, borderRadius: "50%", background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, backdropFilter: "blur(4px)" }}>▶️</div>
-                    </div>
-                  )}
-                </div>
-              ) : featured.has_video && (
-                <div style={{ position: "absolute", inset: 0, background: "radial-gradient(circle at 30% 40%, rgba(34,197,94,0.12), transparent 60%)", pointerEvents: "none" }} />
-              )}
-              <div style={{ padding: "36px 32px", display: "flex", flexDirection: "column", justifyContent: "center", gap: 4, position: "relative" }}>
-                <span style={{
-                  position: "absolute", top: 20, right: 20, fontSize: 9, fontWeight: 800, letterSpacing: ".18em",
-                  color: GREEN, textTransform: "uppercase", opacity: .7,
-                }}>Featured</span>
+        <EcoProjectsStrip onNotice={setNotice} />
 
-                <div style={{ marginBottom: 12 }}><CatBadge cat={featured.tags[0]?.name || "Featured"} /></div>
-
-                <h2 style={{ margin: "0 0 14px", fontSize: "clamp(20px,2.8vw,30px)", fontWeight: 900, letterSpacing: "-0.02em", lineHeight: 1.15, color: "#fff" }}>{featured.title}</h2>
-
-                <AuthorRow name={featured.author_name} role={featured.author_role} photo={featured.author_photo} />
-
-                <div style={{ height: 1, background: "rgba(255,255,255,0.08)", margin: "18px 0" }} />
-
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-                  <div style={{ display: "flex", gap: 16 }}>
-                    <span style={{ fontSize: 12.5, color: "rgba(255,255,255,0.45)", display: "flex", alignItems: "center", gap: 5 }}>❤️ {featured.likes_count}</span>
-                    <span style={{ fontSize: 12.5, color: "rgba(255,255,255,0.45)", display: "flex", alignItems: "center", gap: 5 }}>💬 {featured.comments_count}</span>
-                    <span style={{ fontSize: 12.5, color: "rgba(255,255,255,0.3)" }}>{featured.read_time_minutes} min</span>
-                  </div>
-                  <span style={{
-                    display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 800,
-                    color: GREEN, letterSpacing: ".03em",
-                  }}>
-                    Read article →
-                  </span>
-                </div>
-              </div>
-            </div>
-          </FadeIn>
-        )}
-
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(290px,1fr))", gap: 18 }}>
-          {rest.map((post, i) => <PostCard key={post.id} post={post} onClick={() => setActiveSlug(post.slug)} delay={i * 55} />)}
-        </div>
+        {filtered.map((post, i) => (
+          <FeedPost key={post.id} post={post} delay={i * 45}
+            onOpen={() => setActiveSlug(post.slug)}
+            onNotice={setNotice}
+            onAuthorClick={showAuthor}
+          />
+        ))}
       </main>
 
-      {activeSlug && <ArticleModal slug={activeSlug} onClose={() => setActiveSlug(null)} />}
+      {activeSlug && <ArticleModal slug={activeSlug} onClose={() => setActiveSlug(null)} onNotice={setNotice} onAuthorClick={showAuthor} />}
+      {authorPopover && <AuthorPopover name={authorPopover.name} role={authorPopover.role} photo={authorPopover.photo} onClose={() => setAuthorPopover(null)} />}
+      {notice && <Toast message={notice} onDone={() => setNotice(null)} />}
     </div>
   );
 }

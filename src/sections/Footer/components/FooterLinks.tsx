@@ -9,7 +9,7 @@ export const FooterLinks = () => {
             <FooterLinkColumn
                 title="Conference"
                 links={[
-                    { href: "/about", label: "About" },
+
                     { href: "/blog", label: "Blog" },
                     { href: "/schedule", label: "Schedule" },
                     { href: "/sponsors", label: "Partners" },

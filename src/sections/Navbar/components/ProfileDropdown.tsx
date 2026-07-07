@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../contexts/AuthContext";
+import { useLang } from "../../../contexts/LanguageContext";
 import { fixMediaUrl } from "../../../config/api";
 
 const GREEN = "#22C55E";
@@ -62,6 +63,7 @@ function StatBox({ icon, val, lbl }: { icon: string; val: string | number; lbl: 
 
 export function ProfileDropdown() {
     const { user, logout, isLoggedIn } = useAuth();
+    const { t } = useLang();
     const [open, setOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
@@ -74,15 +76,26 @@ export function ProfileDropdown() {
 
     if (!isLoggedIn || !user) {
         return (
-            <Link to="/login" style={{
-                background: GREEN, color: "#000", border: "none",
-                padding: "8px 18px", borderRadius: 8,
-                fontSize: 11, fontWeight: 800, letterSpacing: ".08em",
-                textDecoration: "none", fontFamily: "'Montserrat',sans-serif",
-                boxShadow: "0 0 16px rgba(34,197,94,0.3)",
-            }}>
-                LOGIN →
-            </Link>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <Link to="/login?mode=register" style={{
+                    background: "transparent", color: "rgba(255,255,255,0.75)",
+                    border: "1px solid rgba(255,255,255,0.15)",
+                    padding: "8px 16px", borderRadius: 8,
+                    fontSize: 11, fontWeight: 700, letterSpacing: ".06em",
+                    textDecoration: "none", fontFamily: "'Montserrat',sans-serif",
+                }}>
+                    {t.signUp?.toUpperCase() || "SIGN UP"}
+                </Link>
+                <Link to="/login" style={{
+                    background: GREEN, color: "#000", border: "none",
+                    padding: "8px 18px", borderRadius: 8,
+                    fontSize: 11, fontWeight: 800, letterSpacing: ".08em",
+                    textDecoration: "none", fontFamily: "'Montserrat',sans-serif",
+                    boxShadow: "0 0 16px rgba(34,197,94,0.3)",
+                }}>
+                    {t.signIn?.toUpperCase() || "LOGIN"} →
+                </Link>
+            </div>
         );
     }
 

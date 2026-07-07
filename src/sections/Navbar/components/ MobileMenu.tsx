@@ -7,7 +7,6 @@ const GREEN = "#22C55E";
 
 const NAV_LINKS = [
     { to: "/", label: "Home", end: true },
-    { to: "/about", label: "About" },
     { to: "/blog", label: "Blog" },
     { to: "/team", label: "Team" },
     { to: "/sponsors", label: "Sponsors" },

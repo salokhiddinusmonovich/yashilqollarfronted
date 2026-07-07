@@ -9,9 +9,6 @@ export const DesktopNav = () => {
             <NavLink to="/" end className={linkClass}>
                 Home
             </NavLink>
-            <NavLink to="/about" className={linkClass}>
-                About
-            </NavLink>
             <NavLink to="/blog" className={linkClass}>
                 Blog
             </NavLink>

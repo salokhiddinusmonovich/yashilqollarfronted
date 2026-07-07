@@ -2,7 +2,7 @@ export const FooterSocialLinks = () => {
     return (
         <div className="items-center box-border caret-transparent gap-x-[8.8px] flex min-h-[auto] min-w-[auto] outline-[3px] gap-y-[8.8px] text-center no-underline md:text-start">
             <a
-                href="https://www.instagram.com/yashilqollarmun"
+                href="https://www.instagram.com/yashilqollar"
                 aria-label="Instagram"
                 className="items-center bg-white/0 box-border caret-transparent text-neutral-700 flex h-[30px] justify-center min-h-[auto] min-w-[auto] outline-[3px] text-center no-underline w-[30px] border rounded-[7px] border-solid border-white/10 md:text-start hover:text-emerald-500 hover:bg-emerald-500/10 hover:border-emerald-500/30"
             >
@@ -13,7 +13,7 @@ export const FooterSocialLinks = () => {
                 />
             </a>
             <a
-                href="https://t.me/yqmun"
+                href="https://t.me/yashilqollar"
                 aria-label="Telegram"
                 className="items-center bg-white/0 box-border caret-transparent text-neutral-700 flex h-[30px] justify-center min-h-[auto] min-w-[auto] outline-[3px] text-center no-underline w-[30px] border rounded-[7px] border-solid border-white/10 md:text-start hover:text-emerald-500 hover:bg-emerald-500/10 hover:border-emerald-500/30"
             >

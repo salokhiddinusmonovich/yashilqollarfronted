@@ -5,7 +5,7 @@ import { ENDPOINTS, baseHeaders } from "../config/api";
    ТИПЫ — соответствуют ProfileSerializer
 ───────────────────────────────────────── */
 export interface User {
-  tg_id: number;
+  tg_id: number | null;
   fullname: string;
   username: string | null;
   photo: string | null;
@@ -14,8 +14,8 @@ export interface User {
   rank: string;
   projects_count: number;
   age: number | null;
-  email: string;
-  phone: string;
+  email: string | null;
+  phone: string | null;
   education_place: string | null;
   experience: string | null;
   role: string;
@@ -37,6 +37,10 @@ interface AuthContextType {
   isDevMode: boolean;
   loading: boolean;
   loginWithTelegram: (data: TelegramWidgetData) => Promise<{ ok: boolean; error?: string }>;
+  // НОВОЕ — регистрация и вход email+пароль, и Google
+  registerWithPassword: (fullname: string, email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
+  loginWithPassword: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
+  loginWithGoogle: (idToken: string) => Promise<{ ok: boolean; error?: string }>;
   loginWithTokens: (access: string, refresh: string, user: User) => void;
   loginDev: () => void;
   logout: () => Promise<void>;
@@ -71,11 +75,14 @@ const AuthContext = createContext<AuthContextType>({
   isDevMode: false,
   loading: true,
   loginWithTelegram: async () => ({ ok: false }),
-  loginWithTokens: () => {},
-  loginDev: () => {},
-  logout: async () => {},
+  registerWithPassword: async () => ({ ok: false }),
+  loginWithPassword: async () => ({ ok: false }),
+  loginWithGoogle: async () => ({ ok: false }),
+  loginWithTokens: () => { },
+  loginDev: () => { },
+  logout: async () => { },
   updateProfile: async () => ({ ok: false }),
-  refetchProfile: async () => {},
+  refetchProfile: async () => { },
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -122,8 +129,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (!res.ok) {
-        // Не разлогиниваем при 5xx/сетевых сбоях бэкенда — токен ещё может
-        // быть валиден, просто сервер/туннель сейчас недоступен.
         console.warn("Failed to fetch profile, status:", res.status);
         return;
       }
@@ -131,10 +136,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data: User = await res.json();
       setUser(data);
     } catch (err) {
-      // Сетевая ошибка (например, ngrok-туннель сейчас недоступен) —
-      // НЕ разлогиниваем, просто не смогли обновить профиль в этот раз.
-      // Токен в localStorage остаётся на месте, попробуем при следующей
-      // загрузке страницы или после ручного повторного захода.
       console.warn("fetchProfile network error:", err);
     }
   }
@@ -154,12 +155,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!data.access) return false;
 
       localStorage.setItem(ACCESS_KEY, data.access);
-
-      // ВАЖНО: на бэке включена ротация refresh-токенов
-      // (ROTATE_REFRESH_TOKENS + BLACKLIST_AFTER_ROTATION) — старый
-      // refresh становится нерабочим сразу после использования.
-      // Бэкенд присылает новый refresh в этом же ответе — сохраняем его,
-      // иначе следующий рефреш упадёт и разлогинит пользователя.
       if (data.refresh) {
         localStorage.setItem(REFRESH_KEY, data.refresh);
       }
@@ -178,6 +173,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsDevMode(false);
   }
 
+  /** Общая обёртка: любой ответ вида { access, refresh, user } → сохранить сессию. */
+  function applySession(result: { access: string; refresh: string; user: User }) {
+    localStorage.setItem(ACCESS_KEY, result.access);
+    localStorage.setItem(REFRESH_KEY, result.refresh);
+    localStorage.removeItem(DEV_MODE_KEY);
+    setIsDevMode(false);
+    setUser(result.user);
+  }
+
   // ─── Вход через настоящий Telegram Login Widget ───
   const loginWithTelegram = async (data: TelegramWidgetData) => {
     try {
@@ -193,19 +197,84 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const result = await res.json();
-      localStorage.setItem(ACCESS_KEY, result.access);
-      localStorage.setItem(REFRESH_KEY, result.refresh);
-      localStorage.removeItem(DEV_MODE_KEY);
-      setIsDevMode(false);
-      setUser(result.user);
+      applySession(result);
       return { ok: true };
     } catch {
       return { ok: false, error: "Network error. Check your connection." };
     }
   };
 
-  // ─── Dev-режим — временный вход без реального бэкенда ───
-  // ─── Прямая установка сессии — после подтверждения через бота (deep-link) ───
+  // ─── НОВОЕ: регистрация email + пароль (без Telegram) ───
+  const registerWithPassword = async (fullname: string, email: string, password: string) => {
+    try {
+      const res = await fetch(ENDPOINTS.register, {
+        method: "POST",
+        headers: baseHeaders("en", { "Content-Type": "application/json" }),
+        body: JSON.stringify({ fullname, email, password }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        // DRF ValidationError обычно приходит как { field: ["msg"] } — берём первое сообщение
+        const firstError = Object.values(err)[0];
+        const message = Array.isArray(firstError) ? firstError[0] : (err.error || "Registration failed.");
+        return { ok: false, error: String(message) };
+      }
+
+      const result = await res.json();
+      applySession(result);
+      return { ok: true };
+    } catch {
+      return { ok: false, error: "Network error. Check your connection." };
+    }
+  };
+
+  // ─── НОВОЕ: вход email + пароль ───
+  const loginWithPassword = async (email: string, password: string) => {
+    try {
+      const res = await fetch(ENDPOINTS.loginPassword, {
+        method: "POST",
+        headers: baseHeaders("en", { "Content-Type": "application/json" }),
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        const firstError = Object.values(err)[0];
+        const message = Array.isArray(firstError) ? firstError[0] : (err.error || "Invalid email or password.");
+        return { ok: false, error: String(message) };
+      }
+
+      const result = await res.json();
+      applySession(result);
+      return { ok: true };
+    } catch {
+      return { ok: false, error: "Network error. Check your connection." };
+    }
+  };
+
+  // ─── НОВОЕ: вход через Google (id_token с фронта от Google Identity Services) ───
+  const loginWithGoogle = async (idToken: string) => {
+    try {
+      const res = await fetch(ENDPOINTS.loginGoogle, {
+        method: "POST",
+        headers: baseHeaders("en", { "Content-Type": "application/json" }),
+        body: JSON.stringify({ id_token: idToken }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        return { ok: false, error: err.error || "Google login failed." };
+      }
+
+      const result = await res.json();
+      applySession(result);
+      return { ok: true };
+    } catch {
+      return { ok: false, error: "Network error. Check your connection." };
+    }
+  };
+
   const loginWithTokens = (access: string, refresh: string, userData: User) => {
     localStorage.setItem(ACCESS_KEY, access);
     localStorage.setItem(REFRESH_KEY, refresh);
@@ -287,6 +356,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isDevMode,
         loading,
         loginWithTelegram,
+        registerWithPassword,
+        loginWithPassword,
+        loginWithGoogle,
         loginWithTokens,
         loginDev,
         logout,

@@ -4,7 +4,6 @@ import { LanguageProvider } from "./contexts/LanguageContext";
 import { Navbar } from "./sections/Navbar/Navbar";
 import { Footer } from "./sections/Footer/Footer";
 import { HomePage } from "./pages/HomePage";
-import { AboutPage } from "./pages/AboutPage";
 import { BlogPage } from "./pages/BlogPage";
 import { TeamPage } from "./pages/TeamPage";
 import { SponsorsPage } from "./pages/SponsorsPage";
@@ -22,7 +21,6 @@ export default function App() {
           <Navbar />
           <Routes>
             <Route path="/" element={<HomePage />} />
-            <Route path="/about" element={<AboutPage />} />
             <Route path="/blog" element={<BlogPage />} />
             <Route path="/team" element={<TeamPage />} />
             <Route path="/sponsors" element={<SponsorsPage />} />
