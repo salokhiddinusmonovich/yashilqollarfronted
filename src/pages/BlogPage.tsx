@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { ENDPOINTS, baseHeaders, fixMediaUrl } from "../config/api";
 import { useAuth } from "../contexts/AuthContext";
+import { useLang } from "../contexts/LanguageContext";
+import logoImg from "./photo_2025-10-08_22-18-51.jpg";
 
 const GREEN = "#22C55E";
 const DARK = "#060606";
@@ -29,7 +31,9 @@ interface EcoProjectItem {
   id: number; title: string; description: string | null; date: string; location_name: string;
   photo: string | null; gallery_images: GalleryImage[]; is_active: boolean; max_participants: number;
   participants_count: number; region: string; region_display: string; is_joined: boolean; chat_link: string | null;
+  likes_count: number; is_liked_by_me: boolean; comments_count: number; comments: CommentNode[];
 }
+type FeedItem = { kind: "post"; data: ArticleListItem } | { kind: "project"; data: EcoProjectItem };
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
@@ -47,9 +51,11 @@ function timeAgo(iso: string) {
 }
 
 function getAccessToken() { return localStorage.getItem("yq_access_token"); }
-function authHeaders() {
+function authHeaders(lang: string = "en") {
   const token = getAccessToken();
-  return token ? baseHeaders("en", { Authorization: `Bearer ${token}` }) : baseHeaders("en");
+  const extra: Record<string, string> = { "Content-Type": "application/json" };
+  if (token) extra.Authorization = `Bearer ${token}`;
+  return baseHeaders(lang, extra);
 }
 
 /** Достаёт YouTube video ID из обычной ссылки для embed */
@@ -225,9 +231,9 @@ function ArticleVideo({ video, videoUrl }: { video: string | null; videoUrl: str
 /* ─────────────────────────────────────────
    КОММЕНТАРИИ — рекурсивное дерево
 ───────────────────────────────────────── */
-function CommentItem({ comment, onReply, onAuthorClick, onNotice, depth = 0 }: {
+function CommentItem({ comment, onReply, onAuthorClick, onNotice, kind = "post", depth = 0 }: {
   comment: CommentNode; onReply: (parentId: number, text: string) => void;
-  onAuthorClick: (name: string) => void; onNotice: (msg: string) => void; depth?: number;
+  onAuthorClick: (name: string) => void; onNotice: (msg: string) => void; kind?: "post" | "project"; depth?: number;
 }) {
   const { isLoggedIn } = useAuth();
   const [showReply, setShowReply] = useState(false);
@@ -238,7 +244,7 @@ function CommentItem({ comment, onReply, onAuthorClick, onNotice, depth = 0 }: {
 
   const toggleLike = () => {
     if (!isLoggedIn) { onNotice("Sign in to like comments."); return; }
-    fetch(ENDPOINTS.commentLike(comment.id), { method: "POST", headers: authHeaders() })
+    fetch(kind === "project" ? ENDPOINTS.projectCommentLike(comment.id) : ENDPOINTS.commentLike(comment.id), { method: "POST", headers: authHeaders() })
       .then(res => res.ok ? res.json() : Promise.reject())
       .then((data: { likes_count: number; liked: boolean }) => { setLiked(data.liked); setLikeCount(data.likes_count); })
       .catch(() => onNotice("Couldn't update your like. Try again."));
@@ -270,7 +276,7 @@ function CommentItem({ comment, onReply, onAuthorClick, onNotice, depth = 0 }: {
           )}
         </div>
       </div>
-      {comment.replies.map(r => <CommentItem key={r.id} comment={r} onReply={onReply} onAuthorClick={onAuthorClick} onNotice={onNotice} depth={depth + 1} />)}
+      {comment.replies.map(r => <CommentItem key={r.id} comment={r} onReply={onReply} onAuthorClick={onAuthorClick} onNotice={onNotice} kind={kind} depth={depth + 1} />)}
     </div>
   );
 }
@@ -297,6 +303,7 @@ function ArticleModal({ slug, onClose, onNotice, onAuthorClick }: {
   slug: string; onClose: () => void; onNotice: (msg: string) => void; onAuthorClick: (name: string, role: string | null, photo?: string | null) => void;
 }) {
   const { isLoggedIn } = useAuth();
+  const { lang } = useLang();
   const [article, setArticle] = useState<ArticleDetail | null>(null);
   const [error, setError] = useState(false);
   const [liked, setLiked] = useState(false);
@@ -306,11 +313,11 @@ function ArticleModal({ slug, onClose, onNotice, onAuthorClick }: {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetch(ENDPOINTS.blogDetail(slug), { headers: baseHeaders("en") })
+    fetch(ENDPOINTS.blogDetail(slug), { headers: baseHeaders(lang) })
       .then(res => { if (!res.ok) throw new Error(); return res.json(); })
       .then((data: ArticleDetail) => { setArticle(data); setLikeCount(data.likes_count); setLiked(data.is_liked_by_me); })
       .catch(() => setError(true));
-  }, [slug]);
+  }, [slug, lang]);
 
   useEffect(() => {
     const esc = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -322,7 +329,7 @@ function ArticleModal({ slug, onClose, onNotice, onAuthorClick }: {
   const doLike = () => {
     if (!isLoggedIn) { onNotice("Sign in to like posts."); return; }
     if (!liked) setBurst(k => k + 1);
-    fetch(ENDPOINTS.blogLike(slug), { method: "POST", headers: authHeaders() })
+    fetch(ENDPOINTS.blogLike(slug), { method: "POST", headers: authHeaders(lang) })
       .then(res => res.ok ? res.json() : Promise.reject())
       .then((data: { likes_count: number; liked: boolean }) => { setLiked(data.liked); setLikeCount(data.likes_count); })
       .catch(() => onNotice("Couldn't update your like. Try again."));
@@ -332,9 +339,9 @@ function ArticleModal({ slug, onClose, onNotice, onAuthorClick }: {
     if (!isLoggedIn) { onNotice("Sign in to comment."); return; }
     if (!text.trim()) return;
     try {
-      const res = await fetch(ENDPOINTS.blogComment(slug), { method: "POST", headers: authHeaders(), body: JSON.stringify({ text, parent }) });
+      const res = await fetch(ENDPOINTS.blogComment(slug), { method: "POST", headers: authHeaders(lang), body: JSON.stringify({ text, parent }) });
       if (res.ok) {
-        const refreshed = await fetch(ENDPOINTS.blogDetail(slug), { headers: baseHeaders("en") });
+        const refreshed = await fetch(ENDPOINTS.blogDetail(slug), { headers: baseHeaders(lang) });
         if (refreshed.ok) setArticle(await refreshed.json());
         setCommentText("");
       } else {
@@ -432,54 +439,188 @@ function ArticleModal({ slug, onClose, onNotice, onAuthorClick }: {
 }
 
 /* ─────────────────────────────────────────
-   ЛЕНТА ЭКО-ПРОЕКТОВ (плоггингов) — новое, из /projects/
+   ЭКО-ПРОЕКТ КАК ПОЛНОЦЕННЫЙ ПОСТ — с галереей (2-3 фото), лайком,
+   комментариями и кнопкой Join прямо в ленте, наравне со статьями.
 ───────────────────────────────────────── */
-function EcoProjectsStrip({ onNotice }: { onNotice: (msg: string) => void }) {
+function projectPhotos(p: EcoProjectItem): string[] {
+  const arr = p.gallery_images.map(g => g.image);
+  if (p.photo && !arr.includes(p.photo)) arr.unshift(p.photo);
+  return arr.slice(0, 3); // максимум 3, как в плоггинге
+}
+
+function ProjectFeedPost({ project, onOpen, onNotice, delay = 0 }: {
+  project: EcoProjectItem; onOpen: () => void; onNotice: (msg: string) => void; delay?: number;
+}) {
   const { isLoggedIn } = useAuth();
-  const [projects, setProjects] = useState<EcoProjectItem[] | null>(null);
+  const [liked, setLiked] = useState(project.is_liked_by_me);
+  const [likeCount, setLikeCount] = useState(project.likes_count);
+  const [burst, setBurst] = useState(0);
+  const [photoIdx, setPhotoIdx] = useState(0);
+  const photos = projectPhotos(project);
 
-  useEffect(() => {
-    fetch(ENDPOINTS.projects, { headers: authHeaders() })
+  const doLike = () => {
+    if (!isLoggedIn) { onNotice("Sign in to like posts."); return; }
+    if (!liked) setBurst(k => k + 1);
+    fetch(ENDPOINTS.projectLike(project.id), { method: "POST", headers: authHeaders() })
       .then(res => res.ok ? res.json() : Promise.reject())
-      .then(setProjects)
-      .catch(() => setProjects([]));
-  }, []);
-
-  const join = (proj: EcoProjectItem) => {
-    if (!isLoggedIn) { onNotice("Sign in to join a project."); return; }
-    fetch(ENDPOINTS.projectJoin(proj.id), { method: "POST", headers: authHeaders() })
-      .then(res => res.ok ? onNotice(`You're on the list for "${proj.title}"!`) : Promise.reject())
-      .catch(() => onNotice("Couldn't join right now. Try again."));
+      .then((data: { likes_count: number; liked: boolean }) => { setLiked(data.liked); setLikeCount(data.likes_count); })
+      .catch(() => onNotice("Couldn't update your like. Try again."));
   };
 
-  if (!projects || projects.length === 0) return null;
+  const lastTap = useRef(0);
+  const openTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleMediaClick = () => {
+    const now = Date.now();
+    const delta = now - lastTap.current;
+    lastTap.current = now;
+    if (delta < 320) {
+      // second tap arrived in time — it's a double-tap: like, and cancel the pending "open" from the first tap
+      if (openTimer.current) clearTimeout(openTimer.current);
+      doLike();
+    } else {
+      // first tap — wait a beat to see if a second one follows before opening
+      openTimer.current = setTimeout(onOpen, 320);
+    }
+  };
 
   return (
-    <FadeIn>
-      <div style={{ marginBottom: 30 }}>
-        <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: ".2em", textTransform: "uppercase", color: GREEN, marginBottom: 12 }}>Upcoming eco-projects</div>
-        <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 6, marginLeft: -16, marginRight: -16, paddingLeft: 16, paddingRight: 16 }}>
-          {projects.map(p => (
-            <div key={p.id} style={{ flex: "0 0 auto", width: 200, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, overflow: "hidden" }}>
-              <div style={{ width: "100%", height: 110, background: "#111" }}>
-                {p.photo ? <img src={fixMediaUrl(p.photo) || ""} alt={p.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : null}
+    <FadeIn delay={delay}>
+      <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(34,197,94,0.14)", borderRadius: 16, overflow: "hidden", marginBottom: 22 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px" }}>
+          <div style={{ width: 34, height: 34, borderRadius: "50%", overflow: "hidden", border: "1px solid rgba(34,197,94,0.35)", flexShrink: 0 }}>
+            <img src={logoImg} alt="Yashil Qo'llar" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 12.5, fontWeight: 700, color: "#fff" }}>Yashil Qo'llar · {project.region_display}</div>
+            <div style={{ fontSize: 10.5, color: "rgba(255,255,255,0.35)" }}>{timeAgo(project.date)} · {formatDate(project.date)}</div>
+          </div>
+          <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: ".1em", color: GREEN, textTransform: "uppercase" }}>Eco-project</span>
+        </div>
+
+        {photos.length > 0 && (
+          <div onClick={handleMediaClick} style={{ position: "relative", width: "100%", aspectRatio: "4/5", background: "#111", cursor: "pointer" }}>
+            <img src={fixMediaUrl(photos[photoIdx]) || ""} alt={project.title} draggable={false} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+            {photos.length > 1 && (
+              <div style={{ position: "absolute", top: 12, right: 12, display: "flex", gap: 4 }}>
+                {photos.map((_, i) => (
+                  <span key={i} onClick={e => { e.stopPropagation(); setPhotoIdx(i); }} style={{ width: 6, height: 6, borderRadius: "50%", background: i === photoIdx ? "#fff" : "rgba(255,255,255,0.4)" }} />
+                ))}
               </div>
-              <div style={{ padding: "10px 12px" }}>
-                <div style={{ fontSize: 12.5, fontWeight: 700, color: "#fff", marginBottom: 4, lineHeight: 1.3 }}>{p.title}</div>
-                <div style={{ fontSize: 10.5, color: "rgba(255,255,255,0.4)", marginBottom: 8 }}>{p.region_display} · {formatDate(p.date)}</div>
-                <button onClick={() => join(p)} disabled={p.is_joined} style={{
-                  width: "100%", padding: "6px 0", borderRadius: 7, fontSize: 11, fontWeight: 700, cursor: p.is_joined ? "default" : "pointer",
-                  background: p.is_joined ? "rgba(34,197,94,0.1)" : GREEN, color: p.is_joined ? GREEN : "#000",
-                  border: p.is_joined ? "1px solid rgba(34,197,94,0.3)" : "none",
-                }}>
-                  {p.is_joined ? "You're in ✓" : `Join (${p.participants_count}/${p.max_participants})`}
-                </button>
-              </div>
-            </div>
-          ))}
+            )}
+            <LikeBurst show={burst} />
+          </div>
+        )}
+
+        <div style={{ padding: "12px 14px 6px", display: "flex", alignItems: "center", gap: 16 }}>
+          <button onClick={doLike} style={{ background: "none", border: "none", cursor: "pointer", color: liked ? GREEN : "rgba(255,255,255,0.65)", fontSize: 22, padding: 0, lineHeight: 1 }}>{liked ? "♥" : "♡"}</button>
+          <button onClick={onOpen} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.65)", fontSize: 20, padding: 0, lineHeight: 1 }}>💬</button>
+        </div>
+
+        <div style={{ padding: "0 14px 14px" }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#fff", marginBottom: 6 }}>{likeCount} likes</div>
+          <div onClick={onOpen} style={{ fontSize: 13.5, color: "rgba(255,255,255,0.75)", lineHeight: 1.5, marginBottom: 6, cursor: "pointer" }}>
+            <span style={{ fontWeight: 700, color: "#fff", marginRight: 6 }}>Yashil Qo'llar</span>
+            {project.title}
+          </div>
+          {project.description && (
+            <div style={{ fontSize: 12.5, color: "rgba(255,255,255,0.45)", lineHeight: 1.5, marginBottom: 6 }}>{project.description}</div>
+          )}
+          {project.comments_count > 0 && (
+            <div onClick={onOpen} style={{ fontSize: 12.5, color: "rgba(255,255,255,0.35)", cursor: "pointer" }}>View all {project.comments_count} comments</div>
+          )}
         </div>
       </div>
     </FadeIn>
+  );
+}
+
+/* Модалка эко-проекта — тот же UX, что у статьи: галерея, лайк, комменты, плюс Join */
+function ProjectModal({ project, onClose, onNotice }: { project: EcoProjectItem; onClose: () => void; onNotice: (msg: string) => void }) {
+  const { isLoggedIn } = useAuth();
+  const { lang } = useLang();
+  const [liked, setLiked] = useState(project.is_liked_by_me);
+  const [likeCount, setLikeCount] = useState(project.likes_count);
+  const [comments, setComments] = useState(project.comments);
+  const [commentText, setCommentText] = useState("");
+  const [burst, setBurst] = useState(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const photos = projectPhotos(project);
+
+  useEffect(() => {
+    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", esc);
+    document.body.style.overflow = "hidden";
+    return () => { document.removeEventListener("keydown", esc); document.body.style.overflow = ""; };
+  }, [onClose]);
+
+  const doLike = () => {
+    if (!isLoggedIn) { onNotice("Sign in to like posts."); return; }
+    if (!liked) setBurst(k => k + 1);
+    fetch(ENDPOINTS.projectLike(project.id), { method: "POST", headers: authHeaders(lang) })
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then((data: { likes_count: number; liked: boolean }) => { setLiked(data.liked); setLikeCount(data.likes_count); })
+      .catch(() => onNotice("Couldn't update your like. Try again."));
+  };
+
+  const submitComment = async (text: string, parent: number | null = null) => {
+    if (!isLoggedIn) { onNotice("Sign in to comment."); return; }
+    if (!text.trim()) return;
+    try {
+      const res = await fetch(ENDPOINTS.projectComment(project.id), { method: "POST", headers: authHeaders(lang), body: JSON.stringify({ text, parent }) });
+      if (res.ok) {
+        const refreshed = await fetch(ENDPOINTS.projectDetail(project.id), { headers: authHeaders(lang) });
+        if (refreshed.ok) { const data = await refreshed.json(); setComments(data.comments); }
+        setCommentText("");
+      } else onNotice("Couldn't post your comment. Try again.");
+    } catch { onNotice("Network error. Check your connection."); }
+  };
+
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.88)", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+      <div ref={scrollRef} onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 600, maxHeight: "92vh", overflowY: "auto", background: "#0f0f0f", borderRadius: "20px 20px 0 0", border: "1px solid rgba(34,197,94,0.2)", borderBottom: "none", animation: "slideUp .3s cubic-bezier(.16,1,.3,1)" }}>
+        <ReadingProgress containerRef={scrollRef} />
+
+        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 18px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+          <div style={{ width: 36, height: 36, borderRadius: "50%", overflow: "hidden", border: "1px solid rgba(34,197,94,0.35)", flexShrink: 0 }}>
+            <img src={logoImg} alt="Yashil Qo'llar" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>Yashil Qo'llar · {project.region_display}</div>
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)" }}>{formatDate(project.date)} · {project.location_name}</div>
+          </div>
+          <button onClick={onClose} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)", borderRadius: 8, width: 30, height: 30, cursor: "pointer", fontSize: 14 }}>✕</button>
+        </div>
+
+        {photos.length > 0 && <PhotoGallery images={photos.map((img, i) => ({ id: i, image: img }))} />}
+
+        <div style={{ padding: "20px 18px 48px" }}>
+          <h1 style={{ margin: "0 0 14px", fontSize: "clamp(19px,3.6vw,26px)", fontWeight: 800, letterSpacing: "-0.02em", lineHeight: 1.2, color: "#fff" }}>{project.title}</h1>
+          {project.description && <p style={{ fontSize: 15, color: "rgba(255,255,255,0.65)", lineHeight: 1.8, marginBottom: 22 }}>{project.description}</p>}
+
+          <div style={{ display: "flex", alignItems: "center", gap: 18, padding: "8px 0 18px", borderTop: "1px solid rgba(255,255,255,0.06)", marginTop: 4 }}>
+            <button onClick={doLike} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", cursor: "pointer", color: liked ? GREEN : "rgba(255,255,255,0.6)", fontSize: 22, padding: 0 }}>{liked ? "♥" : "♡"}</button>
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>{likeCount} likes</span>
+            <span style={{ fontSize: 13, color: "rgba(255,255,255,0.4)" }}>{comments.length} comments</span>
+          </div>
+
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: 20 }}>
+            <div style={{ display: "flex", gap: 10, marginBottom: 24, alignItems: "flex-start" }}>
+              <Avatar initials="ME" size={30} />
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
+                <textarea value={commentText} onChange={e => setCommentText(e.target.value)} placeholder={isLoggedIn ? "Add a comment…" : "Sign in to comment"} rows={3}
+                  style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)", borderRadius: 10, color: "#fff", fontSize: 13, padding: "10px 12px", fontFamily: "'Inter',sans-serif", outline: "none", resize: "vertical", boxSizing: "border-box" }} />
+                <button onClick={() => submitComment(commentText)} style={{ alignSelf: "flex-end", background: GREEN, border: "none", color: "#000", padding: "8px 20px", borderRadius: 8, fontSize: 12, fontWeight: 800, cursor: "pointer" }}>Post →</button>
+              </div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+              {comments.map(c => (
+                <CommentItem key={c.id} comment={c} onReply={(pid, text) => submitComment(text, pid)} onAuthorClick={() => { }} onNotice={onNotice} kind="project" />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -545,25 +686,45 @@ function FeedPost({ post, onOpen, onNotice, onAuthorClick, delay = 0 }: {
    MAIN
 ───────────────────────────────────────── */
 export function BlogPage() {
+  const { lang } = useLang();
   const [posts, setPosts] = useState<ArticleListItem[] | null>(null);
+  const [projects, setProjects] = useState<EcoProjectItem[] | null>(null);
   const [error, setError] = useState(false);
   const [search, setSearch] = useState("");
   const [activeSlug, setActiveSlug] = useState<string | null>(null);
+  const [activeProject, setActiveProject] = useState<EcoProjectItem | null>(null);
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [authorPopover, setAuthorPopover] = useState<{ name: string; role: string | null; photo?: string | null } | null>(null);
 
   useEffect(() => {
-    fetch(ENDPOINTS.blog, { headers: baseHeaders("en") })
+    fetch(ENDPOINTS.blog, { headers: baseHeaders(lang) })
       .then(res => { if (!res.ok) throw new Error(); return res.json(); })
       .then(setPosts)
       .catch(() => setError(true));
-  }, []);
+    fetch(ENDPOINTS.projects, { headers: authHeaders(lang) })
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then(setProjects)
+      .catch(() => setProjects([]));
+  }, [lang]);
 
   const allTags = Array.from(new Map((posts || []).flatMap(p => p.tags).map(t => [t.slug, t])).values());
-  const filtered = (posts || [])
+  const filteredPosts = (posts || [])
     .filter(p => !search || p.title.toLowerCase().includes(search.toLowerCase()))
     .filter(p => !activeTag || p.tags.some(t => t.slug === activeTag));
+  const filteredProjects = (projects || [])
+    .filter(p => !search || p.title.toLowerCase().includes(search.toLowerCase()));
+
+  // Единая лента: посты + эко-проекты вместе, отсортированы по дате — как в Instagram,
+  // а не отдельными блоками.
+  const feed: FeedItem[] = [
+    ...filteredPosts.map((p): FeedItem => ({ kind: "post", data: p })),
+    ...filteredProjects.map((p): FeedItem => ({ kind: "project", data: p })),
+  ].sort((a, b) => {
+    const da = new Date(a.kind === "post" ? a.data.created_at : a.data.date).getTime();
+    const db = new Date(b.kind === "post" ? b.data.created_at : b.data.date).getTime();
+    return db - da;
+  });
 
   const showAuthor = (name: string, role: string | null, photo?: string | null) => setAuthorPopover({ name, role, photo });
 
@@ -602,25 +763,29 @@ export function BlogPage() {
         </FadeIn>
 
         {error && <p style={{ color: "rgba(255,255,255,0.4)", textAlign: "center", padding: "60px 0" }}>Couldn't load posts.</p>}
-        {!error && !posts && (
+        {!error && !posts && !projects && (
           <div style={{ display: "flex", justifyContent: "center", padding: "80px 0" }}>
             <div style={{ width: 34, height: 34, borderRadius: "50%", border: "3px solid rgba(34,197,94,0.15)", borderTopColor: GREEN, animation: "yq-spin .8s linear infinite" }} />
           </div>
         )}
-        {!error && posts && posts.length === 0 && <p style={{ color: "rgba(255,255,255,0.35)", textAlign: "center", padding: "60px 0" }}>No posts yet — check back soon!</p>}
+        {!error && posts && projects && feed.length === 0 && <p style={{ color: "rgba(255,255,255,0.35)", textAlign: "center", padding: "60px 0" }}>Nothing here yet — check back soon!</p>}
 
-        <EcoProjectsStrip onNotice={setNotice} />
-
-        {filtered.map((post, i) => (
-          <FeedPost key={post.id} post={post} delay={i * 45}
-            onOpen={() => setActiveSlug(post.slug)}
+        {feed.map((item, i) => item.kind === "post" ? (
+          <FeedPost key={`post-${item.data.id}`} post={item.data} delay={i * 45}
+            onOpen={() => setActiveSlug(item.data.slug)}
             onNotice={setNotice}
             onAuthorClick={showAuthor}
+          />
+        ) : (
+          <ProjectFeedPost key={`project-${item.data.id}`} project={item.data} delay={i * 45}
+            onOpen={() => setActiveProject(item.data)}
+            onNotice={setNotice}
           />
         ))}
       </main>
 
       {activeSlug && <ArticleModal slug={activeSlug} onClose={() => setActiveSlug(null)} onNotice={setNotice} onAuthorClick={showAuthor} />}
+      {activeProject && <ProjectModal project={activeProject} onClose={() => setActiveProject(null)} onNotice={setNotice} />}
       {authorPopover && <AuthorPopover name={authorPopover.name} role={authorPopover.role} photo={authorPopover.photo} onClose={() => setAuthorPopover(null)} />}
       {notice && <Toast message={notice} onDone={() => setNotice(null)} />}
     </div>

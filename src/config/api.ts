@@ -53,6 +53,9 @@ export const ENDPOINTS = {
     projects: `${API_BASE}/projects/`,
     projectDetail: (id: number | string) => `${API_BASE}/projects/${id}/`,
     projectJoin: (id: number | string) => `${API_BASE}/projects/${id}/join/`,
+    projectLike: (id: number | string) => `${API_BASE}/projects/${id}/like/`,
+    projectComment: (id: number | string) => `${API_BASE}/projects/${id}/comment/`,
+    projectCommentLike: (id: number | string) => `${API_BASE}/project-comment/${id}/like/`,
 } as const;
 
 /**

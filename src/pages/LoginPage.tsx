@@ -49,6 +49,13 @@ export function LoginPage() {
   const [searchParams] = useSearchParams();
 
   const [mode, setMode] = useState<Mode>(searchParams.get("mode") === "register" ? "register" : "login");
+
+  // Reacts to the header's Sign Up / Login links even when already sitting on /login —
+  // React Router doesn't remount this component just because the query string changed,
+  // so the initial useState above only runs once. This keeps mode in sync afterwards.
+  useEffect(() => {
+    setMode(searchParams.get("mode") === "register" ? "register" : "login");
+  }, [searchParams]);
   const [fullname, setFullname] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
