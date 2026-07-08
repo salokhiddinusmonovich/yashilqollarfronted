@@ -26,7 +26,7 @@ const UI: Record<string, Record<string, string>> = {
     founder: "Founders", digital: "Digital", media: "Media", organization: "Organization",
     loading: "Loading team…", error: "Couldn't load the team. Please try again.", retry: "Retry",
     empty: "No team members in this group yet.",
-    skills: "Skills",
+    skills: "bio",
   },
   uz: {
     eyebrow: "Missiya ortidagi odamlar", title: "Bizning", titleGreen: "Jamoamiz",
@@ -34,7 +34,7 @@ const UI: Record<string, Record<string, string>> = {
     founder: "Asoschilar", digital: "Raqamli yo'nalish", media: "Media", organization: "Tashkiliy",
     loading: "Jamoa yuklanmoqda…", error: "Jamoani yuklab bo'lmadi. Qayta urinib ko'ring.", retry: "Qayta urinish",
     empty: "Bu guruhda hozircha azolar yo'q.",
-    skills: "Ko'nikmalar",
+    skills: "bio",
   },
   ru: {
     eyebrow: "Люди за миссией", title: "Наша", titleGreen: "Команда",
@@ -42,7 +42,7 @@ const UI: Record<string, Record<string, string>> = {
     founder: "Основатели", digital: "Digital", media: "Медиа", organization: "Организация",
     loading: "Загружаем команду…", error: "Не удалось загрузить команду. Попробуйте ещё раз.", retry: "Повторить",
     empty: "В этой группе пока нет участников.",
-    skills: "Навыки",
+    skills: "био",
   },
 };
 
