@@ -1,7 +1,83 @@
 import { useState, useEffect, useRef } from "react";
+import { useLang } from "../contexts/LanguageContext";
 
 const GREEN = "#22C55E";
 const DARK = "#060606";
+
+type PageLang = "en" | "ru" | "uz";
+
+const PAGE_UI: Record<PageLang, {
+  eyebrow: string; title1: string; titleGreen: string; subtitle: string;
+  contactDesc: string[]; locationLabel: string; responseText: string; responseHours: string;
+  faqLabel: string; faq: { q: string; a: string }[];
+}> = {
+  en: {
+    eyebrow: "Get in Touch",
+    title1: "Let's unite",
+    titleGreen: "for nature.",
+    subtitle: "Volunteering, partnership, or just a question — pick whichever channel works for you below.",
+    contactDesc: [
+      "Registration, profile, and project participation",
+      "News, project announcements, and reports",
+      "Photos and videos from our events",
+      "Partnerships, media, and general questions",
+    ],
+    locationLabel: "Our base",
+    responseText: "We usually reply within",
+    responseHours: "24 hours",
+    faqLabel: "Frequently Asked Questions",
+    faq: [
+      { q: "How can I become a Yashil Qo'llar volunteer?", a: "We regularly run ecological actions, plogging events, and training sessions across Uzbekistan. Message us on our Telegram bot or channel — we'll connect you with the nearest event." },
+      { q: "Can organizations partner with you?", a: "Yes. We work with schools, universities, businesses, and government bodies — from joint ecological actions to opening eco-clubs on-site. Message us to discuss the format." },
+      { q: "What do volunteers actually do at events?", a: "Cleaning up areas and sorting waste, plogging (picking up litter while running or walking), recycling workshops, ecological safety trainings, and running eco-clubs in schools and universities." },
+      { q: "How do you share results?", a: "We cover every event on our Telegram channel and social media — photos, videos, eco-challenges, and posts about what's been done. Transparency matters to us." },
+    ],
+  },
+  ru: {
+    eyebrow: "Свяжитесь с нами",
+    title1: "Объединимся",
+    titleGreen: "ради природы.",
+    subtitle: "Волонтёрство, партнёрство или просто вопрос — выберите удобный канал ниже.",
+    contactDesc: [
+      "Регистрация, профиль и участие в проектах",
+      "Новости, анонсы проектов и отчёты",
+      "Фото и видео с наших мероприятий",
+      "Партнёрства, СМИ и общие вопросы",
+    ],
+    locationLabel: "Наша база",
+    responseText: "Обычно отвечаем в течение",
+    responseHours: "24 часов",
+    faqLabel: "Частые вопросы",
+    faq: [
+      { q: "Как я могу стать волонтёром Yashil Qo'llar?", a: "Мы регулярно проводим экоакции, плоггинги и обучающие мероприятия по всему Узбекистану. Напишите нам в Telegram-боте или канале — подключим вас к ближайшему мероприятию в вашем регионе." },
+      { q: "Можно ли организациям сотрудничать с вами?", a: "Да. Мы работаем со школами, вузами, бизнесом и госорганами — от совместных экоакций до открытия эко-клубов на базе учреждения. Напишите нам, обсудим формат." },
+      { q: "Чем конкретно занимаются волонтёры на мероприятиях?", a: "Уборка территорий и сортировка отходов, плоггинг (сбор мусора во время бега или ходьбы), обучение переработке отходов, тренинги по экологической безопасности и работа в эко-клубах при школах и вузах." },
+      { q: "Как вы рассказываете о результатах?", a: "Мы освещаем каждое мероприятие в Telegram-канале и соцсетях — фото, видео, экочелленджи и посты о том, что уже сделано. Прозрачность для нас принципиальна." },
+    ],
+  },
+  uz: {
+    eyebrow: "Biz bilan bog'laning",
+    title1: "Tabiat uchun",
+    titleGreen: "birlashamiz.",
+    subtitle: "Ko'ngillilik, hamkorlik yoki shunchaki savol — quyidagi qulay kanalni tanlang.",
+    contactDesc: [
+      "Ro'yxatdan o'tish, profil va loyihalarda ishtirok",
+      "Yangiliklar, loyiha e'lonlari va hisobotlar",
+      "Tadbirlarimizdan foto va videolar",
+      "Hamkorlik, OAV va umumiy savollar",
+    ],
+    locationLabel: "Bizning bazamiz",
+    responseText: "Odatda",
+    responseHours: "24 soat ichida javob beramiz",
+    faqLabel: "Tez-tez so'raladigan savollar",
+    faq: [
+      { q: "Yashil Qo'llarga qanday ko'ngilli bo'lsam bo'ladi?", a: "Biz O'zbekiston bo'ylab muntazam ravishda ekologik aksiyalar, plogging va o'quv tadbirlarini o'tkazamiz. Telegram-botimiz yoki kanalimizga yozing — sizni eng yaqin tadbirga bog'laymiz." },
+      { q: "Tashkilotlar siz bilan hamkorlik qila oladimi?", a: "Ha. Biz maktablar, universitetlar, biznes va davlat organlari bilan ishlaymiz — birgalikdagi ekologik aksiyalardan tortib, muassasa negizida eko-klublar ochishgacha. Formatni muhokama qilish uchun yozing." },
+      { q: "Tadbirlarda ko'ngillilar aniq nima qiladi?", a: "Hududlarni tozalash va chiqindilarni saralash, plogging (yugurish yoki yurish paytida chiqindi yig'ish), qayta ishlash bo'yicha mashg'ulotlar, ekologik xavfsizlik treninglari va maktab/universitetlardagi eko-klublar faoliyati." },
+      { q: "Natijalar haqida qanday ma'lumot berasiz?", a: "Har bir tadbirni Telegram-kanalimiz va ijtimoiy tarmoqlarda yoritamiz — foto, video, ekologik challenge'lar va qilingan ishlar haqida postlar. Shaffoflik biz uchun muhim." },
+    ],
+  },
+};
 
 /* ─────────────────────────────────────────
    КОНТАКТЫ
@@ -12,7 +88,6 @@ const contacts = [
     label: "Telegram Bot",
     value: "@yashilqollar_bot",
     href: "https://t.me/yashilqollar_bot",
-    desc: "Регистрация, профиль и участие в проектах",
     icon: (
       <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
         <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
@@ -24,7 +99,6 @@ const contacts = [
     label: "Telegram Channel",
     value: "@yashilqollar",
     href: "https://t.me/yashilqollar",
-    desc: "Новости, анонсы проектов и отчёты",
     icon: (
       <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.6" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" d="M22 2 11 13" />
@@ -37,7 +111,6 @@ const contacts = [
     label: "Instagram",
     value: "@yashilqollar",
     href: "https://instagram.com/yashilqollar",
-    desc: "Фото и видео с наших посадок",
     icon: (
       <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
         <rect x="2" y="2" width="20" height="20" rx="5" />
@@ -51,7 +124,6 @@ const contacts = [
     label: "Email",
     value: "yashilqollar@gmail.com",
     href: "mailto:yashilqollar@gmail.com",
-    desc: "Партнёрства, СМИ и общие вопросы",
     icon: (
       <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -59,13 +131,6 @@ const contacts = [
     ),
     accent: "#FACC15",
   },
-];
-
-const faq = [
-  { q: "Как я могу стать волонтёром Yashil Qollar?", a: "Мы проводим посадочные дни круглый год по всему Узбекистану. Напишите нам в Telegram-боте или канале, и мы подберём ближайший проект." },
-  { q: "Можно ли организациям сотрудничать с вами?", a: "Да. Мы работаем со школами, бизнесом, госорганами и НКО. Формы партнёрства разные — напишите нам, обсудим." },
-  { q: "Как вы следите за тем, что деревья действительно приживаются?", a: "Каждый участок мониторится минимум два года. Мы используем GPS-метки, программу кураторов из местных жителей и публикуем данные о выживаемости открыто." },
-  { q: "Можно ли направить пожертвование в конкретный регион?", a: "Да, при пожертвовании можно указать регион или проект. Все средства отражаются в квартальных отчётах о прозрачности." },
 ];
 
 /* ─────────────────────────────────────────
@@ -102,7 +167,7 @@ function FadeIn({ children, delay = 0, style = {} }: { children: React.ReactNode
 /* ─────────────────────────────────────────
    БОЛЬШАЯ КАРТОЧКА КОНТАКТА
 ───────────────────────────────────────── */
-function ContactCard({ c, delay }: { c: typeof contacts[0]; delay: number }) {
+function ContactCard({ c, desc, delay }: { c: typeof contacts[0]; desc: string; delay: number }) {
   const [hov, setHov] = useState(false);
   return (
     <FadeIn delay={delay}>
@@ -143,7 +208,7 @@ function ContactCard({ c, delay }: { c: typeof contacts[0]; delay: number }) {
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 9, fontWeight: 800, color: "rgba(255,255,255,0.28)", letterSpacing: ".2em", textTransform: "uppercase", marginBottom: 5 }}>{c.label}</div>
           <div style={{ fontSize: 16, fontWeight: 700, color: hov ? "#fff" : "rgba(255,255,255,0.75)", transition: "color .2s", marginBottom: 3, wordBreak: "break-word" }}>{c.value}</div>
-          <div style={{ fontSize: 12.5, color: "rgba(255,255,255,0.35)", lineHeight: 1.5 }}>{c.desc}</div>
+          <div style={{ fontSize: 12.5, color: "rgba(255,255,255,0.35)", lineHeight: 1.5 }}>{desc}</div>
         </div>
         <div style={{ color: hov ? c.accent : "rgba(255,255,255,0.15)", fontSize: 20, transition: "all .22s", transform: hov ? "translateX(4px)" : "none", flexShrink: 0 }}>→</div>
       </a>
@@ -151,7 +216,7 @@ function ContactCard({ c, delay }: { c: typeof contacts[0]; delay: number }) {
   );
 }
 
-function FaqItem({ item, open, onToggle, delay }: { item: typeof faq[0]; open: boolean; onToggle: () => void; delay: number }) {
+function FaqItem({ item, open, onToggle, delay }: { item: { q: string; a: string }; open: boolean; onToggle: () => void; delay: number }) {
   return (
     <FadeIn delay={delay}>
       <div style={{ background: open ? "rgba(34,197,94,0.05)" : "rgba(255,255,255,0.02)", border: `1px solid ${open ? GREEN + "40" : "rgba(255,255,255,0.07)"}`, borderRadius: 14, overflow: "hidden", transition: "all .25s", backdropFilter: "blur(8px)" }}>
@@ -169,6 +234,8 @@ function FaqItem({ item, open, onToggle, delay }: { item: typeof faq[0]; open: b
 
 export function ContactPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const { lang: siteLang } = useLang();
+  const t = PAGE_UI[(siteLang as PageLang) in PAGE_UI ? (siteLang as PageLang) : "en"];
 
   return (
     <div style={{ minHeight: "100vh", background: DARK, fontFamily: "'Inter','Helvetica Neue',sans-serif", color: "#fff", position: "relative", overflowX: "hidden" }}>
@@ -182,22 +249,22 @@ export function ContactPage() {
           <div style={{ textAlign: "center", marginBottom: "clamp(48px,8vw,72px)" }}>
             <div style={{ display: "inline-flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
               <span style={{ display: "inline-block", width: 36, height: 1.5, background: GREEN, borderRadius: 2 }} />
-              <span style={{ color: GREEN, fontSize: 10, fontWeight: 800, letterSpacing: ".32em", textTransform: "uppercase" }}>Свяжитесь с нами</span>
+              <span style={{ color: GREEN, fontSize: 10, fontWeight: 800, letterSpacing: ".32em", textTransform: "uppercase" }}>{t.eyebrow}</span>
               <span style={{ display: "inline-block", width: 36, height: 1.5, background: GREEN, borderRadius: 2 }} />
             </div>
             <h1 style={{ margin: "0 0 18px", fontWeight: 900, fontSize: "clamp(34px,7vw,64px)", color: "#fff", lineHeight: 1.05, letterSpacing: "-0.03em" }}>
-              Растим будущее <br />
-              <span style={{ color: GREEN, textShadow: "0 0 80px rgba(34,197,94,0.45)" }}>вместе с вами.</span>
+              {t.title1} <br />
+              <span style={{ color: GREEN, textShadow: "0 0 80px rgba(34,197,94,0.45)" }}>{t.titleGreen}</span>
             </h1>
             <p style={{ margin: "0 auto", fontSize: 16, color: "rgba(255,255,255,0.4)", maxWidth: 480, lineHeight: 1.75 }}>
-              Волонтёрство, партнёрство, пожертвования или просто вопрос — выберите удобный канал ниже.
+              {t.subtitle}
             </p>
           </div>
         </FadeIn>
 
         {/* КОНТАКТЫ — сетка карточек */}
         <div className="yq-contact-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 14, marginBottom: 20 }}>
-          {contacts.map((c, i) => <ContactCard key={i} c={c} delay={i * 60} />)}
+          {contacts.map((c, i) => <ContactCard key={i} c={c} desc={t.contactDesc[i]} delay={i * 60} />)}
         </div>
 
         {/* ЛОКАЦИЯ + БЕЙДЖ ОТВЕТА */}
@@ -207,9 +274,9 @@ export function ContactPage() {
               <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
                 <div style={{ width: 50, height: 50, borderRadius: 14, background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>📍</div>
                 <div>
-                  <div style={{ fontSize: 9, fontWeight: 800, color: "rgba(255,255,255,0.28)", letterSpacing: ".2em", textTransform: "uppercase", marginBottom: 6 }}>Наша база</div>
+                  <div style={{ fontSize: 9, fontWeight: 800, color: "rgba(255,255,255,0.28)", letterSpacing: ".2em", textTransform: "uppercase", marginBottom: 6 }}>{t.locationLabel}</div>
                   <div style={{ fontWeight: 700, fontSize: 15, color: "#fff", marginBottom: 6 }}>Tashkent, Uzbekistan</div>
-                  <div style={{ fontSize: 13, color: "rgba(255,255,255,0.38)", lineHeight: 1.7 }}>Islom Karimov street 49<br />Проекты во всех 14 регионах</div>
+                  <div style={{ fontSize: 13, color: "rgba(255,255,255,0.38)", lineHeight: 1.7 }}>Islom Karimov street 49</div>
                 </div>
               </div>
             </div>
@@ -218,7 +285,7 @@ export function ContactPage() {
           <FadeIn delay={320}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "22px", background: "rgba(34,197,94,0.07)", border: "1px solid rgba(34,197,94,0.18)", borderRadius: 18, height: "100%", boxSizing: "border-box" }}>
               <span style={{ width: 10, height: 10, borderRadius: "50%", background: GREEN, boxShadow: `0 0 10px ${GREEN}`, flexShrink: 0, animation: "blink 2s infinite" }} />
-              <span style={{ fontSize: 13, color: "rgba(255,255,255,0.55)", lineHeight: 1.6 }}>Обычно отвечаем в течение <strong style={{ color: GREEN }}>24 часов</strong></span>
+              <span style={{ fontSize: 13, color: "rgba(255,255,255,0.55)", lineHeight: 1.6 }}>{t.responseText} <strong style={{ color: GREEN }}>{t.responseHours}</strong></span>
             </div>
           </FadeIn>
         </div>
@@ -226,10 +293,10 @@ export function ContactPage() {
         {/* FAQ */}
         <div>
           <FadeIn>
-            <p style={{ fontSize: 10, fontWeight: 800, color: "rgba(255,255,255,0.2)", letterSpacing: ".22em", textTransform: "uppercase", margin: "0 0 20px", textAlign: "center" }}>Частые вопросы</p>
+            <p style={{ fontSize: 10, fontWeight: 800, color: "rgba(255,255,255,0.2)", letterSpacing: ".22em", textTransform: "uppercase", margin: "0 0 20px", textAlign: "center" }}>{t.faqLabel}</p>
           </FadeIn>
           <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
-            {faq.map((item, i) => (
+            {t.faq.map((item, i) => (
               <FaqItem key={i} item={item} open={openFaq === i} onToggle={() => setOpenFaq(openFaq === i ? null : i)} delay={i * 55} />
             ))}
           </div>
