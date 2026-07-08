@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from "react";
+import { useLang } from "../contexts/LanguageContext";
 import betrader from "/sponsors/btr.png";
 import tdiu from "/sponsors/tdiu.png";
 import tosh_eco_bosh_bosh from "/sponsors/tosh_sh_eco_bosh_bosh.png";
 
 const GREEN = "#22C55E";
 type Lang = "EN" | "UZ" | "RU";
-const LANGS: Lang[] = ["EN", "UZ", "RU"];
 
 // ─── i18n ──────────────────────────────────────────────────────────────────────
 const UI: Record<Lang, Record<string, string>> = {
@@ -45,12 +45,6 @@ const UI: Record<Lang, Record<string, string>> = {
     benefits_title: "Что вы получаете",
     stat1: "Партнёров", stat2: "Регионов", stat3: "Волонтёров", stat4: "Посажено деревьев",
   },
-};
-
-const BENEFITS: Record<Lang, string[]> = {
-  EN: ["Logo on all conference and project materials", "Dedicated feature on our website and social channels", "Access to volunteer and community network", "Speaking opportunity at events", "Co-branded planting campaigns"],
-  UZ: ["Barcha materiallarda logotip", "Veb-sayt va ijtimoiy tarmoqlarda taqdimot", "Ko'ngilli hamjamiyatiga kirish", "Tadbirlarda nutq so'zlash imkoniyati", "Hamkorlikdagi ekish kampaniyalari"],
-  RU: ["Логотип на всех материалах", "Публикация на сайте и в соцсетях", "Доступ к волонтёрскому сообществу", "Возможность выступить на мероприятиях", "Совместные кампании по посадке деревьев"],
 };
 
 const PARTNERS = [
@@ -207,16 +201,14 @@ function PartnerCard({ partner, lang, delay }: { partner: typeof PARTNERS[0]; la
 
 // ─── Main ──────────────────────────────────────────────────────────────────────
 export function SponsorsPage() {
-  const [lang, setLang] = useState<Lang>("EN");
-  const t = UI[lang];
-  const benefits = BENEFITS[lang];
+  // ИЗМЕНЕНО: язык теперь берётся из общего LanguageContext (тот же
+  // переключатель, что в шапке сайта), а не из отдельного локального
+  // стейта на этой странице. Свой собственный переключатель EN/UZ/RU
+  // отсюда убран — он дублировал общий и не был с ним синхронизирован.
+  const { lang: siteLang } = useLang();
+  const lang: Lang = siteLang === "uz" ? "UZ" : siteLang === "ru" ? "RU" : "EN";
 
-  const stats = [
-    { val: "3", label: t.stat1 },
-    { val: "6", label: t.stat2 },
-    { val: "1,000+", label: t.stat3 },
-    { val: "97K+", label: t.stat4 },
-  ];
+  const t = UI[lang];
 
   return (
     <div style={{ minHeight: "100vh", background: "#060606", color: "#fff", fontFamily: "'Inter','Helvetica Neue',sans-serif", position: "relative", overflowX: "hidden" }}>
@@ -230,46 +222,18 @@ export function SponsorsPage() {
 
       <main style={{ position: "relative", zIndex: 1, maxWidth: 1200, margin: "0 auto", padding: "clamp(100px,12vw,140px) clamp(16px,5vw,60px) 100px" }}>
 
-        {/* ── Header ── */}
+        {/* ── Header (переключатель языка удалён — теперь общий, в шапке) ── */}
         <FadeIn>
-          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 20, marginBottom: 56 }}>
-            <div style={{ flex: 1, minWidth: 260 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-                <span style={{ width: 32, height: 1.5, background: GREEN, borderRadius: 2, display: "inline-block" }} />
-                <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: ".28em", textTransform: "uppercase", color: GREEN }}>{t.eyebrow}</span>
-              </div>
-              <h1 style={{ margin: "0 0 14px", fontSize: "clamp(36px,6vw,68px)", fontWeight: 900, letterSpacing: "-0.03em", lineHeight: 1 }}>
-                <span style={{ color: "#fff" }}>{t.title} </span>
-                <span style={{ color: GREEN, textShadow: "0 0 60px rgba(34,197,94,0.4)" }}>{t.titleGreen}</span>
-              </h1>
-              <p style={{ margin: 0, fontSize: 16, color: "rgba(255,255,255,0.38)", maxWidth: 520, lineHeight: 1.75 }}>{t.subtitle}</p>
+          <div style={{ marginBottom: 56 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+              <span style={{ width: 32, height: 1.5, background: GREEN, borderRadius: 2, display: "inline-block" }} />
+              <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: ".28em", textTransform: "uppercase", color: GREEN }}>{t.eyebrow}</span>
             </div>
-
-            {/* Lang switcher */}
-            <div style={{ display: "flex", gap: 6, flexShrink: 0, alignSelf: "flex-start", marginTop: 8 }}>
-              {LANGS.map(l => (
-                <button key={l} onClick={() => setLang(l)} style={{
-                  padding: "7px 14px", borderRadius: 8, cursor: "pointer",
-                  background: lang === l ? `${GREEN}18` : "rgba(255,255,255,0.04)",
-                  border: `1px solid ${lang === l ? GREEN + "45" : "rgba(255,255,255,0.09)"}`,
-                  color: lang === l ? GREEN : "rgba(255,255,255,0.4)",
-                  fontSize: 11, fontWeight: 800, letterSpacing: ".1em", transition: "all .18s",
-                  fontFamily: "'Inter',sans-serif",
-                }}>{l}</button>
-              ))}
-            </div>
-          </div>
-        </FadeIn>
-
-        {/* ── Stats strip ── */}
-        <FadeIn delay={80}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(120px,1fr))", gap: 1, background: `${GREEN}10`, borderRadius: 16, overflow: "hidden", border: `1px solid ${GREEN}18`, marginBottom: 72 }}>
-            {stats.map((s, i) => (
-              <div key={i} style={{ padding: "24px 20px", background: "rgba(6,6,6,0.9)", textAlign: "center" }}>
-                <div style={{ fontSize: "clamp(24px,3.5vw,40px)", fontWeight: 800, color: GREEN, letterSpacing: "-0.02em", lineHeight: 1 }}>{s.val}</div>
-                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", marginTop: 8, letterSpacing: ".1em", textTransform: "uppercase" }}>{s.label}</div>
-              </div>
-            ))}
+            <h1 style={{ margin: "0 0 14px", fontSize: "clamp(36px,6vw,68px)", fontWeight: 900, letterSpacing: "-0.03em", lineHeight: 1 }}>
+              <span style={{ color: "#fff" }}>{t.title} </span>
+              <span style={{ color: GREEN, textShadow: "0 0 60px rgba(34,197,94,0.4)" }}>{t.titleGreen}</span>
+            </h1>
+            <p style={{ margin: 0, fontSize: 16, color: "rgba(255,255,255,0.38)", maxWidth: 520, lineHeight: 1.75 }}>{t.subtitle}</p>
           </div>
         </FadeIn>
 
@@ -287,58 +251,6 @@ export function SponsorsPage() {
           {PARTNERS.map((p, i) => (
             <PartnerCard key={i} partner={p} lang={lang} delay={i * 80} />
           ))}
-        </div>
-
-        {/* ── Divider ── */}
-        <div style={{ height: 1, background: "linear-gradient(90deg,transparent,rgba(34,197,94,0.2),transparent)", marginBottom: 72 }} />
-
-        {/* ── Become a partner ── */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))", gap: 48, alignItems: "start" }}>
-
-          {/* Left: CTA */}
-          <FadeIn>
-            <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-                <span style={{ width: 24, height: 1.5, background: GREEN, borderRadius: 2, display: "inline-block" }} />
-                <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: ".28em", textTransform: "uppercase", color: GREEN }}>Partnership</span>
-              </div>
-              <h2 style={{ margin: "0 0 16px", fontSize: "clamp(26px,4vw,44px)", fontWeight: 900, letterSpacing: "-0.025em", lineHeight: 1.05, color: "#fff" }}>
-                {t.become_title}
-              </h2>
-              <p style={{ margin: "0 0 28px", fontSize: 15, color: "rgba(255,255,255,0.4)", lineHeight: 1.75, maxWidth: 420 }}>{t.become_sub}</p>
-              <a href="/contact" style={{
-                display: "inline-flex", alignItems: "center", gap: 8,
-                background: GREEN, color: "#000", border: "none",
-                padding: "14px 28px", borderRadius: 11,
-                fontSize: 12, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase",
-                textDecoration: "none", cursor: "pointer",
-                boxShadow: "0 0 32px rgba(34,197,94,0.25)", transition: "all .25s",
-              }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = "0 0 48px rgba(34,197,94,0.45)"; (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)"; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = "0 0 32px rgba(34,197,94,0.25)"; (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}
-              >
-                {t.cta}
-              </a>
-            </div>
-          </FadeIn>
-
-          {/* Right: Benefits */}
-          <FadeIn delay={120}>
-            <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 18, padding: "28px 24px", backdropFilter: "blur(8px)", position: "relative", overflow: "hidden" }}>
-              <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg,transparent,${GREEN}50,transparent)` }} />
-              <div style={{ fontSize: 10, fontWeight: 800, color: "rgba(255,255,255,0.25)", letterSpacing: ".2em", textTransform: "uppercase", marginBottom: 20 }}>{t.benefits_title}</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                {benefits.map((b, i) => (
-                  <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-                    <div style={{ width: 22, height: 22, borderRadius: "50%", background: `${GREEN}18`, border: `1px solid ${GREEN}40`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1 }}>
-                      <span style={{ fontSize: 10, color: GREEN }}>✓</span>
-                    </div>
-                    <span style={{ fontSize: 14, color: "rgba(255,255,255,0.55)", lineHeight: 1.6 }}>{b}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </FadeIn>
         </div>
 
       </main>

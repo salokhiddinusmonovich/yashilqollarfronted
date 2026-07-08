@@ -1,5 +1,6 @@
 import { NavLink, Link } from "react-router-dom";
 import { useAuth } from "../../../contexts/AuthContext";
+import { useLang } from "../../../contexts/LanguageContext";
 import { LangSwitcher } from "./LangSwitcher";
 import { ProfileDropdown } from "./ProfileDropdown";
 
@@ -15,6 +16,7 @@ const navItems = [
 
 export const MobileMenu = ({ onClose }: { onClose: () => void }) => {
     const { isLoggedIn } = useAuth();
+    const { t } = useLang();
 
     return (
         <div className="absolute top-14 left-0 w-full bg-zinc-950/98 backdrop-blur-xl border-b border-white/10 md:hidden z-50">
@@ -38,18 +40,35 @@ export const MobileMenu = ({ onClose }: { onClose: () => void }) => {
                     {isLoggedIn ? (
                         <ProfileDropdown />
                     ) : (
-                        <Link
-                            to="/login"
-                            onClick={onClose}
-                            style={{
-                                background: GREEN, color: "#04140a", border: "none",
-                                padding: "8px 18px", borderRadius: 8,
-                                fontSize: 11, fontWeight: 800, letterSpacing: ".08em",
-                                textDecoration: "none", fontFamily: "'Montserrat',sans-serif",
-                            }}
-                        >
-                            LOGIN →
-                        </Link>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <Link
+                                to="/login?mode=register"
+                                onClick={onClose}
+                                style={{
+                                    background: "transparent", color: "rgba(255,255,255,0.75)",
+                                    border: "1px solid rgba(255,255,255,0.15)",
+                                    padding: "8px 14px", borderRadius: 8,
+                                    fontSize: 10.5, fontWeight: 700, letterSpacing: ".06em",
+                                    textDecoration: "none", fontFamily: "'Montserrat',sans-serif",
+                                    whiteSpace: "nowrap",
+                                }}
+                            >
+                                {t.signUp?.toUpperCase() || "SIGN UP"}
+                            </Link>
+                            <Link
+                                to="/login"
+                                onClick={onClose}
+                                style={{
+                                    background: GREEN, color: "#04140a", border: "none",
+                                    padding: "8px 16px", borderRadius: 8,
+                                    fontSize: 10.5, fontWeight: 800, letterSpacing: ".08em",
+                                    textDecoration: "none", fontFamily: "'Montserrat',sans-serif",
+                                    whiteSpace: "nowrap",
+                                }}
+                            >
+                                {t.signIn?.toUpperCase() || "LOGIN"} →
+                            </Link>
+                        </div>
                     )}
                 </div>
             </nav>
