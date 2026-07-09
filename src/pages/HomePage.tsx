@@ -403,13 +403,6 @@ export function HomePage() {
       <section className="yq-hero" style={{ position: "relative", zIndex: 2 }}>
         <div className="yq-hero-grid">
           <div>
-            <div className="yq-fade-1" style={{ display: "inline-flex", alignItems: "center", gap: 10, marginBottom: "1.4rem" }}>
-              <span style={{ width: 30, height: 1.5, background: "#22c55e", borderRadius: 2, display: "inline-block" }} />
-              <span style={{ fontFamily: "var(--font-label)", fontSize: 10, fontWeight: 800, letterSpacing: ".24em", textTransform: "uppercase", color: "#22c55e" }}>
-                {t.dateTag}
-              </span>
-            </div>
-
             <h1 className="hw yq-fade-1">{t.heroLine1} {t.heroLine2}</h1>
             <h1 className="hw yq-fade-1 hw-accent">{t.heroLine3} {t.heroLine4} {t.heroLine5}</h1>
 
@@ -457,48 +450,6 @@ export function HomePage() {
           ))}
         </div>
       </div>
-
-      {/* ── WHAT WE DO ── */}
-      <section className="yq-what">
-        <FadeIn>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
-            <span style={{ width: 28, height: 1.5, background: "var(--green)", borderRadius: 2, display: "inline-block" }} />
-            <span style={{ fontFamily: "var(--font-label)", fontSize: 10, fontWeight: 800, letterSpacing: ".24em", textTransform: "uppercase", color: "var(--green)" }}>{t.whatLabel}</span>
-          </div>
-          <h2 className="hw" style={{ fontSize: "clamp(1.8rem,4vw,3rem)", marginBottom: 18 }}>{t.whatTitle}</h2>
-          <p style={{ color: "var(--text-muted)", fontFamily: "var(--font-sans)", fontSize: 15.5, lineHeight: 1.8, maxWidth: 640, margin: "0 0 32px" }}>{t.whatBody}</p>
-
-          <div style={{ fontFamily: "var(--font-label)", fontSize: 10, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", color: "rgba(255,255,255,.35)", marginBottom: 14 }}>{t.regionsLabel}</div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-            {t.regions.map((r, i) => <span className="yq-region-chip" key={i}><i />{r}</span>)}
-          </div>
-        </FadeIn>
-      </section>
-
-      {/* ── ACTIVITY TYPES — the 6 real activities from the project brief ── */}
-      <section className="yq-what" style={{ paddingTop: 0 }}>
-        <FadeIn>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
-            <span style={{ width: 28, height: 1.5, background: "var(--green)", borderRadius: 2, display: "inline-block" }} />
-            <span style={{ fontFamily: "var(--font-label)", fontSize: 10, fontWeight: 800, letterSpacing: ".24em", textTransform: "uppercase", color: "var(--green)" }}>{t.councilsLabel}</span>
-          </div>
-          <h2 className="hw" style={{ fontSize: "clamp(1.8rem,4vw,3rem)", marginBottom: 28 }}>{t.councilsTitle}</h2>
-        </FadeIn>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 14 }}>
-          {t.homeCommittees.map((a, i) => (
-            <FadeIn key={i}>
-              <div style={{
-                position: "relative", background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.08)",
-                borderRadius: 16, padding: "24px 22px", height: "100%", transition: "border-color .2s, transform .2s",
-              }}>
-                <span style={{ position: "absolute", top: 16, right: 20, fontFamily: "var(--font-display)", fontSize: 28, color: "rgba(34,197,94,0.16)" }}>{a.code}</span>
-                <h3 style={{ fontFamily: "var(--font-label)", fontSize: 14.5, fontWeight: 800, color: "#fff", margin: "0 0 10px", maxWidth: "80%" }}>{a.name}</h3>
-                <p style={{ fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--text-muted)", lineHeight: 1.7, margin: 0 }}>{a.topic}</p>
-              </div>
-            </FadeIn>
-          ))}
-        </div>
-      </section>
 
       {/* ── MAP — where we are, all 14 regions ── */}
       <section className="yq-what">

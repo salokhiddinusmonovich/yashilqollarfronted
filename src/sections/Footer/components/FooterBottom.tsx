@@ -4,7 +4,7 @@ export const FooterBottom = () => {
     const { t } = useLang();
 
     return (
-        <div className="relative z-[1] mx-auto mt-10 flex max-w-[1200px] flex-wrap items-center justify-between gap-4 border-t border-white/[0.06] px-6 pt-5 md:px-10">
+        <div className="relative z-[1] mx-auto mt-10 flex max-w-[1200px] flex-wrap items-center justify-between gap-4 px-6 pt-5 md:px-10">
             <span className="text-xs text-white/30">© 2026 {t.footer.copyright}</span>
             <div className="flex gap-2.5">
                 <a
@@ -36,6 +36,20 @@ export const FooterBottom = () => {
                         <rect x="2.5" y="2.5" width="19" height="19" rx="5.5" stroke="currentColor" strokeWidth="1.8" />
                         <circle cx="12" cy="12" r="4.3" stroke="currentColor" strokeWidth="1.8" />
                         <circle cx="17.4" cy="6.6" r="1.15" fill="currentColor" />
+                    </svg>
+                </a>
+                <a
+                    href="https://www.linkedin.com/company/yashilqollar"
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="LinkedIn"
+                    className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 text-white/50 no-underline transition-colors hover:border-[#22c55e] hover:text-[#22c55e]"
+                >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+                        <rect x="2.5" y="2.5" width="19" height="19" rx="4" stroke="currentColor" strokeWidth="1.8" />
+                        <path d="M7.5 10v6.5M7.5 7.5v.01" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                        <path d="M11.5 16.5V12.7c0-1.2.9-2.2 2.1-2.2 1.2 0 1.9.9 1.9 2.2v3.8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M11.5 10.3v6.2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
                     </svg>
                 </a>
             </div>
