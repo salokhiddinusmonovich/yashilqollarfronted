@@ -349,7 +349,7 @@ export const translations = {
     navHome: "Bosh sahifa", navAbout: "Biz haqimizda", navCommittees: "Loyihalar", navTeam: "Jamoa",
     navSchedule: "Tadbirlar", navRegister: "Qo'shilish", navSponsors: "Homiylar", navContact: "Aloqa",
     dateTag: "Ekologik Loyiha",
-    heroLine1: "Yashil", heroLine2: "Qo'llar", heroLine3: "tabiat uchun", heroLine4: "birlash-", heroLine5: "amiz!",
+    heroLine1: "Yashil", heroLine2: "Qo'llar", heroLine3: "tabiat uchun", heroLine4: "birlashamiz!",
     heroSub: "Toza va barqaror kelajak uchun birlashamiz! Yoshlar orasida ekologik ong va madaniyatni oshirish va atrof-muhitni asrashga qaratilgan loyiha bo'lib, resurslardan oqilona foydalanish, chiqindilarni kamaytirish, ekologik mas'uliyatni kuchaytirishni maqsad qiladi.",
     heroCta2: "Siz ham bizning yo'limizga qo'shiling.",
     heroBadge: "Safimizga qo'shiling",
