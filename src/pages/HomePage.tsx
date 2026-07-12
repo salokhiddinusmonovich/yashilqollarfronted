@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useLang } from "../contexts/LanguageContext";
+import { ENDPOINTS, baseHeaders, fixMediaUrl } from "../config/api";
 import logoImg from "./photo_2025-10-08_22-18-51.jpg";
 
 /* ─────────────────────────────────────────────────────────────
@@ -337,9 +338,69 @@ const REGION_PATHS = [
 
 const MAP_VIEWBOX = "0 0 640 430.4";
 
-/* Real choropleth map — actual region borders, hoverable, linked to the legend below */
+/* Реальные коды регионов из TGUser.Region.choices на бэкенде — порядок
+   строго совпадает с REGION_PATHS и t.mapRegions (14 штук). */
+const REGION_CODES = [
+  "tashkent_s", "tashkent_v", "andijon", "fargona", "namangan",
+  "sirdaryo", "jizzakh", "samarkand", "bukhara", "navoi",
+  "qashqadaryo", "surkhandaryo", "khorezm", "karakalpakstan",
+];
+
+interface RegionTeamMember { id: number; fullname: string; photo: string | null; role: string; role_display: string; }
+
+/* Модалка команды региона — открывается по клику на регион/чип */
+function RegionTeamModal({ region, regionCode, onClose }: { region: string; regionCode: string; onClose: () => void }) {
+  const [members, setMembers] = useState<RegionTeamMember[] | null>(null);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    fetch(ENDPOINTS.teamByRegion(regionCode), { headers: baseHeaders("en") })
+      .then(res => { if (!res.ok) throw new Error(); return res.json(); })
+      .then(setMembers)
+      .catch(() => setError(true));
+  }, [regionCode]);
+
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: "#0f0f0f", border: "1px solid rgba(34,197,94,0.25)", borderRadius: 18, padding: 28, width: "100%", maxWidth: 380, maxHeight: "80vh", overflowY: "auto" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+          <h3 style={{ margin: 0, fontFamily: "var(--font-display)", fontSize: 20, color: "#fff" }}>{region}</h3>
+          <button onClick={onClose} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)", borderRadius: 8, width: 30, height: 30, cursor: "pointer", fontSize: 14 }}>✕</button>
+        </div>
+
+        {error && <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 13 }}>Couldn't load the team for this region.</p>}
+        {!error && !members && (
+          <div style={{ display: "flex", justifyContent: "center", padding: "30px 0" }}>
+            <div style={{ width: 26, height: 26, borderRadius: "50%", border: "3px solid rgba(34,197,94,0.15)", borderTopColor: "var(--green)", animation: "yq-spin .8s linear infinite" }} />
+          </div>
+        )}
+        {!error && members && members.length === 0 && (
+          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, lineHeight: 1.6 }}>No team assigned to this region yet.</p>
+        )}
+        {!error && members && members.length > 0 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {members.map(m => (
+              <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12 }}>
+                <div style={{ width: 42, height: 42, borderRadius: "50%", overflow: "hidden", flexShrink: 0, background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.35)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--green)", fontWeight: 700, fontSize: 14 }}>
+                  {m.photo ? <img src={fixMediaUrl(m.photo) || ""} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : m.fullname.split(" ").map(w => w[0]).slice(0, 2).join("")}
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 13.5, fontWeight: 700, color: "#fff" }}>{m.fullname}</div>
+                  <div style={{ fontSize: 11.5, color: "var(--green)", fontWeight: 600 }}>{m.role_display}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* Real choropleth map — actual region borders, hoverable, linked to the legend below, click opens that region's team */
 function UzbekistanMap({ regions }: { regions: readonly string[] }) {
   const [active, setActive] = useState<number | null>(null);
+  const [openRegion, setOpenRegion] = useState<number | null>(null);
 
   return (
     <div className="yq-map-wrap">
@@ -352,6 +413,7 @@ function UzbekistanMap({ regions }: { regions: readonly string[] }) {
             style={{ animationDelay: `${i * 90}ms, ${1.8 + i * 0.06}s` }}
             onMouseEnter={() => setActive(i)}
             onMouseLeave={() => setActive(a => (a === i ? null : a))}
+            onClick={() => setOpenRegion(i)}
           />
         ))}
         {REGION_PATHS.map((r, i) => (
@@ -369,11 +431,17 @@ function UzbekistanMap({ regions }: { regions: readonly string[] }) {
             className={"yq-map-chip" + (active === i ? " active" : "")}
             onMouseEnter={() => setActive(i)}
             onMouseLeave={() => setActive(a => (a === i ? null : a))}
+            onClick={() => setOpenRegion(i)}
+            style={{ cursor: "pointer" }}
           >
             <i />{r}
           </span>
         ))}
       </div>
+
+      {openRegion !== null && (
+        <RegionTeamModal region={regions[openRegion]} regionCode={REGION_CODES[openRegion]} onClose={() => setOpenRegion(null)} />
+      )}
     </div>
   );
 }
@@ -408,6 +476,7 @@ export function HomePage() {
 
             <div className="yq-fade-2" style={{ marginTop: "1.5rem", maxWidth: 500 }}>
               <p style={{ color: "var(--text-muted)", fontFamily: "var(--font-sans)", fontSize: "1.02rem", lineHeight: 1.72, margin: 0 }}>{t.heroSub}</p>
+              <p style={{ color: "var(--green)", fontFamily: "var(--font-label)", fontSize: "0.95rem", fontWeight: 700, letterSpacing: ".02em", margin: "12px 0 0" }}>{t.heroCta2}</p>
             </div>
 
             <div className="yq-fade-3" style={{ marginTop: "2.2rem" }}>
