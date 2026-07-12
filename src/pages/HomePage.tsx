@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useLang } from "../contexts/LanguageContext";
 import { ENDPOINTS, baseHeaders, fixMediaUrl } from "../config/api";
+import { PersonProfileModal } from "./PersonProfileModal";
 import logoImg from "./photo_2025-10-08_22-18-51.jpg";
 
 /* ─────────────────────────────────────────────────────────────
@@ -346,12 +347,17 @@ const REGION_CODES = [
   "qashqadaryo", "surkhandaryo", "khorezm", "karakalpakstan",
 ];
 
-interface RegionTeamMember { id: number; fullname: string; photo: string | null; role: string; role_display: string; }
+interface RegionTeamMember {
+  id: number; fullname: string; photo: string | null; role: string; role_display: string;
+}
 
-/* Модалка команды региона — открывается по клику на регион/чип */
+/* Модалка команды региона — открывается по клику на регион/чип.
+   Клик на человека открывает ОБЩИЙ PersonProfileModal (тот же, что у авторов
+   статей и комментаторов в блоге) — один профиль на весь сайт. */
 function RegionTeamModal({ region, regionCode, onClose }: { region: string; regionCode: string; onClose: () => void }) {
   const [members, setMembers] = useState<RegionTeamMember[] | null>(null);
   const [error, setError] = useState(false);
+  const [openProfileId, setOpenProfileId] = useState<number | null>(null);
 
   useEffect(() => {
     fetch(ENDPOINTS.teamByRegion(regionCode), { headers: baseHeaders("en") })
@@ -361,38 +367,56 @@ function RegionTeamModal({ region, regionCode, onClose }: { region: string; regi
   }, [regionCode]);
 
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: "#0f0f0f", border: "1px solid rgba(34,197,94,0.25)", borderRadius: 18, padding: 28, width: "100%", maxWidth: 380, maxHeight: "80vh", overflowY: "auto" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-          <h3 style={{ margin: 0, fontFamily: "var(--font-display)", fontSize: 20, color: "#fff" }}>{region}</h3>
-          <button onClick={onClose} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)", borderRadius: 8, width: 30, height: 30, cursor: "pointer", fontSize: 14 }}>✕</button>
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.78)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: "#0f0f0f", border: "1px solid rgba(34,197,94,0.25)", borderRadius: 20, padding: "30px 30px 26px", width: "100%", maxWidth: 620, maxHeight: "85vh", overflowY: "auto" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+          <div>
+            <div style={{ fontFamily: "var(--font-label)", fontSize: 10, fontWeight: 800, letterSpacing: ".2em", textTransform: "uppercase", color: "var(--green)", marginBottom: 6 }}>Regional Team</div>
+            <h3 style={{ margin: 0, fontFamily: "var(--font-display)", fontSize: 26, color: "#fff" }}>{region}</h3>
+          </div>
+          <button onClick={onClose} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)", borderRadius: 8, width: 34, height: 34, cursor: "pointer", fontSize: 15, flexShrink: 0 }}>✕</button>
         </div>
 
         {error && <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 13 }}>Couldn't load the team for this region.</p>}
         {!error && !members && (
-          <div style={{ display: "flex", justifyContent: "center", padding: "30px 0" }}>
-            <div style={{ width: 26, height: 26, borderRadius: "50%", border: "3px solid rgba(34,197,94,0.15)", borderTopColor: "var(--green)", animation: "yq-spin .8s linear infinite" }} />
+          <div style={{ display: "flex", justifyContent: "center", padding: "40px 0" }}>
+            <div style={{ width: 28, height: 28, borderRadius: "50%", border: "3px solid rgba(34,197,94,0.15)", borderTopColor: "var(--green)", animation: "yq-spin .8s linear infinite" }} />
           </div>
         )}
         {!error && members && members.length === 0 && (
           <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, lineHeight: 1.6 }}>No team assigned to this region yet.</p>
         )}
         {!error && members && members.length > 0 && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 14 }}>
             {members.map(m => (
-              <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12 }}>
-                <div style={{ width: 42, height: 42, borderRadius: "50%", overflow: "hidden", flexShrink: 0, background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.35)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--green)", fontWeight: 700, fontSize: 14 }}>
-                  {m.photo ? <img src={fixMediaUrl(m.photo) || ""} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : m.fullname.split(" ").map(w => w[0]).slice(0, 2).join("")}
+              <div
+                key={m.id}
+                onClick={() => setOpenProfileId(m.id)}
+                style={{ display: "flex", flexDirection: "column", gap: 10, padding: "18px 18px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, cursor: "pointer", transition: "border-color .18s, transform .18s" }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(34,197,94,0.4)"; (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)"; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.08)"; (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ width: 56, height: 56, borderRadius: "50%", overflow: "hidden", flexShrink: 0, background: "rgba(34,197,94,0.15)", border: "1.5px solid rgba(34,197,94,0.4)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--green)", fontWeight: 800, fontSize: 17 }}>
+                    {m.photo
+                      ? <img src={fixMediaUrl(m.photo) || ""} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                      : m.fullname.split(" ").filter(Boolean).map(w => w[0]).slice(0, 2).join("").toUpperCase()}
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 14.5, fontWeight: 700, color: "#fff", lineHeight: 1.25 }}>{m.fullname}</div>
+                    <div style={{ fontSize: 11.5, color: "var(--green)", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".04em" }}>{m.role_display}</div>
+                  </div>
                 </div>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 13.5, fontWeight: 700, color: "#fff" }}>{m.fullname}</div>
-                  <div style={{ fontSize: 11.5, color: "var(--green)", fontWeight: 600 }}>{m.role_display}</div>
-                </div>
+                <span style={{ fontSize: 11, color: "rgba(255,255,255,0.3)" }}>View profile →</span>
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {openProfileId !== null && (
+        <PersonProfileModal userId={openProfileId} onClose={() => setOpenProfileId(null)} />
+      )}
     </div>
   );
 }

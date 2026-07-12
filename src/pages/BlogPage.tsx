@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { ENDPOINTS, baseHeaders, fixMediaUrl } from "../config/api";
 import { useAuth } from "../contexts/AuthContext";
 import { useLang } from "../contexts/LanguageContext";
+import { PersonProfileModal } from "./PersonProfileModal";
 import logoImg from "./photo_2025-10-08_22-18-51.jpg";
 
 const GREEN = "#22C55E";
@@ -18,12 +19,12 @@ interface CommentNode {
 interface ArticleListItem {
   id: number; title: string; slug: string; cover_image: string | null; tags: Tag[];
   read_time_minutes: number; likes_count: number; is_liked_by_me: boolean; comments_count: number; created_at: string; is_featured: boolean;
-  author_name: string; author_role: string | null; author_photo: string | null; has_video: boolean;
+  author_name: string; author_id: number | null; author_role: string | null; author_photo: string | null; has_video: boolean;
 }
 interface GalleryImage { id: number; image: string; }
 interface ArticleDetail {
   id: number; title: string; slug: string; cover_image: string | null; content: string | null;
-  author_name: string; author_role: string | null; author_photo: string | null; tags: Tag[]; read_time_minutes: number;
+  author_name: string; author_id: number | null; author_role: string | null; author_photo: string | null; tags: Tag[]; read_time_minutes: number;
   likes_count: number; is_liked_by_me: boolean; created_at: string; comments: CommentNode[];
   video: string | null; video_url: string | null; gallery_images: GalleryImage[];
 }
@@ -128,27 +129,6 @@ function Avatar({ initials, size = 32, photo, onClick }: { initials: string; siz
   );
 }
 
-/* ─────────────────────────────────────────
-   МИНИ-ПРОФИЛЬ АВТОРА — то, что реально доступно с бэкенда
-   (name/role/photo). Полноценная страница профиля для произвольного
-   юзера потребует отдельного публичного эндпоинта — сейчас на бэке
-   есть только /me/ (для себя) и /team/ (для команды). Для авторов
-   статей (все — is_admin=True) это обычно те же люди, что в /team/.
-───────────────────────────────────────── */
-function AuthorPopover({ name, role, photo, onClose }: { name: string; role: string | null; photo?: string | null; onClose: () => void }) {
-  const initials = (name || "?").split(" ").filter(Boolean).map(w => w[0]).slice(0, 2).join("").toUpperCase();
-  return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-      <div onClick={e => e.stopPropagation()} style={{ background: "#0f0f0f", border: "1px solid rgba(34,197,94,0.25)", borderRadius: 18, padding: 28, width: "100%", maxWidth: 300, textAlign: "center" }}>
-        <Avatar initials={initials} photo={photo} size={72} />
-        <div style={{ fontSize: 17, fontWeight: 700, color: "#fff", marginTop: 14 }}>{name || "Yashil Qo'llar"}</div>
-        {role && <div style={{ fontSize: 12.5, color: GREEN, fontWeight: 600, marginTop: 4 }}>{role}</div>}
-        <button onClick={onClose} style={{ marginTop: 20, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)", padding: "8px 20px", borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>Close</button>
-      </div>
-    </div>
-  );
-}
-
 function CatBadge({ cat }: { cat: string }) {
   return <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase", padding: "3px 9px", borderRadius: 5, background: `${GREEN}14`, color: GREEN, border: `1px solid ${GREEN}28` }}>{cat}</span>;
 }
@@ -233,7 +213,7 @@ function ArticleVideo({ video, videoUrl }: { video: string | null; videoUrl: str
 ───────────────────────────────────────── */
 function CommentItem({ comment, onReply, onAuthorClick, onNotice, kind = "post", depth = 0 }: {
   comment: CommentNode; onReply: (parentId: number, text: string) => void;
-  onAuthorClick: (name: string) => void; onNotice: (msg: string) => void; kind?: "post" | "project"; depth?: number;
+  onAuthorClick: (id: number) => void; onNotice: (msg: string) => void; kind?: "post" | "project"; depth?: number;
 }) {
   const { isLoggedIn } = useAuth();
   const [showReply, setShowReply] = useState(false);
@@ -253,10 +233,10 @@ function CommentItem({ comment, onReply, onAuthorClick, onNotice, kind = "post",
   return (
     <div style={{ marginLeft: depth > 0 ? 20 : 0, borderLeft: depth > 0 ? "1px solid rgba(34,197,94,0.15)" : "none", paddingLeft: depth > 0 ? 14 : 0 }}>
       <div style={{ display: "flex", gap: 10, marginBottom: 8 }}>
-        <Avatar initials={comment.user_name.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase()} photo={comment.user_photo} size={28} onClick={() => onAuthorClick(comment.user_name)} />
+        <Avatar initials={comment.user_name.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase()} photo={comment.user_photo} size={28} onClick={() => onAuthorClick(comment.user_id)} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
-            <span onClick={() => onAuthorClick(comment.user_name)} style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.8)", cursor: "pointer" }}>{comment.user_name}</span>
+            <span onClick={() => onAuthorClick(comment.user_id)} style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.8)", cursor: "pointer" }}>{comment.user_name}</span>
             <span style={{ fontSize: 11, color: "rgba(255,255,255,0.25)" }}>{timeAgo(comment.created_at)}</span>
           </div>
           <p style={{ margin: "0 0 8px", fontSize: 13, color: "rgba(255,255,255,0.6)", lineHeight: 1.65 }}>{comment.text}</p>
@@ -300,7 +280,7 @@ function ReadingProgress({ containerRef }: { containerRef: React.RefObject<HTMLD
    МОДАЛКА СТАТЬИ (полный вид с комментариями)
 ───────────────────────────────────────── */
 function ArticleModal({ slug, onClose, onNotice, onAuthorClick }: {
-  slug: string; onClose: () => void; onNotice: (msg: string) => void; onAuthorClick: (name: string, role: string | null, photo?: string | null) => void;
+  slug: string; onClose: () => void; onNotice: (msg: string) => void; onAuthorClick: (id: number) => void;
 }) {
   const { isLoggedIn } = useAuth();
   const { lang } = useLang();
@@ -372,9 +352,9 @@ function ArticleModal({ slug, onClose, onNotice, onAuthorClick }: {
 
         {/* IG-style header */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 18px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-          <Avatar initials={(article.author_name || "?").split(" ").map(w => w[0]).slice(0, 2).join("")} photo={article.author_photo} onClick={() => onAuthorClick(article.author_name, article.author_role, article.author_photo)} />
+          <Avatar initials={(article.author_name || "?").split(" ").map(w => w[0]).slice(0, 2).join("")} photo={article.author_photo} onClick={() => article.author_id && onAuthorClick(article.author_id)} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div onClick={() => onAuthorClick(article.author_name, article.author_role, article.author_photo)} style={{ fontSize: 13, fontWeight: 700, color: "#fff", cursor: "pointer" }}>{article.author_name || "Yashil Qo'llar"}</div>
+            <div onClick={() => article.author_id && onAuthorClick(article.author_id)} style={{ fontSize: 13, fontWeight: 700, color: "#fff", cursor: "pointer" }}>{article.author_name || "Yashil Qo'llar"}</div>
             <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)" }}>{timeAgo(article.created_at)} · {article.read_time_minutes} min read</div>
           </div>
           <button onClick={onClose} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)", borderRadius: 8, width: 30, height: 30, cursor: "pointer", fontSize: 14 }}>✕</button>
@@ -428,7 +408,7 @@ function ArticleModal({ slug, onClose, onNotice, onAuthorClick }: {
             <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
               {article.comments.map(c => (
                 <CommentItem key={c.id} comment={c} onReply={(pid, text) => submitComment(text, pid)}
-                  onAuthorClick={(name) => onAuthorClick(name, null, null)} onNotice={onNotice} />
+                  onAuthorClick={onAuthorClick} onNotice={onNotice} />
               ))}
             </div>
           </div>
@@ -535,7 +515,7 @@ function ProjectFeedPost({ project, onOpen, onNotice, delay = 0 }: {
 }
 
 /* Модалка эко-проекта — тот же UX, что у статьи: галерея, лайк, комменты, плюс Join */
-function ProjectModal({ project, onClose, onNotice }: { project: EcoProjectItem; onClose: () => void; onNotice: (msg: string) => void }) {
+function ProjectModal({ project, onClose, onNotice, onAuthorClick }: { project: EcoProjectItem; onClose: () => void; onNotice: (msg: string) => void; onAuthorClick: (id: number) => void }) {
   const { isLoggedIn } = useAuth();
   const { lang } = useLang();
   const [liked, setLiked] = useState(project.is_liked_by_me);
@@ -614,7 +594,7 @@ function ProjectModal({ project, onClose, onNotice }: { project: EcoProjectItem;
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
               {comments.map(c => (
-                <CommentItem key={c.id} comment={c} onReply={(pid, text) => submitComment(text, pid)} onAuthorClick={() => { }} onNotice={onNotice} kind="project" />
+                <CommentItem key={c.id} comment={c} onReply={(pid, text) => submitComment(text, pid)} onAuthorClick={onAuthorClick} onNotice={onNotice} kind="project" />
               ))}
             </div>
           </div>
@@ -627,7 +607,7 @@ function ProjectModal({ project, onClose, onNotice }: { project: EcoProjectItem;
 
 function FeedPost({ post, onOpen, onNotice, onAuthorClick, delay = 0 }: {
   post: ArticleListItem; onOpen: () => void; onNotice: (msg: string) => void;
-  onAuthorClick: (name: string, role: string | null, photo?: string | null) => void; delay?: number;
+  onAuthorClick: (id: number) => void; delay?: number;
 }) {
   const { isLoggedIn } = useAuth();
   const [liked, setLiked] = useState(post.is_liked_by_me);
@@ -648,9 +628,9 @@ function FeedPost({ post, onOpen, onNotice, onAuthorClick, delay = 0 }: {
       <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, overflow: "hidden", marginBottom: 22 }}>
         {/* header */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px" }}>
-          <Avatar initials={(post.author_name || "?").split(" ").map(w => w[0]).slice(0, 2).join("")} photo={post.author_photo} onClick={() => onAuthorClick(post.author_name, post.author_role, post.author_photo)} />
+          <Avatar initials={(post.author_name || "?").split(" ").map(w => w[0]).slice(0, 2).join("")} photo={post.author_photo} onClick={() => post.author_id && onAuthorClick(post.author_id)} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div onClick={() => onAuthorClick(post.author_name, post.author_role, post.author_photo)} style={{ fontSize: 12.5, fontWeight: 700, color: "#fff", cursor: "pointer" }}>{post.author_name || "Yashil Qo'llar"}</div>
+            <div onClick={() => post.author_id && onAuthorClick(post.author_id)} style={{ fontSize: 12.5, fontWeight: 700, color: "#fff", cursor: "pointer" }}>{post.author_name || "Yashil Qo'llar"}</div>
             <div style={{ fontSize: 10.5, color: "rgba(255,255,255,0.35)" }}>{timeAgo(post.created_at)}</div>
           </div>
           {post.is_featured && <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: ".12em", color: GREEN, textTransform: "uppercase" }}>Featured</span>}
@@ -695,7 +675,7 @@ export function BlogPage() {
   const [activeProject, setActiveProject] = useState<EcoProjectItem | null>(null);
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [authorPopover, setAuthorPopover] = useState<{ name: string; role: string | null; photo?: string | null } | null>(null);
+  const [openProfileId, setOpenProfileId] = useState<number | null>(null);
 
   useEffect(() => {
     fetch(ENDPOINTS.blog, { headers: baseHeaders(lang) })
@@ -726,7 +706,6 @@ export function BlogPage() {
     return db - da;
   });
 
-  const showAuthor = (name: string, role: string | null, photo?: string | null) => setAuthorPopover({ name, role, photo });
 
   return (
     <div style={{ minHeight: "100vh", background: DARK, color: "#fff", fontFamily: "'Inter','Helvetica Neue',sans-serif", position: "relative", overflowX: "hidden" }}>
@@ -774,7 +753,7 @@ export function BlogPage() {
           <FeedPost key={`post-${item.data.id}`} post={item.data} delay={i * 45}
             onOpen={() => setActiveSlug(item.data.slug)}
             onNotice={setNotice}
-            onAuthorClick={showAuthor}
+            onAuthorClick={setOpenProfileId}
           />
         ) : (
           <ProjectFeedPost key={`project-${item.data.id}`} project={item.data} delay={i * 45}
@@ -784,9 +763,9 @@ export function BlogPage() {
         ))}
       </main>
 
-      {activeSlug && <ArticleModal slug={activeSlug} onClose={() => setActiveSlug(null)} onNotice={setNotice} onAuthorClick={showAuthor} />}
-      {activeProject && <ProjectModal project={activeProject} onClose={() => setActiveProject(null)} onNotice={setNotice} />}
-      {authorPopover && <AuthorPopover name={authorPopover.name} role={authorPopover.role} photo={authorPopover.photo} onClose={() => setAuthorPopover(null)} />}
+      {activeSlug && <ArticleModal slug={activeSlug} onClose={() => setActiveSlug(null)} onNotice={setNotice} onAuthorClick={setOpenProfileId} />}
+      {activeProject && <ProjectModal project={activeProject} onClose={() => setActiveProject(null)} onNotice={setNotice} onAuthorClick={setOpenProfileId} />}
+      {openProfileId !== null && <PersonProfileModal userId={openProfileId} onClose={() => setOpenProfileId(null)} />}
       {notice && <Toast message={notice} onDone={() => setNotice(null)} />}
     </div>
   );
