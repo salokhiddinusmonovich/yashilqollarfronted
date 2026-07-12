@@ -122,6 +122,25 @@ const GLOBAL_CSS = `
 
 /* ── Map ── */
 .yq-map-wrap { position: relative; background: rgba(255,255,255,0.02); border: 1px solid rgba(34,197,94,0.16); border-radius: 22px; padding: clamp(20px,4vw,40px); overflow: hidden; }
+.yq-map-hint {
+  position: absolute; top: 14px; right: 14px; z-index: 3;
+  display: flex; align-items: center; gap: 7px;
+  background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3);
+  border-radius: 999px; padding: 7px 14px 7px 10px;
+  font-family: var(--font-label); font-size: 11px; font-weight: 700; color: var(--green);
+  animation: yq-hint-bounce 2.2s ease-in-out infinite;
+  pointer-events: none;
+}
+.yq-map-hint-icon { display: inline-block; animation: yq-hint-tap 1.4s ease-in-out infinite; }
+@keyframes yq-hint-bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@keyframes yq-hint-tap { 0%,100% { transform: scale(1) rotate(0deg); } 50% { transform: scale(0.82) rotate(-8deg); } }
+.yq-map-tap-ring { fill: none; stroke: var(--green); stroke-width: 1.6; animation: yq-tap-ring 1.8s ease-out infinite; }
+.yq-map-tap-dot { fill: var(--green); animation: yq-tap-dot 1.8s ease-out infinite; }
+@keyframes yq-tap-ring { 0% { r: 5px; opacity: .9; } 100% { r: 22px; opacity: 0; } }
+@keyframes yq-tap-dot { 0%,70% { opacity: .95; } 85% { opacity: .3; } 100% { opacity: .95; } }
+@media (prefers-reduced-motion: reduce) {
+  .yq-map-hint, .yq-map-hint-icon, .yq-map-tap-ring, .yq-map-tap-dot { animation: none !important; }
+}
 .yq-map-svg { width: 100%; height: auto; display: block; }
 .yq-map-region {
   fill: rgba(34,197,94,0.14); stroke: rgba(140,255,180,0.65); stroke-width: 1.2; stroke-linejoin: round; cursor: pointer;
@@ -425,9 +444,20 @@ function RegionTeamModal({ region, regionCode, onClose }: { region: string; regi
 function UzbekistanMap({ regions }: { regions: readonly string[] }) {
   const [active, setActive] = useState<number | null>(null);
   const [openRegion, setOpenRegion] = useState<number | null>(null);
+  const [hasInteracted, setHasInteracted] = useState(false);
+
+  const markInteracted = () => setHasInteracted(true);
+  const DEMO_INDEX = 7; // Samarkand — roughly central, easy to notice
 
   return (
     <div className="yq-map-wrap">
+      {!hasInteracted && (
+        <div className="yq-map-hint">
+          <span className="yq-map-hint-icon">👆</span>
+          Click any region to meet the local team
+        </div>
+      )}
+
       <svg className="yq-map-svg" viewBox={MAP_VIEWBOX} xmlns="http://www.w3.org/2000/svg">
         {REGION_PATHS.map((r, i) => (
           <path
@@ -435,9 +465,9 @@ function UzbekistanMap({ regions }: { regions: readonly string[] }) {
             d={r.d}
             className={"yq-map-region" + (active === i ? " active" : "")}
             style={{ animationDelay: `${i * 90}ms, ${1.8 + i * 0.06}s` }}
-            onMouseEnter={() => setActive(i)}
+            onMouseEnter={() => { setActive(i); markInteracted(); }}
             onMouseLeave={() => setActive(a => (a === i ? null : a))}
-            onClick={() => setOpenRegion(i)}
+            onClick={() => { setOpenRegion(i); markInteracted(); }}
           />
         ))}
         {REGION_PATHS.map((r, i) => (
@@ -446,6 +476,14 @@ function UzbekistanMap({ regions }: { regions: readonly string[] }) {
             <circle className="yq-map-dot" cx={r.cx} cy={r.cy} r={active === i ? 3.2 : 2} />
           </g>
         ))}
+
+        {/* демо-подсказка: пульсирующий "тап" на одном регионе, пока юзер сам не кликнул */}
+        {!hasInteracted && (
+          <g style={{ pointerEvents: "none" }}>
+            <circle cx={REGION_PATHS[DEMO_INDEX].cx} cy={REGION_PATHS[DEMO_INDEX].cy} r="14" className="yq-map-tap-ring" />
+            <circle cx={REGION_PATHS[DEMO_INDEX].cx} cy={REGION_PATHS[DEMO_INDEX].cy} r="5" className="yq-map-tap-dot" />
+          </g>
+        )}
       </svg>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 22, justifyContent: "center" }}>
@@ -453,9 +491,9 @@ function UzbekistanMap({ regions }: { regions: readonly string[] }) {
           <span
             key={i}
             className={"yq-map-chip" + (active === i ? " active" : "")}
-            onMouseEnter={() => setActive(i)}
+            onMouseEnter={() => { setActive(i); markInteracted(); }}
             onMouseLeave={() => setActive(a => (a === i ? null : a))}
-            onClick={() => setOpenRegion(i)}
+            onClick={() => { setOpenRegion(i); markInteracted(); }}
             style={{ cursor: "pointer" }}
           >
             <i />{r}
@@ -463,9 +501,14 @@ function UzbekistanMap({ regions }: { regions: readonly string[] }) {
         ))}
       </div>
 
-      {openRegion !== null && (
-        <RegionTeamModal region={regions[openRegion]} regionCode={REGION_CODES[openRegion]} onClose={() => setOpenRegion(null)} />
-      )}
+      {openRegion !== null && (() => {
+        // Ташкент-сити (0) и Ташкент-область (1) — считаются одним для команды:
+        // клик на любой из них показывает объединённую команду обоих кодов.
+        const isTashkent = openRegion === 0 || openRegion === 1;
+        const regionCode = isTashkent ? "tashkent_s,tashkent_v" : REGION_CODES[openRegion];
+        const regionLabel = isTashkent ? "Tashkent" : regions[openRegion];
+        return <RegionTeamModal region={regionLabel} regionCode={regionCode} onClose={() => setOpenRegion(null)} />;
+      })()}
     </div>
   );
 }
