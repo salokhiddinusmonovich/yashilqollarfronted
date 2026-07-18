@@ -67,7 +67,7 @@ function FadeIn({ children, delay = 0 }: { children: React.ReactNode; delay?: nu
 /** Кастомный порядок карточек на странице команды (не по id из API).
  * Ищем по подстроке в fullname (без учёта регистра). Кого нет в списке —
  * уходят в конец, сохраняя свой относительный порядок. */
-const CUSTOM_ORDER = ["abdulboriy", "komronbek", "salokhiddin", "muhammad rizo", "anvarjon"];
+const CUSTOM_ORDER = ["durdona", "abdulboriy", "komronbek", "salokhiddin", "muhammad rizo", "anvarjon"];
 
 function sortByCustomOrder(members: TeamMember[]): TeamMember[] {
   return [...members].sort((a, b) => {
