@@ -100,9 +100,8 @@ const contacts = [
     value: "@yashilqollar",
     href: "https://t.me/yashilqollar",
     icon: (
-      <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.6" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M22 2 11 13" />
-        <path strokeLinecap="round" strokeLinejoin="round" d="M22 2 15 22l-4-9-9-4 20-7z" />
+      <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24" className="yq-icon-pulse">
+        <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
       </svg>
     ),
     accent: "#38BDF8",
@@ -112,7 +111,7 @@ const contacts = [
     value: "@yashilqollar",
     href: "https://instagram.com/yashilqollar",
     icon: (
-      <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+      <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" className="yq-icon-pulse">
         <rect x="2" y="2" width="20" height="20" rx="5" />
         <path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z" />
         <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" strokeLinecap="round" strokeWidth="2" />
@@ -305,6 +304,8 @@ export function ContactPage() {
 
       <style>{`
         @keyframes blink { 0%,100% { opacity:.5; transform:scale(1); } 50% { opacity:1; transform:scale(1.3); } }
+        @keyframes yq-icon-glow { 0%,100% { filter: drop-shadow(0 0 0px currentColor); transform: scale(1); } 50% { filter: drop-shadow(0 0 8px currentColor); transform: scale(1.12); } }
+        .yq-contact-card:hover .yq-icon-pulse { animation: yq-icon-glow 1.1s ease-in-out infinite; }
 
         /* ── Мобильный дизайн ── */
         @media (max-width: 640px) {

@@ -39,6 +39,7 @@ export const ENDPOINTS = {
     register: `${API_BASE}/register/`,
     loginPassword: `${API_BASE}/login/password/`,
     loginGoogle: `${API_BASE}/login/google/`,
+    loginTelegramWebApp: `${API_BASE}/login/telegram-webapp/`,
     logout: `${API_BASE}/logout/`,
     tokenRefresh: `${API_BASE}/token/refresh/`,
     me: `${API_BASE}/me/`,
@@ -56,8 +57,11 @@ export const ENDPOINTS = {
     projectLike: (id: number | string) => `${API_BASE}/projects/${id}/like/`,
     projectComment: (id: number | string) => `${API_BASE}/projects/${id}/comment/`,
     projectCommentLike: (id: number | string) => `${API_BASE}/project-comment/${id}/like/`,
+    commentDelete: (id: number | string) => `${API_BASE}/comment/${id}/delete/`,
+    projectCommentDelete: (id: number | string) => `${API_BASE}/project-comment/${id}/delete/`,
     teamByRegion: (region: string) => `${API_BASE}/team/region/${region}/`,
     userProfile: (id: number | string) => `${API_BASE}/users/${id}/profile/`,
+    partners: `${API_BASE}/partners/`,
 } as const;
 
 /**

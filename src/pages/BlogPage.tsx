@@ -52,6 +52,14 @@ function timeAgo(iso: string) {
 }
 
 function getAccessToken() { return localStorage.getItem("yq_access_token"); }
+
+/** Рекурсивно убирает комментарий (на любой глубине вложенности) из дерева комментариев. */
+function removeCommentById(comments: CommentNode[], id: number): CommentNode[] {
+  return comments
+    .filter(c => c.id !== id)
+    .map(c => (c.replies.length ? { ...c, replies: removeCommentById(c.replies, id) } : c));
+}
+
 function authHeaders(lang: string = "en") {
   const token = getAccessToken();
   const extra: Record<string, string> = { "Content-Type": "application/json" };
@@ -211,16 +219,19 @@ function ArticleVideo({ video, videoUrl }: { video: string | null; videoUrl: str
 /* ─────────────────────────────────────────
    КОММЕНТАРИИ — рекурсивное дерево
 ───────────────────────────────────────── */
-function CommentItem({ comment, onReply, onAuthorClick, onNotice, kind = "post", depth = 0 }: {
+function CommentItem({ comment, onReply, onAuthorClick, onNotice, onDeleted, kind = "post", depth = 0 }: {
   comment: CommentNode; onReply: (parentId: number, text: string) => void;
-  onAuthorClick: (id: number) => void; onNotice: (msg: string) => void; kind?: "post" | "project"; depth?: number;
+  onAuthorClick: (id: number) => void; onNotice: (msg: string) => void;
+  onDeleted: (id: number) => void; kind?: "post" | "project"; depth?: number;
 }) {
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, user } = useAuth();
   const [showReply, setShowReply] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [liked, setLiked] = useState(comment.is_liked_by_me);
   const [likeCount, setLikeCount] = useState(comment.likes_count);
+  const [removing, setRemoving] = useState(false);
   const submitReply = () => { if (!replyText.trim()) return; onReply(comment.id, replyText); setReplyText(""); setShowReply(false); };
+  const isMine = !!user && user.id === comment.user_id;
 
   const toggleLike = () => {
     if (!isLoggedIn) { onNotice("Sign in to like comments."); return; }
@@ -230,8 +241,27 @@ function CommentItem({ comment, onReply, onAuthorClick, onNotice, kind = "post",
       .catch(() => onNotice("Couldn't update your like. Try again."));
   };
 
+  const deleteComment = () => {
+    const endpoint = kind === "project" ? ENDPOINTS.projectCommentDelete(comment.id) : ENDPOINTS.commentDelete(comment.id);
+    fetch(endpoint, { method: "DELETE", headers: authHeaders() })
+      .then(res => {
+        if (!res.ok) throw new Error();
+        setRemoving(true); // запускает CSS-переход, потом реально убираем из состояния
+        setTimeout(() => onDeleted(comment.id), 260);
+      })
+      .catch(() => onNotice("Couldn't delete this comment. Try again."));
+  };
+
   return (
-    <div style={{ marginLeft: depth > 0 ? 20 : 0, borderLeft: depth > 0 ? "1px solid rgba(34,197,94,0.15)" : "none", paddingLeft: depth > 0 ? 14 : 0 }}>
+    <div
+      style={{
+        marginLeft: depth > 0 ? 20 : 0, borderLeft: depth > 0 ? "1px solid rgba(34,197,94,0.15)" : "none", paddingLeft: depth > 0 ? 14 : 0,
+        animation: "yq-comment-in .35s cubic-bezier(.16,1,.3,1) both",
+        maxHeight: removing ? 0 : 600, opacity: removing ? 0 : 1, overflow: "hidden",
+        transition: "max-height .25s ease, opacity .22s ease, margin .25s ease",
+        marginBottom: removing ? 0 : undefined,
+      }}
+    >
       <div style={{ display: "flex", gap: 10, marginBottom: 8 }}>
         <Avatar initials={comment.user_name.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase()} photo={comment.user_photo} size={28} onClick={() => onAuthorClick(comment.user_id)} />
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -240,23 +270,40 @@ function CommentItem({ comment, onReply, onAuthorClick, onNotice, kind = "post",
             <span style={{ fontSize: 11, color: "rgba(255,255,255,0.25)" }}>{timeAgo(comment.created_at)}</span>
           </div>
           <p style={{ margin: "0 0 8px", fontSize: 13, color: "rgba(255,255,255,0.6)", lineHeight: 1.65 }}>{comment.text}</p>
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <button onClick={toggleLike} style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "none", cursor: "pointer", color: liked ? GREEN : "rgba(255,255,255,0.35)", fontSize: 11, fontWeight: 600, padding: 0 }}>{liked ? "♥" : "♡"} {likeCount}</button>
-            {depth < 2 && <button onClick={() => setShowReply(s => !s)} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.35)", fontSize: 11, fontWeight: 600, padding: 0 }}>Reply</button>}
+
+          {/* ── ряд действий: фиксированный gap, одна линия, ровно ── */}
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <button onClick={toggleLike} className="yq-comment-btn" style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "none", cursor: "pointer", color: liked ? GREEN : "rgba(255,255,255,0.35)", fontSize: 11, fontWeight: 600, padding: 0, transition: "color .18s, transform .12s" }}>
+              <span style={{ display: "inline-block", transition: "transform .25s cubic-bezier(.34,1.56,.64,1)", transform: liked ? "scale(1.15)" : "scale(1)" }}>{liked ? "♥" : "♡"}</span> {likeCount}
+            </button>
+            {depth < 2 && (
+              <button onClick={() => setShowReply(s => !s)} className="yq-comment-btn" style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.35)", fontSize: 11, fontWeight: 600, padding: 0, transition: "color .18s" }}>
+                Reply
+              </button>
+            )}
+            {isMine && (
+              <button onClick={deleteComment} className="yq-comment-btn" style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(239,68,68,0.55)", fontSize: 11, fontWeight: 600, padding: 0, marginLeft: "auto", transition: "color .18s" }}>
+                Delete
+              </button>
+            )}
           </div>
-          {showReply && (
+
+          <div style={{
+            maxHeight: showReply ? 140 : 0, opacity: showReply ? 1 : 0, overflow: "hidden",
+            transition: "max-height .3s cubic-bezier(.16,1,.3,1), opacity .25s ease",
+          }}>
             <div style={{ marginTop: 10, display: "flex", gap: 8, alignItems: "flex-start" }}>
               <textarea value={replyText} onChange={e => setReplyText(e.target.value)} placeholder="Add a comment…" rows={2}
-                style={{ flex: 1, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)", borderRadius: 8, color: "#fff", fontSize: 12, padding: "8px 10px", fontFamily: "'Inter',sans-serif", outline: "none", resize: "vertical" }} />
+                style={{ flex: 1, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)", borderRadius: 8, color: "#fff", fontSize: 12, padding: "8px 10px", fontFamily: "'Inter',sans-serif", outline: "none", resize: "vertical", transition: "border-color .18s" }} />
               <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-                <button onClick={submitReply} style={{ background: GREEN, border: "none", color: "#000", padding: "6px 12px", borderRadius: 7, fontSize: 11, fontWeight: 800, cursor: "pointer" }}>Post</button>
-                <button onClick={() => setShowReply(false)} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.4)", padding: "6px 12px", borderRadius: 7, fontSize: 11, fontWeight: 600, cursor: "pointer" }}>Cancel</button>
+                <button onClick={submitReply} className="yq-comment-btn" style={{ background: GREEN, border: "none", color: "#000", padding: "6px 12px", borderRadius: 7, fontSize: 11, fontWeight: 800, cursor: "pointer", transition: "transform .12s, filter .15s" }}>Post</button>
+                <button onClick={() => setShowReply(false)} className="yq-comment-btn" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.4)", padding: "6px 12px", borderRadius: 7, fontSize: 11, fontWeight: 600, cursor: "pointer", transition: "transform .12s, background .15s" }}>Cancel</button>
               </div>
             </div>
-          )}
+          </div>
         </div>
       </div>
-      {comment.replies.map(r => <CommentItem key={r.id} comment={r} onReply={onReply} onAuthorClick={onAuthorClick} onNotice={onNotice} kind={kind} depth={depth + 1} />)}
+      {comment.replies.map(r => <CommentItem key={r.id} comment={r} onReply={onReply} onAuthorClick={onAuthorClick} onNotice={onNotice} onDeleted={onDeleted} kind={kind} depth={depth + 1} />)}
     </div>
   );
 }
@@ -408,7 +455,8 @@ function ArticleModal({ slug, onClose, onNotice, onAuthorClick }: {
             <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
               {article.comments.map(c => (
                 <CommentItem key={c.id} comment={c} onReply={(pid, text) => submitComment(text, pid)}
-                  onAuthorClick={onAuthorClick} onNotice={onNotice} />
+                  onAuthorClick={onAuthorClick} onNotice={onNotice}
+                  onDeleted={(id) => setArticle(a => a ? { ...a, comments: removeCommentById(a.comments, id) } : a)} />
               ))}
             </div>
           </div>
@@ -594,7 +642,8 @@ function ProjectModal({ project, onClose, onNotice, onAuthorClick }: { project: 
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
               {comments.map(c => (
-                <CommentItem key={c.id} comment={c} onReply={(pid, text) => submitComment(text, pid)} onAuthorClick={onAuthorClick} onNotice={onNotice} kind="project" />
+                <CommentItem key={c.id} comment={c} onReply={(pid, text) => submitComment(text, pid)} onAuthorClick={onAuthorClick} onNotice={onNotice}
+                  onDeleted={(id) => setComments(cs => removeCommentById(cs, id))} kind="project" />
               ))}
             </div>
           </div>
@@ -713,23 +762,21 @@ export function BlogPage() {
         @keyframes slideUp{from{transform:translateY(60px);opacity:0}to{transform:translateY(0);opacity:1}}
         @keyframes yq-spin{to{transform:rotate(360deg)}}
         @keyframes yq-heartPop{0%{transform:scale(0);opacity:0}25%{transform:scale(1.15);opacity:1}45%{transform:scale(0.95)}100%{transform:scale(1);opacity:0}}
+        @keyframes yq-comment-in{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+        .yq-comment-btn:active { transform: scale(0.92); }
         @keyframes yq-toastIn{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
       `}</style>
       <ForestCanvas />
       <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, background: "radial-gradient(ellipse 75% 55% at 10% 15%, rgba(34,197,94,0.09) 0%, transparent 58%)" }} />
 
-      <main style={{ position: "relative", zIndex: 1, maxWidth: 560, margin: "0 auto", padding: "clamp(90px,10vw,120px) 16px 100px" }}>
+      <main style={{ position: "relative", zIndex: 1, maxWidth: 1200, margin: "0 auto", padding: "clamp(90px,10vw,120px) 16px 100px" }}>
         <FadeIn>
           <div style={{ marginBottom: 28 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-              <span style={{ width: 28, height: 1.5, background: GREEN, borderRadius: 2, display: "inline-block" }} />
-              <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: ".28em", textTransform: "uppercase", color: GREEN }}>Yashil Qo'llar Journal</span>
-            </div>
-            <h1 style={{ margin: "0 0 10px", fontSize: "clamp(28px,7vw,40px)", fontWeight: 900, letterSpacing: "-0.03em", lineHeight: 1 }}>
-              From the <span style={{ color: GREEN }}>field.</span>
-            </h1>
+            {/* <h1 style={{ margin: "0 0 10px", fontSize: "clamp(28px,7vw,40px)", fontWeight: 900, letterSpacing: "-0.03em", lineHeight: 1 }}>
+              <span style={{ color: GREEN }}>Blogs</span>
+            </h1> */}
             <input type="text" placeholder="Search posts…" value={search} onChange={e => setSearch(e.target.value)}
-              style={{ width: "100%", padding: "10px 14px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)", borderRadius: 10, color: "#fff", fontSize: 13, outline: "none", boxSizing: "border-box" }} />
+              style={{ width: "100%", maxWidth: 480, padding: "10px 14px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)", borderRadius: 10, color: "#fff", fontSize: 13, outline: "none", boxSizing: "border-box" }} />
             {allTags.length > 0 && (
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 14 }}>
                 <button onClick={() => setActiveTag(null)} style={{ padding: "6px 14px", borderRadius: 999, fontSize: 11, fontWeight: 700, cursor: "pointer", background: !activeTag ? GREEN : "rgba(255,255,255,0.04)", color: !activeTag ? "#000" : "rgba(255,255,255,0.5)", border: `1px solid ${!activeTag ? GREEN : "rgba(255,255,255,0.09)"}` }}>All</button>
@@ -749,18 +796,21 @@ export function BlogPage() {
         )}
         {!error && posts && projects && feed.length === 0 && <p style={{ color: "rgba(255,255,255,0.35)", textAlign: "center", padding: "60px 0" }}>Nothing here yet — check back soon!</p>}
 
-        {feed.map((item, i) => item.kind === "post" ? (
-          <FeedPost key={`post-${item.data.id}`} post={item.data} delay={i * 45}
-            onOpen={() => setActiveSlug(item.data.slug)}
-            onNotice={setNotice}
-            onAuthorClick={setOpenProfileId}
-          />
-        ) : (
-          <ProjectFeedPost key={`project-${item.data.id}`} project={item.data} delay={i * 45}
-            onOpen={() => setActiveProject(item.data)}
-            onNotice={setNotice}
-          />
-        ))}
+        {/* ── лента в ряд: несколько постов на одной строке, а не один под другим ── */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 20, alignItems: "start" }}>
+          {feed.map((item, i) => item.kind === "post" ? (
+            <FeedPost key={`post-${item.data.id}`} post={item.data} delay={i * 45}
+              onOpen={() => setActiveSlug(item.data.slug)}
+              onNotice={setNotice}
+              onAuthorClick={setOpenProfileId}
+            />
+          ) : (
+            <ProjectFeedPost key={`project-${item.data.id}`} project={item.data} delay={i * 45}
+              onOpen={() => setActiveProject(item.data)}
+              onNotice={setNotice}
+            />
+          ))}
+        </div>
       </main>
 
       {activeSlug && <ArticleModal slug={activeSlug} onClose={() => setActiveSlug(null)} onNotice={setNotice} onAuthorClick={setOpenProfileId} />}

@@ -349,7 +349,7 @@ export const translations = {
     navHome: "Bosh sahifa", navAbout: "Biz haqimizda", navCommittees: "Loyihalar", navTeam: "Jamoa",
     navSchedule: "Tadbirlar", navRegister: "Qo'shilish", navSponsors: "Homiylar", navContact: "Aloqa",
     dateTag: "Ekologik Loyiha",
-    heroLine1: "Yashil", heroLine2: "Qo'llar", heroLine3: "tabiat uchun", heroLine4: "birlashamiz!",
+    heroLine1: "Yashil", heroLine2: "Qo'llar", heroLine3: "tabiat uchun", heroLine4: "birlash-", heroLine5: "amiz!",
     heroSub: "Toza va barqaror kelajak uchun birlashamiz! Yoshlar orasida ekologik ong va madaniyatni oshirish va atrof-muhitni asrashga qaratilgan loyiha bo'lib, resurslardan oqilona foydalanish, chiqindilarni kamaytirish, ekologik mas'uliyatni kuchaytirishni maqsad qiladi.",
     heroCta2: "Siz ham bizning yo'limizga qo'shiling.",
     heroBadge: "Safimizga qo'shiling",
@@ -357,7 +357,7 @@ export const translations = {
     stat0val: "1 000+", stat0lbl: "Faol ko'ngillilar", stat1val: "25+", stat1lbl: "Tadbirlar",
     stat2val: "14", stat2lbl: "Hudud", stat3val: "6", stat3lbl: "Faoliyat turi",
     councilsLabel: "Nima Qilamiz", councilsTitle: "Faoliyat Turlari", viewAll: "Barcha faoliyatlar",
-    ctaTitle1: "Toza va Barqaror", ctaTitle2: "Kelajak Qurish!",
+    ctaTitle1: "Toza va Barqaror", ctaTitle2: "Kelajak birlashamiz!",
     ctaSub: "Maqsadimiz — yoshlar orasida ekologik madaniyatni rivojlantirish. Safimizdagi 1000+ faol ko'ngilliga qo'shiling.",
     btnContact: "Biz bilan bog'laning",
     homeCommittees: [

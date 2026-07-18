@@ -1,81 +1,37 @@
 import { useState, useEffect, useRef } from "react";
 import { useLang } from "../contexts/LanguageContext";
-import betrader from "/sponsors/btr.png";
-import tdiu from "/sponsors/tdiu.png";
-import tosh_eco_bosh_bosh from "/sponsors/tosh_sh_eco_bosh_bosh.png";
+import { ENDPOINTS, baseHeaders, fixMediaUrl } from "../config/api";
 
 const GREEN = "#22C55E";
-type Lang = "EN" | "UZ" | "RU";
 
-// ─── i18n ──────────────────────────────────────────────────────────────────────
-const UI: Record<Lang, Record<string, string>> = {
-  EN: {
+const UI: Record<string, Record<string, string>> = {
+  en: {
     eyebrow: "Partners & Sponsors",
-    title: "Those who make",
-    titleGreen: "it possible.",
+    title: "Those who make", titleGreen: "it possible.",
     subtitle: "Organizations supporting Yashil Qo'llar's mission to restore Uzbekistan's green cover.",
-    section_main: "Main Partners",
-    become_title: "Become a Partner",
-    become_sub: "Partner with Yashil Qo'llar and gain visibility among a growing community of eco-conscious citizens and organizations across Uzbekistan.",
-    cta: "Get in Touch →",
-    benefits_title: "What you get",
-    stat1: "Partners", stat2: "Regions", stat3: "Volunteers", stat4: "Trees planted",
+    loading: "Loading partners…", error: "Couldn't load partners. Please try again.", retry: "Retry",
+    empty: "No partners listed yet.",
   },
-  UZ: {
+  uz: {
     eyebrow: "Hamkorlar va Homiylar",
-    title: "Buni mumkin qilganlar",
-    titleGreen: "ular.",
+    title: "Buni mumkin qilganlar", titleGreen: "ular.",
     subtitle: "Yashil Qo'llarning O'zbekistonni yashillashtirish missiyasini qo'llab-quvvatlayotgan tashkilotlar.",
-    section_main: "Asosiy Hamkorlar",
-    become_title: "Hamkor bo'ling",
-    become_sub: "Yashil Qo'llar bilan hamkorlik qiling va O'zbekiston bo'ylab ekologik jamoatchilik orasida ko'rinishga ega bo'ling.",
-    cta: "Bog'lanish →",
-    benefits_title: "Nima olasiz",
-    stat1: "Hamkorlar", stat2: "Hududlar", stat3: "Ko'ngillilar", stat4: "Ekilgan daraxtlar",
+    loading: "Hamkorlar yuklanmoqda…", error: "Hamkorlarni yuklab bo'lmadi. Qayta urinib ko'ring.", retry: "Qayta urinish",
+    empty: "Hozircha hamkorlar yo'q.",
   },
-  RU: {
+  ru: {
     eyebrow: "Партнёры и спонсоры",
-    title: "Те, кто делает",
-    titleGreen: "это возможным.",
+    title: "Те, кто делает", titleGreen: "это возможным.",
     subtitle: "Организации, поддерживающие миссию Yashil Qo'llar по восстановлению зелёного покрова Узбекистана.",
-    section_main: "Главные партнёры",
-    become_title: "Стать партнёром",
-    become_sub: "Партнёрство с Yashil Qo'llar даёт видимость среди экосознательного сообщества по всему Узбекистану.",
-    cta: "Связаться →",
-    benefits_title: "Что вы получаете",
-    stat1: "Партнёров", stat2: "Регионов", stat3: "Волонтёров", stat4: "Посажено деревьев",
+    loading: "Загружаем партнёров…", error: "Не удалось загрузить партнёров. Попробуйте ещё раз.", retry: "Повторить",
+    empty: "Пока нет партнёров.",
   },
 };
 
-const PARTNERS = [
-  {
-    logo: betrader,
-    logoBg: "#060924",
-    logoFit: "contain" as const,
-    logoPadding: 24,
-    name: "Be Trader",
-    desc: { EN: "Grand sponsor empowering youth development and financial literacy through educational initiatives.", UZ: "Yoshlar rivojlanishi va moliyaviy savodxonlikni qo'llab-quvvatlovchi bosh homiy.", RU: "Главный спонсор, поддерживающий развитие молодёжи и финансовую грамотность." },
-    tag: { EN: "MAIN PARTNER", UZ: "ASOSIY HAMKOR", RU: "ГЛАВНЫЙ ПАРТНЁР" },
-  },
-  {
-    logo: tdiu,
-    logoBg: "#ffffff",
-    logoFit: "contain" as const,
-    logoPadding: 16,
-    name: "Tashkent State University of Economics",
-    desc: { EN: "Host university and academic foundation of the initiative.", UZ: "Tashabbusning mezbon universiteti va akademik asosi.", RU: "Принимающий университет и академическая основа инициативы." },
-    tag: { EN: "ACADEMIC PARTNER", UZ: "AKADEMIK HAMKOR", RU: "АКАДЕМИЧЕСКИЙ ПАРТНЁР" },
-  },
-  {
-    logo: tosh_eco_bosh_bosh,
-    logoBg: "#060924",
-    logoFit: "contain" as const,
-    logoPadding: 16,
-    name: "Toshkent Ekologiya Bosh Boshqarmasi",
-    desc: { EN: "Official ecological partner supporting environmental sustainability and green initiatives across the capital.", UZ: "Poytaxt bo'ylab ekologik barqarorlikni qo'llab-quvvatlovchi rasmiy hamkor.", RU: "Официальный экологический партнёр по всей столице." },
-    tag: { EN: "ECO PARTNER", UZ: "EKO HAMKOR", RU: "ЭКО ПАРТНЁР" },
-  },
-];
+interface Partner {
+  id: number; name: string; description: string | null; logo: string | null;
+  instagram: string | null; telegram: string | null; linkedin: string | null;
+}
 
 // ─── Forest canvas ─────────────────────────────────────────────────────────────
 function ForestCanvas() {
@@ -137,7 +93,6 @@ function ForestCanvas() {
   return <canvas ref={ref} style={{ position: "fixed", inset: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 0 }} />;
 }
 
-// ─── FadeIn ────────────────────────────────────────────────────────────────────
 function FadeIn({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
   const ref = useRef<HTMLDivElement>(null);
   const [vis, setVis] = useState(false);
@@ -153,12 +108,41 @@ function FadeIn({ children, delay = 0 }: { children: React.ReactNode; delay?: nu
   );
 }
 
+function TelegramIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="yq-partner-icon" aria-hidden="true">
+      <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
+    </svg>
+  );
+}
+function InstagramIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="yq-partner-icon" aria-hidden="true">
+      <rect x="2" y="2" width="20" height="20" rx="5" />
+      <path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z" />
+      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" strokeLinecap="round" strokeWidth="2.5" />
+    </svg>
+  );
+}
+function LinkedInIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="yq-partner-icon" aria-hidden="true">
+      <rect x="2.5" y="2.5" width="19" height="19" rx="4" />
+      <path d="M7.5 10v6.5M7.5 7.5v.01" strokeLinecap="round" />
+      <path d="M11.5 16.5V12.7c0-1.2.9-2.2 2.1-2.2 1.2 0 1.9.9 1.9 2.2v3.8M11.5 10.3v6.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 // ─── Partner card ──────────────────────────────────────────────────────────────
-function PartnerCard({ partner, lang, delay }: { partner: typeof PARTNERS[0]; lang: Lang; delay: number }) {
+function PartnerCard({ partner, delay }: { partner: Partner; delay: number }) {
   const [hov, setHov] = useState(false);
+  const logoUrl = fixMediaUrl(partner.logo);
+
   return (
     <FadeIn delay={delay}>
       <div
+        className="yq-partner-card"
         onMouseEnter={() => setHov(true)}
         onMouseLeave={() => setHov(false)}
         style={{
@@ -173,26 +157,39 @@ function PartnerCard({ partner, lang, delay }: { partner: typeof PARTNERS[0]; la
           display: "flex", flexDirection: "column",
         }}
       >
-        {/* top shimmer */}
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: hov ? `linear-gradient(90deg,transparent,${GREEN}70,transparent)` : "transparent", transition: "background .3s" }} />
 
-        {/* Logo */}
-        <div style={{
-          width: "100%", aspectRatio: "16/9", overflow: "hidden",
-          background: partner.logoBg, flexShrink: 0,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          padding: partner.logoPadding, boxSizing: "border-box",
-        }}>
-          <img src={partner.logo} alt={partner.name} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: partner.logoFit, transition: "transform .4s", transform: hov ? "scale(1.04)" : "scale(1)" }} />
+        <div style={{ width: "100%", aspectRatio: "16/9", overflow: "hidden", background: "#0e0e14", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          {logoUrl ? (
+            <img src={logoUrl} alt={partner.name} style={{ maxWidth: "88%", maxHeight: "88%", objectFit: "contain", transition: "transform .4s", transform: hov ? "scale(1.04)" : "scale(1)" }} />
+          ) : (
+            <span style={{ fontSize: 13, color: "rgba(255,255,255,0.25)", fontWeight: 700 }}>{partner.name}</span>
+          )}
         </div>
 
-        {/* Content */}
         <div style={{ padding: "20px 22px 24px", flex: 1, display: "flex", flexDirection: "column", gap: 10 }}>
-          <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: ".14em", textTransform: "uppercase", padding: "3px 9px", borderRadius: 5, background: `${GREEN}14`, color: GREEN, border: `1px solid ${GREEN}28`, alignSelf: "flex-start" }}>
-            {partner.tag[lang]}
-          </span>
           <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "#fff", lineHeight: 1.25 }}>{partner.name}</h3>
-          <p style={{ margin: 0, fontSize: 13, color: "rgba(255,255,255,0.42)", lineHeight: 1.7 }}>{partner.desc[lang]}</p>
+          {partner.description && <p style={{ margin: 0, fontSize: 13, color: "rgba(255,255,255,0.42)", lineHeight: 1.7 }}>{partner.description}</p>}
+
+          {(partner.telegram || partner.instagram || partner.linkedin) && (
+            <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+              {partner.telegram && (
+                <a href={partner.telegram} target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 10px", background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.18)", borderRadius: 8, textDecoration: "none", color: GREEN, fontSize: 11.5, fontWeight: 600 }}>
+                  <TelegramIcon /> Telegram
+                </a>
+              )}
+              {partner.instagram && (
+                <a href={partner.instagram} target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 10px", background: "rgba(244,114,182,0.08)", border: "1px solid rgba(244,114,182,0.2)", borderRadius: 8, textDecoration: "none", color: "#F472B6", fontSize: 11.5, fontWeight: 600 }}>
+                  <InstagramIcon /> Instagram
+                </a>
+              )}
+              {partner.linkedin && (
+                <a href={partner.linkedin} target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 10px", background: "rgba(56,189,248,0.08)", border: "1px solid rgba(56,189,248,0.2)", borderRadius: 8, textDecoration: "none", color: "#38BDF8", fontSize: 11.5, fontWeight: 600 }}>
+                  <LinkedInIcon /> LinkedIn
+                </a>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </FadeIn>
@@ -201,20 +198,26 @@ function PartnerCard({ partner, lang, delay }: { partner: typeof PARTNERS[0]; la
 
 // ─── Main ──────────────────────────────────────────────────────────────────────
 export function SponsorsPage() {
-  // ИЗМЕНЕНО: язык теперь берётся из общего LanguageContext (тот же
-  // переключатель, что в шапке сайта), а не из отдельного локального
-  // стейта на этой странице. Свой собственный переключатель EN/UZ/RU
-  // отсюда убран — он дублировал общий и не был с ним синхронизирован.
-  const { lang: siteLang } = useLang();
-  const lang: Lang = siteLang === "uz" ? "UZ" : siteLang === "ru" ? "RU" : "EN";
+  const { lang } = useLang();
+  const t = UI[lang] || UI.en;
 
-  const t = UI[lang];
+  const [partners, setPartners] = useState<Partner[] | null>(null);
+  const [error, setError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    setPartners(null);
+    setError(false);
+    fetch(ENDPOINTS.partners, { headers: baseHeaders(lang) })
+      .then(res => { if (!res.ok) throw new Error(); return res.json(); })
+      .then(setPartners)
+      .catch(() => setError(true));
+  }, [lang, reloadKey]);
 
   return (
     <div style={{ minHeight: "100vh", background: "#060606", color: "#fff", fontFamily: "'Inter','Helvetica Neue',sans-serif", position: "relative", overflowX: "hidden" }}>
       <ForestCanvas />
 
-      {/* Ambient overlays */}
       <div style={{
         position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0,
         background: "radial-gradient(ellipse 75% 55% at 8% 18%, rgba(34,197,94,0.1) 0%, transparent 58%), radial-gradient(ellipse 55% 45% at 92% 82%, rgba(34,197,94,0.06) 0%, transparent 55%)"
@@ -222,14 +225,10 @@ export function SponsorsPage() {
 
       <main style={{ position: "relative", zIndex: 1, maxWidth: 1200, margin: "0 auto", padding: "clamp(100px,12vw,140px) clamp(16px,5vw,60px) 100px" }}>
 
-        {/* ── Header (переключатель языка удалён — теперь общий, в шапке) ── */}
         <FadeIn>
           <div style={{ marginBottom: 56 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-              <span style={{ width: 32, height: 1.5, background: GREEN, borderRadius: 2, display: "inline-block" }} />
-              <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: ".28em", textTransform: "uppercase", color: GREEN }}>{t.eyebrow}</span>
-            </div>
-            <h1 style={{ margin: "0 0 14px", fontSize: "clamp(36px,6vw,68px)", fontWeight: 900, letterSpacing: "-0.03em", lineHeight: 1 }}>
+            <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: ".28em", textTransform: "uppercase", color: GREEN }}>{t.eyebrow}</span>
+            <h1 style={{ margin: "10px 0 14px", fontSize: "clamp(36px,6vw,68px)", fontWeight: 900, letterSpacing: "-0.03em", lineHeight: 1 }}>
               <span style={{ color: "#fff" }}>{t.title} </span>
               <span style={{ color: GREEN, textShadow: "0 0 60px rgba(34,197,94,0.4)" }}>{t.titleGreen}</span>
             </h1>
@@ -237,23 +236,38 @@ export function SponsorsPage() {
           </div>
         </FadeIn>
 
-        {/* ── Section label ── */}
-        <FadeIn delay={100}>
-          <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 32 }}>
-            <span style={{ width: 28, height: 1.5, background: GREEN, borderRadius: 2, display: "inline-block", flexShrink: 0 }} />
-            <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: ".28em", textTransform: "uppercase", color: GREEN, whiteSpace: "nowrap" }}>{t.section_main}</span>
-            <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg,${GREEN}40,transparent)` }} />
+        {!partners && !error && (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, padding: "80px 0", color: "rgba(255,255,255,0.4)" }}>
+            <div style={{ width: 34, height: 34, borderRadius: "50%", border: "3px solid rgba(34,197,94,0.15)", borderTopColor: GREEN, animation: "yq-spin .8s linear infinite" }} />
+            <span style={{ fontSize: 13 }}>{t.loading}</span>
           </div>
-        </FadeIn>
+        )}
 
-        {/* ── Partner cards grid ── */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(280px,1fr))", gap: 20, marginBottom: 80 }}>
-          {PARTNERS.map((p, i) => (
-            <PartnerCard key={i} partner={p} lang={lang} delay={i * 80} />
-          ))}
-        </div>
+        {error && (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, padding: "80px 0", textAlign: "center" }}>
+            <span style={{ fontSize: 32 }}>⚠️</span>
+            <p style={{ margin: 0, fontSize: 14, color: "rgba(255,255,255,0.5)" }}>{t.error}</p>
+            <button onClick={() => setReloadKey(k => k + 1)} style={{ background: GREEN, border: "none", color: "#000", padding: "10px 22px", borderRadius: 10, fontSize: 12, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase", cursor: "pointer" }}>{t.retry}</button>
+          </div>
+        )}
+
+        {!error && partners && partners.length === 0 && (
+          <p style={{ color: "rgba(255,255,255,0.35)", textAlign: "center", padding: "60px 0" }}>{t.empty}</p>
+        )}
+
+        {!error && partners && partners.length > 0 && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(280px,1fr))", gap: 20, marginBottom: 80 }}>
+            {partners.map((p, i) => <PartnerCard key={p.id} partner={p} delay={i * 80} />)}
+          </div>
+        )}
 
       </main>
+
+      <style>{`
+        @keyframes yq-spin { to { transform: rotate(360deg); } }
+        @keyframes yq-partner-icon-glow { 0%,100% { filter: drop-shadow(0 0 0px currentColor); transform: scale(1); } 50% { filter: drop-shadow(0 0 6px currentColor); transform: scale(1.15); } }
+        .yq-partner-card:hover .yq-partner-icon { animation: yq-partner-icon-glow 1s ease-in-out infinite; }
+      `}</style>
     </div>
   );
 }

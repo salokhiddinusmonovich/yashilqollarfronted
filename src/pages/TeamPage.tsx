@@ -21,28 +21,19 @@ interface TeamMember {
 
 const UI: Record<string, Record<string, string>> = {
   en: {
-    eyebrow: "The People Behind the Mission", title: "Our", titleGreen: "Team",
-    subtitle: "Dedicated volunteers making Yashil Qollar happen.",
-    founder: "Founders", digital: "Digital", media: "Media", organization: "Organization",
+    title: "Our", titleGreen: "Team",
     loading: "Loading team…", error: "Couldn't load the team. Please try again.", retry: "Retry",
     empty: "No team members in this group yet.",
-    skills: "bio",
   },
   uz: {
-    eyebrow: "Missiya ortidagi odamlar", title: "Bizning", titleGreen: "Jamoamiz",
-    subtitle: "Yashil Qollarni amalga oshirayotgan fidoyi kongillilar.",
-    founder: "Asoschilar", digital: "Raqamli yo'nalish", media: "Media", organization: "Tashkiliy",
+    title: "Bizning", titleGreen: "Jamoamiz",
     loading: "Jamoa yuklanmoqda…", error: "Jamoani yuklab bo'lmadi. Qayta urinib ko'ring.", retry: "Qayta urinish",
     empty: "Bu guruhda hozircha azolar yo'q.",
-    skills: "bio",
   },
   ru: {
-    eyebrow: "Люди за миссией", title: "Наша", titleGreen: "Команда",
-    subtitle: "Преданные волонтёры, воплощающие Yashil Qollar в жизнь.",
-    founder: "Основатели", digital: "Digital", media: "Медиа", organization: "Организация",
+    title: "Наша", titleGreen: "Команда",
     loading: "Загружаем команду…", error: "Не удалось загрузить команду. Попробуйте ещё раз.", retry: "Повторить",
     empty: "В этой группе пока нет участников.",
-    skills: "био",
   },
 };
 
@@ -73,26 +64,6 @@ function FadeIn({ children, delay = 0 }: { children: React.ReactNode; delay?: nu
   return <div ref={ref} style={{ opacity: vis ? 1 : 0, transform: vis ? "translateY(0)" : "translateY(26px)", transition: `opacity .8s cubic-bezier(.16,1,.3,1) ${delay}ms,transform .8s cubic-bezier(.16,1,.3,1) ${delay}ms` }}>{children}</div>;
 }
 
-function SectionLabel({ label }: { label: string }) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 24 }}>
-      <span style={{ width: 28, height: 1.5, background: GREEN, borderRadius: 2, display: "inline-block", flexShrink: 0 }} />
-      <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: ".28em", textTransform: "uppercase", color: GREEN, whiteSpace: "nowrap" }}>{label}</span>
-      <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg,${GREEN}40,transparent)` }} />
-    </div>
-  );
-}
-
-/** Разбивает поле skills на пункты списка. Бэкенд на разных языках
- * отдаёт разные разделители: где-то "•", где-то " - " — пробуем оба. */
-function splitSkills(text: string): string[] {
-  let parts = text.split("•").map(s => s.trim()).filter(Boolean);
-  if (parts.length <= 1) {
-    parts = text.split(/\s-\s/).map(s => s.trim()).filter(Boolean);
-  }
-  return parts.length ? parts : [text.trim()];
-}
-
 /** Кастомный порядок карточек на странице команды (не по id из API).
  * Ищем по подстроке в fullname (без учёта регистра). Кого нет в списке —
  * уходят в конец, сохраняя свой относительный порядок. */
@@ -110,23 +81,65 @@ function sortByCustomOrder(members: TeamMember[]): TeamMember[] {
 
 const absUrl = fixMediaUrl;
 
-function MemberCard({ member, delay, t }: { member: TeamMember; delay: number; t: Record<string, string> }) {
+/* Настоящие логотипы вместо эмодзи, с пульсирующим свечением при ховере на карточку */
+function TelegramIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="yq-team-icon" aria-hidden="true">
+      <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
+    </svg>
+  );
+}
+function InstagramIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="yq-team-icon" aria-hidden="true">
+      <rect x="2" y="2" width="20" height="20" rx="5" />
+      <path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z" />
+      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" strokeLinecap="round" strokeWidth="2.5" />
+    </svg>
+  );
+}
+
+/** Поле skills теперь пишется так:
+ *   •  Co-Founder and CTO
+ *   • Victory loves preparation
+ * Первый пункт — конкретная должность (роль), второй — цитата.
+ * Если пунктов меньше двух, недостающее просто не показываем. */
+function parseSkills(text: string | null): { title: string | null; quote: string | null } {
+  if (!text) return { title: null, quote: null };
+  const parts = text.split("•").map(s => s.trim()).filter(Boolean);
+  return { title: parts[0] || null, quote: parts[1] || null };
+}
+
+function MemberCard({ member, delay }: { member: TeamMember; delay: number }) {
   const [hov, setHov] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
   const initials = member.fullname.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase();
   const photoUrl = absUrl(member.photo);
+
+  const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width - 0.5;
+    const py = (e.clientY - rect.top) / rect.height - 0.5;
+    if (cardRef.current) cardRef.current.style.transform = `perspective(900px) rotateY(${px * 10}deg) rotateX(${-py * 10}deg) translateY(-6px)`;
+  };
+  const reset = () => { setHov(false); if (cardRef.current) cardRef.current.style.transform = "perspective(900px) rotateY(0) rotateX(0) translateY(0)"; };
+  const { title, quote } = parseSkills(member.skills);
 
   return (
     <FadeIn delay={delay}>
       <div
+        ref={cardRef}
+        className="yq-team-card"
         onMouseEnter={() => setHov(true)}
-        onMouseLeave={() => setHov(false)}
+        onMouseMove={handleMove}
+        onMouseLeave={reset}
         style={{
           background: "rgba(255,255,255,0.025)",
           border: `1px solid ${hov ? GREEN + "50" : "rgba(255,255,255,0.08)"}`,
           borderRadius: 20, overflow: "hidden",
-          transition: "all .28s ease",
-          transform: hov ? "translateY(-6px)" : "translateY(0)",
-          boxShadow: hov ? "0 20px 50px rgba(34,197,94,0.1)" : "none",
+          transition: "transform .18s ease-out, border-color .28s, box-shadow .28s",
+          transformStyle: "preserve-3d",
+          boxShadow: hov ? "0 24px 60px rgba(34,197,94,0.15)" : "none",
           backdropFilter: "blur(10px)", position: "relative", height: "100%",
         }}
       >
@@ -134,47 +147,75 @@ function MemberCard({ member, delay, t }: { member: TeamMember; delay: number; t
 
         <div style={{ position: "relative", width: "100%", aspectRatio: "3/4", overflow: "hidden" }}>
           {photoUrl ? (
-            <img src={photoUrl} alt={member.fullname} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top center", display: "block", transition: "transform .4s ease", transform: hov ? "scale(1.04)" : "scale(1)" }} />
+            <img src={photoUrl} alt={member.fullname} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top center", display: "block", transition: "transform .4s ease", transform: hov ? "scale(1.06)" : "scale(1)" }} />
           ) : (
             <div style={{ width: "100%", height: "100%", background: `linear-gradient(160deg,${GREEN}20 0%,rgba(34,197,94,0.04) 100%)`, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16 }}>
               <div style={{ width: 88, height: 88, borderRadius: "50%", background: `${GREEN}20`, border: `2px solid ${GREEN}45`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, fontWeight: 800, color: GREEN }}>{initials}</div>
               <span style={{ fontSize: 28, opacity: .25 }}>🌿</span>
             </div>
           )}
-          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "50%", background: "linear-gradient(to top,rgba(8,8,8,0.95) 0%,transparent 100%)" }} />
+          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "55%", background: "linear-gradient(to top,rgba(8,8,8,0.97) 0%,transparent 100%)" }} />
           <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "14px 16px" }}>
-            <div style={{ fontWeight: 700, fontSize: 14, color: "#fff", lineHeight: 1.2 }}>{member.fullname}</div>
+            <div style={{ fontWeight: 700, fontSize: 14, color: "#fff", lineHeight: 1.2, marginBottom: 6 }}>{member.fullname}</div>
+            {/* Роль — переливающийся градиентный текст вместо статичного бейджа */}
+            {title && (
+              <span
+                className="yq-role-shimmer"
+                style={{
+                  display: "inline-block", fontSize: 11.5, fontWeight: 800, letterSpacing: ".02em",
+                  backgroundImage: `linear-gradient(90deg, ${GREEN} 0%, #86efac 25%, ${GREEN} 50%, #4ade80 75%, ${GREEN} 100%)`,
+                  backgroundSize: "200% auto", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent",
+                  animation: "yq-role-shimmer 2.6s linear infinite",
+                }}
+              >
+                {title}
+              </span>
+            )}
           </div>
+
+          {/* Гигантская пульсирующая кавычка-декор */}
+          {quote && (
+            <span
+              aria-hidden="true"
+              style={{
+                position: "absolute", top: 8, right: 12, fontFamily: "Georgia, serif", fontSize: 64, lineHeight: 1,
+                color: "rgba(34,197,94,0.18)", pointerEvents: "none",
+                animation: "yq-quote-float 4s ease-in-out infinite",
+              }}
+            >
+              "
+            </span>
+          )}
         </div>
 
-        <div style={{ padding: "14px 16px 18px" }}>
-          {member.skills && (
-            <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: ".14em", textTransform: "uppercase", color: "rgba(255,255,255,0.28)", marginBottom: 8 }}>{t.skills}</div>
-              <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 6 }}>
-                {splitSkills(member.skills).map((line, i) => (
-                  <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 12.5, color: "rgba(255,255,255,0.5)", lineHeight: 1.55 }}>
-                    <span style={{ color: GREEN, fontSize: 13, lineHeight: 1.4, flexShrink: 0 }}>•</span>
-                    <span>{line}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            {member.telegram_username && (
-              <a href={`https://t.me/${member.telegram_username.replace("@", "")}`} target="_blank" rel="noreferrer"
-                style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 10px", background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.18)", borderRadius: 8, textDecoration: "none", color: GREEN, fontSize: 11.5, fontWeight: 600 }}>
-                ✈️ Telegram
-              </a>
-            )}
-            {member.instagram && (
-              <a href={`https://instagram.com/${member.instagram.replace("@", "")}`} target="_blank" rel="noreferrer"
-                style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 10px", background: "rgba(244,114,182,0.08)", border: "1px solid rgba(244,114,182,0.2)", borderRadius: 8, textDecoration: "none", color: "#F472B6", fontSize: 11.5, fontWeight: 600 }}>
-                📸 Instagram
-              </a>
-            )}
+        {/* Цитата — эластично "выпрыгивает" при наведении */}
+        {quote && (
+          <div style={{
+            padding: "16px 18px 20px",
+            maxHeight: hov ? 200 : 0, opacity: hov ? 1 : 0,
+            transform: hov ? "translateY(0) scale(1)" : "translateY(10px) scale(.94)",
+            overflow: "hidden",
+            transition: "max-height .4s cubic-bezier(.34,1.56,.64,1), opacity .3s ease, transform .4s cubic-bezier(.34,1.56,.64,1)",
+          }}>
+            <p style={{ margin: 0, fontSize: 13, fontStyle: "italic", color: "rgba(255,255,255,0.6)", lineHeight: 1.7 }}>
+              "{quote}"
+            </p>
           </div>
+        )}
+
+        <div style={{ padding: member.skills ? "0 16px 18px" : "14px 16px 18px", display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {member.telegram_username && (
+            <a href={`https://t.me/${member.telegram_username.replace("@", "")}`} target="_blank" rel="noreferrer"
+              style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 10px", background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.18)", borderRadius: 8, textDecoration: "none", color: GREEN, fontSize: 11.5, fontWeight: 600 }}>
+              <TelegramIcon /> Telegram
+            </a>
+          )}
+          {member.instagram && (
+            <a href={`https://instagram.com/${member.instagram.replace("@", "")}`} target="_blank" rel="noreferrer"
+              style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 10px", background: "rgba(244,114,182,0.08)", border: "1px solid rgba(244,114,182,0.2)", borderRadius: 8, textDecoration: "none", color: "#F472B6", fontSize: 11.5, fontWeight: 600 }}>
+              <InstagramIcon /> Instagram
+            </a>
+          )}
         </div>
       </div>
     </FadeIn>
@@ -212,8 +253,6 @@ export function TeamPage() {
     return () => controller.abort();
   }, [lang, reloadKey]);
 
-  // Все участники в одну секцию, без группировки по focus
-
   return (
     <div style={{ minHeight: "100vh", background: "#060606", color: "#fff", fontFamily: "'Inter','Helvetica Neue',sans-serif", position: "relative", overflowX: "hidden" }}>
       <ForestCanvas />
@@ -221,15 +260,10 @@ export function TeamPage() {
 
       <main style={{ position: "relative", zIndex: 1, maxWidth: 1200, margin: "0 auto", padding: "clamp(100px,12vw,140px) clamp(16px,5vw,60px) 100px" }}>
         <FadeIn>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-            <span style={{ width: 32, height: 1.5, background: GREEN, borderRadius: 2, display: "inline-block" }} />
-            <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: ".28em", textTransform: "uppercase", color: GREEN }}>{t.eyebrow}</span>
-          </div>
-          <h1 style={{ margin: "0 0 14px", fontSize: "clamp(40px,7vw,72px)", fontWeight: 900, letterSpacing: "-0.03em", lineHeight: 1 }}>
+          <h1 style={{ margin: "0 0 56px", fontSize: "clamp(40px,7vw,72px)", fontWeight: 900, letterSpacing: "-0.03em", lineHeight: 1 }}>
             <span style={{ color: "#fff" }}>{t.title} </span>
             <span style={{ color: GREEN, textShadow: "0 0 60px rgba(34,197,94,0.4)" }}>{t.titleGreen}</span>
           </h1>
-          <p style={{ margin: "0 0 56px", fontSize: 16, color: "rgba(255,255,255,0.42)", maxWidth: 520, lineHeight: 1.75 }}>{t.subtitle}</p>
         </FadeIn>
 
         {/* ЗАГРУЗКА */}
@@ -257,7 +291,6 @@ export function TeamPage() {
         {/* ВСЯ КОМАНДА В ОДНУ СЕКЦИЮ, СЕТКА 4 В РЯД, АДАПТИВНО */}
         {!loading && !error && members && members.length > 0 && (
           <div style={{ marginBottom: 72 }}>
-            <FadeIn><SectionLabel label={t.founder} /></FadeIn>
             <div
               className="yq-team-grid"
               style={{
@@ -267,7 +300,7 @@ export function TeamPage() {
               }}
             >
               {sortByCustomOrder(members).map((m, i) => (
-                <MemberCard key={m.id} member={m} delay={i * 60} t={t} />
+                <MemberCard key={m.id} member={m} delay={i * 60} />
               ))}
             </div>
           </div>
@@ -283,6 +316,10 @@ export function TeamPage() {
 
       <style>{`
         @keyframes yq-spin { to { transform: rotate(360deg); } }
+        @keyframes yq-team-icon-glow { 0%,100% { filter: drop-shadow(0 0 0px currentColor); transform: scale(1); } 50% { filter: drop-shadow(0 0 6px currentColor); transform: scale(1.15); } }
+        .yq-team-card:hover .yq-team-icon { animation: yq-team-icon-glow 1s ease-in-out infinite; }
+        @keyframes yq-role-shimmer { 0% { background-position: 0% center; } 100% { background-position: 200% center; } }
+        @keyframes yq-quote-float { 0%,100% { transform: translateY(0) rotate(-4deg); opacity: .18; } 50% { transform: translateY(-6px) rotate(4deg); opacity: .3; } }
 
         /* ── Адаптивная сетка команды ── */
         @media (max-width: 980px) {

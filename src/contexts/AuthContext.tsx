@@ -5,6 +5,7 @@ import { ENDPOINTS, baseHeaders } from "../config/api";
    ТИПЫ — соответствуют ProfileSerializer
 ───────────────────────────────────────── */
 export interface User {
+  id: number;
   tg_id: number | null;
   fullname: string;
   username: string | null;
@@ -41,6 +42,7 @@ interface AuthContextType {
   registerWithPassword: (fullname: string, email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
   loginWithPassword: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
   loginWithGoogle: (idToken: string) => Promise<{ ok: boolean; error?: string }>;
+  loginWithTelegramWebApp: (initData: string) => Promise<{ ok: boolean; error?: string }>;
   loginWithTokens: (access: string, refresh: string, user: User) => void;
   loginDev: () => void;
   logout: () => Promise<void>;
@@ -78,6 +80,7 @@ const AuthContext = createContext<AuthContextType>({
   registerWithPassword: async () => ({ ok: false }),
   loginWithPassword: async () => ({ ok: false }),
   loginWithGoogle: async () => ({ ok: false }),
+  loginWithTelegramWebApp: async () => ({ ok: false }),
   loginWithTokens: () => { },
   loginDev: () => { },
   logout: async () => { },
@@ -275,6 +278,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // ─── НОВОЕ: вход через Telegram Mini App (initData подписан ботом) ───
+  const loginWithTelegramWebApp = async (initData: string) => {
+    try {
+      const res = await fetch(ENDPOINTS.loginTelegramWebApp, {
+        method: "POST",
+        headers: baseHeaders("en", { "Content-Type": "application/json" }),
+        body: JSON.stringify({ init_data: initData }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        return { ok: false, error: err.error || "Telegram Mini App login failed." };
+      }
+
+      const result = await res.json();
+      applySession(result);
+      return { ok: true };
+    } catch {
+      return { ok: false, error: "Network error. Check your connection." };
+    }
+  };
+
   const loginWithTokens = (access: string, refresh: string, userData: User) => {
     localStorage.setItem(ACCESS_KEY, access);
     localStorage.setItem(REFRESH_KEY, refresh);
@@ -359,6 +384,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         registerWithPassword,
         loginWithPassword,
         loginWithGoogle,
+        loginWithTelegramWebApp,
         loginWithTokens,
         loginDev,
         logout,
