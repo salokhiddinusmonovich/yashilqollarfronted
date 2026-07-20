@@ -15,7 +15,7 @@ const PAGE_UI: Record<PageLang, {
     eyebrow: "Get in Touch",
     title1: "Let's unite",
     titleGreen: "for nature.",
-    subtitle: "Volunteering, partnership, or just a question — pick whichever channel works for you below.",
+    subtitle: "Uzbekistan's largest youth-led ecological movement — uniting young people around real environmental action.",
     contactDesc: [
       "Registration, profile, and project participation",
       "News, project announcements, and reports",
@@ -28,6 +28,7 @@ const PAGE_UI: Record<PageLang, {
     faqLabel: "Frequently Asked Questions",
     faq: [
       { q: "How can I become a Yashil Qo'llar volunteer?", a: "We regularly run ecological actions, plogging events, and training sessions across Uzbekistan. Message us on our Telegram bot or channel — we'll connect you with the nearest event." },
+      { q: "How do I find out about and join upcoming events?", a: "We announce every event in our Telegram channel first — dates, locations, and registration links. Join the channel and turn on notifications so you don't miss one." },
       { q: "Can organizations partner with you?", a: "Yes. We work with schools, universities, businesses, and government bodies — from joint ecological actions to opening eco-clubs on-site. Message us to discuss the format." },
       { q: "What do volunteers actually do at events?", a: "Cleaning up areas and sorting waste, plogging (picking up litter while running or walking), recycling workshops, ecological safety trainings, and running eco-clubs in schools and universities." },
       { q: "How do you share results?", a: "We cover every event on our Telegram channel and social media — photos, videos, eco-challenges, and posts about what's been done. Transparency matters to us." },
@@ -37,7 +38,7 @@ const PAGE_UI: Record<PageLang, {
     eyebrow: "Свяжитесь с нами",
     title1: "Объединимся",
     titleGreen: "ради природы.",
-    subtitle: "Волонтёрство, партнёрство или просто вопрос — выберите удобный канал ниже.",
+    subtitle: "Крупнейшее молодёжное экологическое движение Узбекистана — объединяем молодёжь вокруг реальных действий для природы.",
     contactDesc: [
       "Регистрация, профиль и участие в проектах",
       "Новости, анонсы проектов и отчёты",
@@ -50,6 +51,7 @@ const PAGE_UI: Record<PageLang, {
     faqLabel: "Частые вопросы",
     faq: [
       { q: "Как я могу стать волонтёром Yashil Qo'llar?", a: "Мы регулярно проводим экоакции, плоггинги и обучающие мероприятия по всему Узбекистану. Напишите нам в Telegram-боте или канале — подключим вас к ближайшему мероприятию в вашем регионе." },
+      { q: "Как узнать о мероприятиях и записаться на них?", a: "Мы анонсируем каждое мероприятие в нашем Telegram-канале — даты, места и ссылки на регистрацию. Подпишитесь на канал и включите уведомления, чтобы ничего не пропустить." },
       { q: "Можно ли организациям сотрудничать с вами?", a: "Да. Мы работаем со школами, вузами, бизнесом и госорганами — от совместных экоакций до открытия эко-клубов на базе учреждения. Напишите нам, обсудим формат." },
       { q: "Чем конкретно занимаются волонтёры на мероприятиях?", a: "Уборка территорий и сортировка отходов, плоггинг (сбор мусора во время бега или ходьбы), обучение переработке отходов, тренинги по экологической безопасности и работа в эко-клубах при школах и вузах." },
       { q: "Как вы рассказываете о результатах?", a: "Мы освещаем каждое мероприятие в Telegram-канале и соцсетях — фото, видео, экочелленджи и посты о том, что уже сделано. Прозрачность для нас принципиальна." },
@@ -59,7 +61,7 @@ const PAGE_UI: Record<PageLang, {
     eyebrow: "Biz bilan bog'laning",
     title1: "Tabiat uchun",
     titleGreen: "birlashamiz.",
-    subtitle: "Ko'ngillilik, hamkorlik yoki shunchaki savol — quyidagi qulay kanalni tanlang.",
+    subtitle: "O'zbekistondagi eng yirik yoshlar ekologik harakati — yoshlarni tabiat uchun real harakatlar atrofida birlashtiramiz.",
     contactDesc: [
       "Ro'yxatdan o'tish, profil va loyihalarda ishtirok",
       "Yangiliklar, loyiha e'lonlari va hisobotlar",
@@ -72,6 +74,7 @@ const PAGE_UI: Record<PageLang, {
     faqLabel: "Tez-tez so'raladigan savollar",
     faq: [
       { q: "Yashil Qo'llarga qanday ko'ngilli bo'lsam bo'ladi?", a: "Biz O'zbekiston bo'ylab muntazam ravishda ekologik aksiyalar, plogging va o'quv tadbirlarini o'tkazamiz. Telegram-botimiz yoki kanalimizga yozing — sizni eng yaqin tadbirga bog'laymiz." },
+      { q: "Tadbirlar haqida qanday bilib olaman va qanday yoziluvchiman?", a: "Har bir tadbirni birinchi navbatda Telegram-kanalimizda e'lon qilamiz — sana, joy va ro'yxatdan o'tish havolasi bilan. Kanalga a'zo bo'ling va bildirishnomalarni yoqing, hech narsani o'tkazib yubormaysiz." },
       { q: "Tashkilotlar siz bilan hamkorlik qila oladimi?", a: "Ha. Biz maktablar, universitetlar, biznes va davlat organlari bilan ishlaymiz — birgalikdagi ekologik aksiyalardan tortib, muassasa negizida eko-klublar ochishgacha. Formatni muhokama qilish uchun yozing." },
       { q: "Tadbirlarda ko'ngillilar aniq nima qiladi?", a: "Hududlarni tozalash va chiqindilarni saralash, plogging (yugurish yoki yurish paytida chiqindi yig'ish), qayta ishlash bo'yicha mashg'ulotlar, ekologik xavfsizlik treninglari va maktab/universitetlardagi eko-klublar faoliyati." },
       { q: "Natijalar haqida qanday ma'lumot berasiz?", a: "Har bir tadbirni Telegram-kanalimiz va ijtimoiy tarmoqlarda yoritamiz — foto, video, ekologik challenge'lar va qilingan ishlar haqida postlar. Shaffoflik biz uchun muhim." },

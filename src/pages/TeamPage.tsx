@@ -7,7 +7,7 @@ const GREEN = "#22C55E";
 /* ─────────────────────────────────────────
    ТИПЫ — соответствуют TeamMemberSerializer
 ───────────────────────────────────────── */
-type Focus = "founder" | "digital" | "media" | "organization";
+type Focus = "founder" | "media" | "organization";
 
 interface TeamMember {
   id: number;
@@ -15,7 +15,9 @@ interface TeamMember {
   photo: string | null;
   telegram_username: string | null;
   instagram: string | null;
-  skills: string | null;
+  github: string | null;
+  linkedin: string | null;
+  bio: string | null;
   focus: Focus;
 }
 
@@ -98,13 +100,29 @@ function InstagramIcon() {
     </svg>
   );
 }
+function GitHubIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="yq-team-icon" aria-hidden="true">
+      <path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.21 11.39.6.11.82-.26.82-.58 0-.29-.01-1.05-.02-2.06-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.73.08-.73 1.21.08 1.84 1.24 1.84 1.24 1.07 1.84 2.81 1.31 3.5 1 .11-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.12-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6.02 0c2.29-1.55 3.3-1.23 3.3-1.23.66 1.66.24 2.88.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.63-5.48 5.93.43.37.81 1.1.81 2.22 0 1.6-.02 2.89-.02 3.29 0 .32.22.7.83.58C20.56 21.79 24 17.3 24 12c0-6.63-5.37-12-12-12z" />
+    </svg>
+  );
+}
+function LinkedInIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="yq-team-icon" aria-hidden="true">
+      <rect x="2.5" y="2.5" width="19" height="19" rx="4" />
+      <path d="M7.5 10v6.5M7.5 7.5v.01" strokeLinecap="round" />
+      <path d="M11.5 16.5V12.7c0-1.2.9-2.2 2.1-2.2 1.2 0 1.9.9 1.9 2.2v3.8M11.5 10.3v6.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
 
-/** Поле skills теперь пишется так:
+/** Поле bio теперь пишется так:
  *   •  Co-Founder and CTO
  *   • Victory loves preparation
  * Первый пункт — конкретная должность (роль), второй — цитата.
  * Если пунктов меньше двух, недостающее просто не показываем. */
-function parseSkills(text: string | null): { title: string | null; quote: string | null } {
+function parseBio(text: string | null): { title: string | null; quote: string | null } {
   if (!text) return { title: null, quote: null };
   const parts = text.split("•").map(s => s.trim()).filter(Boolean);
   return { title: parts[0] || null, quote: parts[1] || null };
@@ -123,7 +141,7 @@ function MemberCard({ member, delay }: { member: TeamMember; delay: number }) {
     if (cardRef.current) cardRef.current.style.transform = `perspective(900px) rotateY(${px * 10}deg) rotateX(${-py * 10}deg) translateY(-6px)`;
   };
   const reset = () => { setHov(false); if (cardRef.current) cardRef.current.style.transform = "perspective(900px) rotateY(0) rotateX(0) translateY(0)"; };
-  const { title, quote } = parseSkills(member.skills);
+  const { title, quote } = parseBio(member.bio);
 
   return (
     <FadeIn delay={delay}>
@@ -134,16 +152,18 @@ function MemberCard({ member, delay }: { member: TeamMember; delay: number }) {
         onMouseMove={handleMove}
         onMouseLeave={reset}
         style={{
-          background: "rgba(255,255,255,0.025)",
-          border: `1px solid ${hov ? GREEN + "50" : "rgba(255,255,255,0.08)"}`,
+          background: "#0d0d0d",
           borderRadius: 20, overflow: "hidden",
-          transition: "transform .18s ease-out, border-color .28s, box-shadow .28s",
+          transition: "transform .18s ease-out, box-shadow .28s",
           transformStyle: "preserve-3d",
-          boxShadow: hov ? "0 24px 60px rgba(34,197,94,0.15)" : "none",
-          backdropFilter: "blur(10px)", position: "relative", height: "100%",
+          boxShadow: hov ? "0 24px 60px rgba(34,197,94,0.2)" : "none",
+          position: "relative", height: "100%",
         }}
       >
-        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: hov ? `linear-gradient(90deg,transparent,${GREEN}70,transparent)` : "transparent", transition: "background .3s" }} />
+        {/* Парящие искры — всегда чуть заметны, ярче при наведении */}
+        <div className="yq-team-sparkle" style={{ left: "14%", animationDelay: "0s" }} />
+        <div className="yq-team-sparkle" style={{ left: "48%", animationDelay: "1.3s" }} />
+        <div className="yq-team-sparkle" style={{ left: "76%", animationDelay: "2.4s" }} />
 
         <div style={{ position: "relative", width: "100%", aspectRatio: "3/4", overflow: "hidden" }}>
           {photoUrl ? (
@@ -154,10 +174,13 @@ function MemberCard({ member, delay }: { member: TeamMember; delay: number }) {
               <span style={{ fontSize: 28, opacity: .25 }}>🌿</span>
             </div>
           )}
+
+          {/* Световой блик — пробегает по фото при наведении */}
+          <div className={"yq-team-shine" + (hov ? " active" : "")} />
+
           <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "55%", background: "linear-gradient(to top,rgba(8,8,8,0.97) 0%,transparent 100%)" }} />
           <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "14px 16px" }}>
             <div style={{ fontWeight: 700, fontSize: 14, color: "#fff", lineHeight: 1.2, marginBottom: 6 }}>{member.fullname}</div>
-            {/* Роль — переливающийся градиентный текст вместо статичного бейджа */}
             {title && (
               <span
                 className="yq-role-shimmer"
@@ -173,7 +196,6 @@ function MemberCard({ member, delay }: { member: TeamMember; delay: number }) {
             )}
           </div>
 
-          {/* Гигантская пульсирующая кавычка-декор */}
           {quote && (
             <span
               aria-hidden="true"
@@ -188,7 +210,6 @@ function MemberCard({ member, delay }: { member: TeamMember; delay: number }) {
           )}
         </div>
 
-        {/* Цитата — эластично "выпрыгивает" при наведении */}
         {quote && (
           <div style={{
             padding: "16px 18px 20px",
@@ -203,7 +224,7 @@ function MemberCard({ member, delay }: { member: TeamMember; delay: number }) {
           </div>
         )}
 
-        <div style={{ padding: member.skills ? "0 16px 18px" : "14px 16px 18px", display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <div style={{ padding: member.bio ? "0 16px 18px" : "14px 16px 18px", display: "flex", gap: 8, flexWrap: "wrap" }}>
           {member.telegram_username && (
             <a href={`https://t.me/${member.telegram_username.replace("@", "")}`} target="_blank" rel="noreferrer"
               style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 10px", background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.18)", borderRadius: 8, textDecoration: "none", color: GREEN, fontSize: 11.5, fontWeight: 600 }}>
@@ -214,6 +235,18 @@ function MemberCard({ member, delay }: { member: TeamMember; delay: number }) {
             <a href={`https://instagram.com/${member.instagram.replace("@", "")}`} target="_blank" rel="noreferrer"
               style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 10px", background: "rgba(244,114,182,0.08)", border: "1px solid rgba(244,114,182,0.2)", borderRadius: 8, textDecoration: "none", color: "#F472B6", fontSize: 11.5, fontWeight: 600 }}>
               <InstagramIcon /> Instagram
+            </a>
+          )}
+          {member.github && (
+            <a href={member.github} target="_blank" rel="noreferrer"
+              style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 10px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, textDecoration: "none", color: "#e0e0e0", fontSize: 11.5, fontWeight: 600 }}>
+              <GitHubIcon /> GitHub
+            </a>
+          )}
+          {member.linkedin && (
+            <a href={member.linkedin} target="_blank" rel="noreferrer"
+              style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 10px", background: "rgba(56,189,248,0.08)", border: "1px solid rgba(56,189,248,0.2)", borderRadius: 8, textDecoration: "none", color: "#38BDF8", fontSize: 11.5, fontWeight: 600 }}>
+              <LinkedInIcon /> LinkedIn
             </a>
           )}
         </div>
@@ -288,23 +321,49 @@ export function TeamPage() {
           </div>
         )}
 
-        {/* ВСЯ КОМАНДА В ОДНУ СЕКЦИЮ, СЕТКА 4 В РЯД, АДАПТИВНО */}
-        {!loading && !error && members && members.length > 0 && (
-          <div style={{ marginBottom: 72 }}>
-            <div
-              className="yq-team-grid"
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(4, 1fr)",
-                gap: 20,
-              }}
-            >
-              {sortByCustomOrder(members).map((m, i) => (
-                <MemberCard key={m.id} member={m} delay={i * 60} />
-              ))}
-            </div>
-          </div>
-        )}
+        {/* КОМАНДА — ДВА БЛОКА: FOUNDERS СВЕРХУ, ORGANIZATION TEAM СНИЗУ */}
+        {!loading && !error && members && members.length > 0 && (() => {
+          const founders = sortByCustomOrder(members.filter(m => m.focus === "founder"));
+          const orgTeam = sortByCustomOrder(members.filter(m => m.focus === "organization"));
+          return (
+            <>
+              <style>{`
+                @keyframes yq-founder-shimmer { 0% { background-position: 0% center; } 100% { background-position: 200% center; } }
+                @keyframes yq-org-pulse { 0%,100% { box-shadow: inset 0 0 50px rgba(34,197,94,0.05); } 50% { box-shadow: inset 0 0 70px rgba(34,197,94,0.12); } }
+              `}</style>
+
+              {founders.length > 0 && (
+                <div style={{ marginBottom: 44 }}>
+                  <div
+                    style={{
+                      fontSize: 12, fontWeight: 800, letterSpacing: ".24em", textTransform: "uppercase",
+                      marginBottom: 22, display: "inline-block",
+                      backgroundImage: "linear-gradient(90deg, #ffc107 0%, #fff3cd 25%, #ffc107 50%, #ffdb70 75%, #ffc107 100%)",
+                      backgroundSize: "200% auto", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent",
+                      animation: "yq-founder-shimmer 2.8s linear infinite",
+                    }}
+                  >
+                    ✦ Founders
+                  </div>
+                  <div className="yq-team-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 20 }}>
+                    {founders.map((m, i) => <MemberCard key={m.id} member={m} delay={i * 60} />)}
+                  </div>
+                </div>
+              )}
+
+              {orgTeam.length > 0 && (
+                <div style={{ marginBottom: 72 }}>
+                  <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: ".24em", textTransform: "uppercase", color: GREEN, marginBottom: 22 }}>
+                    ⬡ Organization Team
+                  </div>
+                  <div className="yq-team-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 20 }}>
+                    {orgTeam.map((m, i) => <MemberCard key={m.id} member={m} delay={i * 60} />)}
+                  </div>
+                </div>
+              )}
+            </>
+          );
+        })()}
 
         {!loading && !error && (members || []).length === 0 && (
           <div style={{ padding: "48px 32px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 18, textAlign: "center", backdropFilter: "blur(8px)" }}>
@@ -320,6 +379,33 @@ export function TeamPage() {
         .yq-team-card:hover .yq-team-icon { animation: yq-team-icon-glow 1s ease-in-out infinite; }
         @keyframes yq-role-shimmer { 0% { background-position: 0% center; } 100% { background-position: 200% center; } }
         @keyframes yq-quote-float { 0%,100% { transform: translateY(0) rotate(-4deg); opacity: .18; } 50% { transform: translateY(-6px) rotate(4deg); opacity: .3; } }
+
+        .yq-team-card { position: relative; z-index: 1; }
+
+        /* ── Световой блик, пробегающий по фото ── */
+        .yq-team-shine {
+          position: absolute; top: 0; left: -60%; width: 40%; height: 100%;
+          background: linear-gradient(115deg, transparent 0%, rgba(255,255,255,0.28) 50%, transparent 100%);
+          transform: skewX(-18deg);
+          pointer-events: none;
+          opacity: 0;
+        }
+        .yq-team-shine.active { animation: yq-shine-sweep 1.1s ease-out; }
+        @keyframes yq-shine-sweep { 0% { left: -60%; opacity: 0; } 15% { opacity: 1; } 100% { left: 130%; opacity: 0; } }
+
+        /* ── Парящие искры внутри карточки ── */
+        .yq-team-sparkle {
+          position: absolute; bottom: 0; width: 3px; height: 3px; border-radius: 50%;
+          background: #22c55e; box-shadow: 0 0 6px #22c55e, 0 0 12px #22c55e;
+          opacity: 0; z-index: 3; pointer-events: none;
+          animation: yq-sparkle-rise 3.6s ease-in infinite;
+        }
+        @keyframes yq-sparkle-rise {
+          0% { bottom: 0; opacity: 0; transform: translateX(0); }
+          10% { opacity: .8; }
+          80% { opacity: .5; }
+          100% { bottom: 100%; opacity: 0; transform: translateX(8px); }
+        }
 
         /* ── Адаптивная сетка команды ── */
         @media (max-width: 980px) {

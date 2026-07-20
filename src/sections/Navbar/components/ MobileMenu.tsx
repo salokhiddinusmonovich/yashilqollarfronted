@@ -14,9 +14,9 @@ const NAV_LINKS = [
 ];
 
 const LANGS: { code: Lang; label: string }[] = [
+    { code: "uz", label: "UZ" },
     { code: "en", label: "EN" },
     { code: "ru", label: "RU" },
-    { code: "uz", label: "UZ" },
 ];
 
 export const MobileMenu = ({ onClose }: { onClose: () => void }) => {
